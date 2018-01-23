@@ -11,4 +11,6 @@ public @interface JobType {
 	String name();
 	String description() default "";
 	String firstStep();
+	String customInfo() default "";
+	boolean forceAcyclic() default false;
 }

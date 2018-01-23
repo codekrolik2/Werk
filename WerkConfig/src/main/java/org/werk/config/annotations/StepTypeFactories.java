@@ -18,4 +18,6 @@ public @interface StepTypeFactories {
 	
 	Class<StepExecFactory> getStepExecFactoryClass();
 	Class<StepTransitionerFactory> getStepTransitionerFactoryClass();
+
+	String customInfo() default "";
 }

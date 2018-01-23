@@ -18,4 +18,6 @@ public @interface StepType {
 	
 	Class<StepExec> getStepExecClass();
 	Class<StepTransitioner> getStepTransitionerClass();
+
+	String customInfo() default "";
 }

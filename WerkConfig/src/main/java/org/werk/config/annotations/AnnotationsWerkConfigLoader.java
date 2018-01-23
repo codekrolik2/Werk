@@ -39,15 +39,19 @@ import org.werk.meta.JobType;
 import org.werk.meta.StepExecFactory;
 import org.werk.meta.StepTransitionerFactory;
 import org.werk.meta.inputparameters.DefaultValueJobInputParameter;
-import org.werk.parameters.BoolParameter;
-import org.werk.parameters.DictionaryParameter;
-import org.werk.parameters.DoubleParameter;
-import org.werk.parameters.ListParameter;
-import org.werk.parameters.LongParameter;
-import org.werk.parameters.StringParameter;
+import org.werk.parameters.BoolParameterImpl;
+import org.werk.parameters.DictionaryParameterImpl;
+import org.werk.parameters.DoubleParameterImpl;
+import org.werk.parameters.ListParameterImpl;
+import org.werk.parameters.LongParameterImpl;
+import org.werk.parameters.StringParameterImpl;
+import org.werk.parameters.interfaces.BoolParameter;
+import org.werk.parameters.interfaces.DictionaryParameter;
+import org.werk.parameters.interfaces.DoubleParameter;
+import org.werk.parameters.interfaces.ListParameter;
+import org.werk.parameters.interfaces.LongParameter;
 import org.werk.parameters.interfaces.ParameterType;
-import org.werk.steps.StepExec;
-import org.werk.steps.StepTransitioner;
+import org.werk.parameters.interfaces.StringParameter;
 
 public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 	@SuppressWarnings("deprecation")
@@ -126,7 +130,7 @@ public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 				boolean isOptional = defaultLongParameter.isOptional();
 				String description = defaultLongParameter.description();
 				boolean isDefaultValueImmutable = defaultLongParameter.isDefaultValueImmutable();
-				LongParameter defaultValue = new LongParameter(defaultLongParameter.defaultValue());
+				LongParameter defaultValue = new LongParameterImpl(defaultLongParameter.defaultValue());
 				
 				return new DefaultValueJobInputParameter(name, type, isOptional, description, 
 						isDefaultValueImmutable, defaultValue);
@@ -146,7 +150,7 @@ public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 				boolean isOptional = defaultDoubleParameter.isOptional();
 				String description = defaultDoubleParameter.description();
 				boolean isDefaultValueImmutable = defaultDoubleParameter.isDefaultValueImmutable();
-				DoubleParameter defaultValue = new DoubleParameter(defaultDoubleParameter.defaultValue());
+				DoubleParameter defaultValue = new DoubleParameterImpl(defaultDoubleParameter.defaultValue());
 				
 				return new DefaultValueJobInputParameter(name, type, isOptional, description, 
 						isDefaultValueImmutable, defaultValue);
@@ -166,7 +170,7 @@ public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 				boolean isOptional = defaultBoolParameter.isOptional();
 				String description = defaultBoolParameter.description();
 				boolean isDefaultValueImmutable = defaultBoolParameter.isDefaultValueImmutable();
-				BoolParameter defaultValue = new BoolParameter(defaultBoolParameter.defaultValue());
+				BoolParameter defaultValue = new BoolParameterImpl(defaultBoolParameter.defaultValue());
 				
 				return new DefaultValueJobInputParameter(name, type, isOptional, description, 
 						isDefaultValueImmutable, defaultValue);
@@ -186,7 +190,7 @@ public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 				boolean isOptional = defaultStringParameter.isOptional();
 				String description = defaultStringParameter.description();
 				boolean isDefaultValueImmutable = defaultStringParameter.isDefaultValueImmutable();
-				StringParameter defaultValue = new StringParameter(defaultStringParameter.defaultValue());
+				StringParameter defaultValue = new StringParameterImpl(defaultStringParameter.defaultValue());
 				
 				return new DefaultValueJobInputParameter(name, type, isOptional, description, 
 						isDefaultValueImmutable, defaultValue);
@@ -219,7 +223,7 @@ public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 				
 				List<org.werk.parameters.interfaces.Parameter> list = 
 						(List<org.werk.parameters.interfaces.Parameter>)listGetter.invoke(null);
-				ListParameter defaultValue = new ListParameter(list);
+				ListParameter defaultValue = new ListParameterImpl(list);
 				
 				return new DefaultValueJobInputParameter(name, type, isOptional, description, 
 						isDefaultValueImmutable, defaultValue);
@@ -252,7 +256,7 @@ public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 				
 				Map<String, org.werk.parameters.interfaces.Parameter> dictionary = 
 						(Map<String, org.werk.parameters.interfaces.Parameter>)dictGetter.invoke(null);
-				DictionaryParameter defaultValue = new DictionaryParameter(dictionary);
+				DictionaryParameter defaultValue = new DictionaryParameterImpl(dictionary);
 				
 				return new DefaultValueJobInputParameter(name, type, isOptional, description, 
 						isDefaultValueImmutable, defaultValue);
@@ -275,6 +279,8 @@ public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 		String jobTypeName = jobType.getJobTypeName();
 		String firstStepTypeName = jobType.getFirstStepTypeName();
 		String description = jobType.getDescription();
+		String customInfo = jobType.getCustomInfo();
+		boolean forceAcyclic = jobType.isForceAcyclic();
 		
 		List<List<org.werk.meta.inputparameters.JobInputParameter>> initInfo = new ArrayList<>();
 		Method[] methods = classObj.getDeclaredMethods();
@@ -292,16 +298,22 @@ public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 			}
 		}
 		
-		return new JobTypeImpl(jobTypeName, initInfo, firstStepTypeName, description);
+		return new JobTypeImpl(jobTypeName, initInfo, firstStepTypeName, description, customInfo, forceAcyclic);
 	}
 	
-	protected List<String> loadAllowedTransitions(@SuppressWarnings("rawtypes") Class classObj) {
+	protected List<String> loadAllowedTransitions(@SuppressWarnings("rawtypes") Class classObj) throws WerkConfigException {
 		List<String> allowedTransitions = new ArrayList<>();
-		for (Field field : classObj.getFields()) {
+		for (Field field : classObj.getDeclaredFields()) {
 			Transition t = null;
 			try {
 				t = (Transition)field.getAnnotation(Transition.class);
 			} catch(NullPointerException e) {}
+			
+			if (!field.getType().equals(String.class))
+				throw new WerkConfigException(
+						String.format("Class [%s] Field [%s] is annotated as @Transition, must be of type String, but is [%s]", 
+								classObj.toString(), field.toString(), field.getType().toString())
+					);
 			
 			String name = t.name() == null ? null : t.name().trim();
 			if ((name == null) || (name.equals("")))
@@ -313,25 +325,31 @@ public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 		return allowedTransitions;
 	}
 	
-	protected List<String> loadAllowedRollbackTransitions(@SuppressWarnings("rawtypes") Class classObj) {
+	protected List<String> loadAllowedRollbackTransitions(@SuppressWarnings("rawtypes") Class classObj) throws WerkConfigException {
 		List<String> allowedRollbackTransitions = new ArrayList<>();
-		for (Field field : classObj.getFields()) {
+		for (Field field : classObj.getDeclaredFields()) {
 			RollbackTransition t = null;
 			try {
 				t = (RollbackTransition)field.getAnnotation(RollbackTransition.class);
 			} catch(NullPointerException e) {}
 			
+			if (!field.getType().equals(String.class))
+				throw new WerkConfigException(
+						String.format("Class [%s] Field [%s] is annotated as @RollbackTransition, must be of type String, but is [%s]", 
+								classObj.toString(), field.toString(), field.getType().toString())
+					);
+			
 			String name = t.name() == null ? null : t.name().trim();
 			if ((name == null) || (name.equals("")))
 				name = field.getName();
 			
-			allowedRollbackTransitions.add(name);		
+			allowedRollbackTransitions.add(name);
 		}
 		
 		return allowedRollbackTransitions;
 	}
 	
-	protected org.werk.meta.StepType loadStepType(String className) throws ClassNotFoundException {
+	protected org.werk.meta.StepType loadStepType(String className) throws ClassNotFoundException, WerkConfigException {
 		@SuppressWarnings("rawtypes")
 		Class classObj = Class.forName(className);
 		
@@ -345,17 +363,18 @@ public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 		
 		List<String> allowedTransitions = loadAllowedTransitions(classObj);
 		List<String> allowedRollbackTransitions = loadAllowedRollbackTransitions(classObj);
+		String customInfo = stepType.customInfo();
 
 		StepExecFactory stepExecFactory = new StepExecFactoryImpl(stepType.getStepExecClass());
 		StepTransitionerFactory stepTransitionerFactory = new StepTransitionerFactoryImpl(stepType.getStepTransitionerClass());
 		
 		return new StepTypeImpl(stepTypeName, jobTypeNames, allowedTransitions, allowedRollbackTransitions, 
-				stepExecFactory, stepTransitionerFactory, processingDescription, rollbackDescription);
+				stepExecFactory, stepTransitionerFactory, processingDescription, rollbackDescription, customInfo);
 	}
 	
 	protected org.werk.meta.StepType loadStepTypeF(String className) throws ClassNotFoundException, 
 			NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, 
-			IllegalArgumentException, InvocationTargetException {
+			IllegalArgumentException, InvocationTargetException, WerkConfigException {
 		@SuppressWarnings("rawtypes")
 		Class classObj = Class.forName(className);
 		
@@ -369,6 +388,7 @@ public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 		
 		List<String> allowedTransitions = loadAllowedTransitions(classObj);
 		List<String> allowedRollbackTransitions = loadAllowedRollbackTransitions(classObj);
+		String customInfo = stepType.customInfo();
 		
 		Class<StepExecFactory> stepExecClass = stepType.getStepExecFactoryClass();
 		Constructor<StepExecFactory> stepExecConstr = stepExecClass.getConstructor();
@@ -379,7 +399,7 @@ public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 		StepTransitionerFactory stepTransitionerFactory = stepTransitionerConstr.newInstance();
 		
 		return new StepTypeImpl(stepTypeName, jobTypeNames, allowedTransitions, allowedRollbackTransitions, 
-				stepExecFactory, stepTransitionerFactory, processingDescription, rollbackDescription);
+				stepExecFactory, stepTransitionerFactory, processingDescription, rollbackDescription, customInfo);
 	}
 	
 	@Override

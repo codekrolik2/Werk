@@ -1,15 +1,15 @@
 package org.werk.parameters;
 
-import org.werk.parameters.interfaces.Parameter;
+import org.werk.parameters.interfaces.LongParameter;
 import org.werk.parameters.interfaces.ParameterType;
 
 import lombok.Getter;
 
-public class LongParameter implements Parameter {
+public class LongParameterImpl implements LongParameter {
 	@Getter
 	protected long value;
 	
-	public LongParameter(long value) {
+	public LongParameterImpl(long value) {
 		this.value = value;
 	}
 	

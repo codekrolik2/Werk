@@ -27,4 +27,6 @@ public class StepTypeImpl implements StepType {
 	String processingDescription;
 	@Getter
 	String rollbackDescription;
+	@Getter
+	String customInfo;
 }

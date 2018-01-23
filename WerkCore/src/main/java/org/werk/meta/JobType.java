@@ -12,4 +12,7 @@ public interface JobType {
 	//-------------------------
 	
 	String getDescription();
+	
+	String getCustomInfo();
+	boolean isForceAcyclic();
 }

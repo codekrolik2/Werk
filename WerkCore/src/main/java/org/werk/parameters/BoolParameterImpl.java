@@ -1,15 +1,15 @@
 package org.werk.parameters;
 
-import org.werk.parameters.interfaces.Parameter;
+import org.werk.parameters.interfaces.BoolParameter;
 import org.werk.parameters.interfaces.ParameterType;
 
 import lombok.Getter;
 
-public class BoolParameter implements Parameter {
+public class BoolParameterImpl implements BoolParameter {
 	@Getter
 	protected boolean value;
 	
-	public BoolParameter(boolean value) {
+	public BoolParameterImpl(boolean value) {
 		this.value = value;
 	}
 	

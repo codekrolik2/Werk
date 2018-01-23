@@ -18,4 +18,8 @@ public class JobTypeImpl implements JobType {
 	protected String firstStepTypeName;
 	@Getter
 	protected String description;
+	@Getter
+	protected String customInfo;
+	@Getter
+	protected boolean forceAcyclic;
 }

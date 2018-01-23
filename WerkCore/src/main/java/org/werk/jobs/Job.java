@@ -8,7 +8,7 @@ import org.werk.steps.Step;
 
 public interface Job {
 	String getJobTypeName();
-
+	
 	//Processing
 	/**
 	 * @return Read-only map of init parameters
@@ -27,13 +27,7 @@ public interface Job {
 	JobStatus getStatus();
 	
 	Step getCurrentStep();
-	List<Step> getProcessingHistory();
 	
-	//-----------------------------------------------
-	
-	//Transitions
-	void nextStep(String stepName);
-	void rollback(String stepName);
-	void finish();
-	void fail();
+	List<ReadOnlyStep> loadProcessingHistory();
+	List<ReadOnlyStep> loadFilteredProcessingHistory(String stepName);
 }

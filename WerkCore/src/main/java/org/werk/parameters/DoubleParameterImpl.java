@@ -1,15 +1,15 @@
 package org.werk.parameters;
 
-import org.werk.parameters.interfaces.Parameter;
+import org.werk.parameters.interfaces.DoubleParameter;
 import org.werk.parameters.interfaces.ParameterType;
 
 import lombok.Getter;
 
-public class DoubleParameter implements Parameter {
+public class DoubleParameterImpl implements DoubleParameter {
 	@Getter
 	protected double value;
 	
-	public DoubleParameter(double value) {
+	public DoubleParameterImpl(double value) {
 		this.value = value;
 	}
 	

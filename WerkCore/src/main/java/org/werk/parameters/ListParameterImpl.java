@@ -3,21 +3,22 @@ package org.werk.parameters;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.werk.parameters.interfaces.ListParameter;
 import org.werk.parameters.interfaces.Parameter;
 import org.werk.parameters.interfaces.ParameterType;
 
 import lombok.Getter;
 
-public class ListParameter implements Parameter {
+public class ListParameterImpl implements ListParameter {
 	@Getter
-	protected List<Parameter> list;
+	protected List<Parameter> value;
 	
-	public ListParameter(List<Parameter> list) {
-		this.list = list;
+	public ListParameterImpl(List<Parameter> value) {
+		this.value = value;
 	}
 	
-	public ListParameter() {
-		this.list = new ArrayList<Parameter>();
+	public ListParameterImpl() {
+		this.value = new ArrayList<Parameter>();
 	}
 	
 	@Override

@@ -16,4 +16,6 @@ public interface StepType {
 	
 	String getProcessingDescription();
 	String getRollbackDescription();
+
+	String getCustomInfo();
 }
