@@ -3,7 +3,7 @@ package org.werk.config;
 import java.lang.reflect.Constructor;
 
 import org.werk.meta.StepTransitionerFactory;
-import org.werk.steps.StepTransitioner;
+import org.werk.processing.steps.StepTransitioner;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

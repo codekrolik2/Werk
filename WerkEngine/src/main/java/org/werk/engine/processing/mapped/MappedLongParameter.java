@@ -2,10 +2,9 @@ package org.werk.engine.processing.mapped;
 
 import java.lang.reflect.Field;
 
-import org.werk.engine.WerkParameterException;
-import org.werk.parameters.interfaces.LongParameter;
-import org.werk.parameters.interfaces.Parameter;
-import org.werk.parameters.interfaces.ParameterType;
+import org.werk.processing.parameters.LongParameter;
+import org.werk.processing.parameters.Parameter;
+import org.werk.processing.parameters.ParameterType;
 
 public class MappedLongParameter extends MappedParameter implements LongParameter {
 	public MappedLongParameter(Field field, Object objectInstance) {
@@ -34,9 +33,9 @@ public class MappedLongParameter extends MappedParameter implements LongParamete
 		}
 	}
 
-	public void update(Parameter parameter) throws WerkParameterException {
+	public void update(Parameter parameter) {
 		if (!(parameter instanceof LongParameter)) {
-			throw new WerkParameterException(
+			throw new IllegalArgumentException(
 				String.format("Mapped parameter of type LongParameter can't be assigned a value of type [%s]. Class [%s] field [%s]", 
 					parameter.getClass(), objectInstance.getClass(), field.toString())
 			);

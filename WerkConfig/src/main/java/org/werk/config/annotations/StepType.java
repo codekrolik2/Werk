@@ -5,8 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import org.werk.steps.StepExec;
-import org.werk.steps.StepTransitioner;
+import org.werk.processing.steps.StepExec;
+import org.werk.processing.steps.StepTransitioner;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

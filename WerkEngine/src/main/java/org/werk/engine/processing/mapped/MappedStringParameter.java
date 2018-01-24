@@ -2,10 +2,9 @@ package org.werk.engine.processing.mapped;
 
 import java.lang.reflect.Field;
 
-import org.werk.engine.WerkParameterException;
-import org.werk.parameters.interfaces.Parameter;
-import org.werk.parameters.interfaces.ParameterType;
-import org.werk.parameters.interfaces.StringParameter;
+import org.werk.processing.parameters.Parameter;
+import org.werk.processing.parameters.ParameterType;
+import org.werk.processing.parameters.StringParameter;
 
 public class MappedStringParameter extends MappedParameter implements StringParameter {
 	public MappedStringParameter(Field field, Object objectInstance) {
@@ -34,9 +33,9 @@ public class MappedStringParameter extends MappedParameter implements StringPara
 		}
 	}
 
-	public void update(Parameter parameter) throws WerkParameterException {
+	public void update(Parameter parameter) {
 		if (!(parameter instanceof StringParameter)) {
-			throw new WerkParameterException(
+			throw new IllegalArgumentException(
 				String.format("Mapped parameter of type StringParameter can't be assigned a value of type [%s]. Class [%s] field [%s]", 
 					parameter.getClass(), objectInstance.getClass(), field.toString())
 			);

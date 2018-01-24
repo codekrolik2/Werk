@@ -2,10 +2,9 @@ package org.werk.engine.processing.mapped;
 
 import java.lang.reflect.Field;
 
-import org.werk.engine.WerkParameterException;
-import org.werk.parameters.interfaces.BoolParameter;
-import org.werk.parameters.interfaces.Parameter;
-import org.werk.parameters.interfaces.ParameterType;
+import org.werk.processing.parameters.BoolParameter;
+import org.werk.processing.parameters.Parameter;
+import org.werk.processing.parameters.ParameterType;
 
 public class MappedBoolParameter extends MappedParameter implements BoolParameter {
 	public MappedBoolParameter(Field field, Object objectInstance) {
@@ -34,9 +33,9 @@ public class MappedBoolParameter extends MappedParameter implements BoolParamete
 		}
 	}
 	
-	public void update(Parameter parameter) throws WerkParameterException {
+	public void update(Parameter parameter) {
 		if (!(parameter instanceof BoolParameter)) {
-			throw new WerkParameterException(
+			throw new IllegalArgumentException(
 				String.format("Mapped parameter of type BoolParameter can't be assigned a value of type [%s]. Class [%s] field [%s]", 
 					parameter.getClass(), objectInstance.getClass(), field.toString())
 			);

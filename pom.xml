@@ -1,6 +1,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.github.bamirov.werk</groupId>
+  <groupId>org.werk</groupId>
   <artifactId>Werk</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
@@ -24,24 +24,29 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>com.github.bamirov.werk</groupId>
+        <groupId>org.werk</groupId>
         <artifactId>WerkCore</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.github.bamirov.werk</groupId>
+        <groupId>org.werk</groupId>
         <artifactId>WerkConfig</artifactId>
         <version>${project.version}</version>
       </dependency>
     
       <dependency>
-        <groupId>com.github.bamirov.pillar</groupId>
+        <groupId>org.pillar</groupId>
         <artifactId>Common</artifactId>
         <version>${pillar.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.github.bamirov.pillar</groupId>
+        <groupId>org.pillar</groupId>
         <artifactId>CommonDB</artifactId>
+        <version>${pillar.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.pillar</groupId>
+        <artifactId>CommandLine</artifactId>
         <version>${pillar.version}</version>
       </dependency>
       

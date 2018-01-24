@@ -1,22 +1,19 @@
 package org.werk.engine.processing;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.werk.jobs.Job;
-import org.werk.parameters.interfaces.Parameter;
-import org.werk.steps.Step;
-import org.werk.steps.StepExec;
-import org.werk.steps.StepExecutionResult;
-import org.werk.steps.StepExecutionStatus;
-import org.werk.steps.StepTransitioner;
-import org.werk.steps.TransitionResult;
-import org.werk.steps.TransitionStatus;
+import org.werk.processing.jobs.Job;
+import org.werk.processing.parameters.Parameter;
+import org.werk.processing.steps.Step;
+import org.werk.processing.steps.StepExec;
+import org.werk.processing.steps.StepExecutionResult;
+import org.werk.processing.steps.StepExecutionStatus;
+import org.werk.processing.steps.StepTransitioner;
+import org.werk.processing.steps.Transition;
+import org.werk.processing.steps.TransitionStatus;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 public class WerkStep implements Step {
@@ -31,13 +28,22 @@ public class WerkStep implements Step {
 	
 	//------------------------------------------------
 	
-	
+	@Getter
 	protected StepContext mainContext;
+	
+	@Getter
 	protected StepContext tempContext;
 	
-	public StepContext setTempContext(StepContext tempContext) {
-		this.tempContext = tempContext;
-		return tempContext;
+	public void openTempContext() {
+		if (tempContext != null)
+			throw new IllegalStateException("Temp context already opened");
+		
+		tempContext = mainContext.cloneContext();
+	}
+	
+	public void commitTempContext() {
+		mainContext = tempContext;
+		tempContext = null;
 	}
 	
 	protected StepContext getCurrentContext() {
@@ -51,6 +57,7 @@ public class WerkStep implements Step {
 		return getCurrentContext().executionCount;
 	}
 
+	@Override
 	public long incrementExecutionCount() {
 		getCurrentContext().executionCount++;
 		return getCurrentContext().executionCount;
@@ -60,22 +67,22 @@ public class WerkStep implements Step {
 	
 	@Override
 	public Map<String, Parameter> getStepParameters() {
-		return Collections.unmodifiableMap(getCurrentContext().stepParameters);
+		return getCurrentContext().getParameters();
 	}
 
 	@Override
 	public Parameter getStepParameter(String parameterName) {
-		return getCurrentContext().stepParameters.get(parameterName);
+		return getCurrentContext().getParameter(parameterName);
 	}
 
 	@Override
 	public Parameter removeStepParameter(String parameterName) {
-		return getCurrentContext().stepParameters.remove(parameterName);
+		return getCurrentContext().removeParameter(parameterName);
 	}
 
 	@Override
 	public void putStepParameter(String parameterName, Parameter parameter) {
-		getCurrentContext().stepParameters.put(parameterName, parameter);
+		getCurrentContext().putParameter(parameterName, parameter);
 	}
 
 	//------------------------------------------------
@@ -111,7 +118,7 @@ public class WerkStep implements Step {
 		return record;
 	}
 
-	protected String transitionResultToStr(TransitionResult record) {
+	protected String transitionToStr(Transition record) {
 		return ((record.getTransitionStatus() == TransitionStatus.NEXT_STEP) ||
 				(record.getTransitionStatus() == TransitionStatus.ROLLBACK))
 			?
@@ -122,14 +129,14 @@ public class WerkStep implements Step {
 	}
 	
 	@Override
-	public TransitionResult appendToProcessingLog(TransitionResult transitionResult) {
-		appendToProcessingLog(transitionResultToStr(transitionResult));
-		return transitionResult;
+	public Transition appendToProcessingLog(Transition transition) {
+		appendToProcessingLog(transitionToStr(transition));
+		return transition;
 	}
 
 	@Override
-	public TransitionResult appendToProcessingLog(TransitionResult transitionResult, String message) {
-		appendToProcessingLog(String.format("%s [%s]", transitionResultToStr(transitionResult), message));
-		return transitionResult;
+	public Transition appendToProcessingLog(Transition transition, String message) {
+		appendToProcessingLog(String.format("%s [%s]", transitionToStr(transition), message));
+		return transition;
 	}
 }

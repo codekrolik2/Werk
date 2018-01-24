@@ -22,8 +22,10 @@ import org.werk.config.JobTypeImpl;
 import org.werk.config.StepExecFactoryImpl;
 import org.werk.config.StepTransitionerFactoryImpl;
 import org.werk.config.StepTypeImpl;
+import org.werk.config.WerkConfig;
 import org.werk.config.WerkConfigException;
 import org.werk.config.WerkConfigImpl;
+import org.werk.config.WerkConfigLoader;
 import org.werk.config.annotations.inject.RollbackTransition;
 import org.werk.config.annotations.inject.Transition;
 import org.werk.config.annotations.inputparameters.DefaultBoolParameter;
@@ -33,25 +35,24 @@ import org.werk.config.annotations.inputparameters.DefaultListParameter;
 import org.werk.config.annotations.inputparameters.DefaultLongParameter;
 import org.werk.config.annotations.inputparameters.DefaultStringParameter;
 import org.werk.config.annotations.inputparameters.JobInputParameter;
-import org.werk.config.interfaces.WerkConfig;
-import org.werk.config.interfaces.WerkConfigLoader;
 import org.werk.meta.JobType;
 import org.werk.meta.StepExecFactory;
 import org.werk.meta.StepTransitionerFactory;
-import org.werk.meta.inputparameters.DefaultValueJobInputParameter;
-import org.werk.parameters.BoolParameterImpl;
-import org.werk.parameters.DictionaryParameterImpl;
-import org.werk.parameters.DoubleParameterImpl;
-import org.werk.parameters.ListParameterImpl;
-import org.werk.parameters.LongParameterImpl;
-import org.werk.parameters.StringParameterImpl;
-import org.werk.parameters.interfaces.BoolParameter;
-import org.werk.parameters.interfaces.DictionaryParameter;
-import org.werk.parameters.interfaces.DoubleParameter;
-import org.werk.parameters.interfaces.ListParameter;
-import org.werk.parameters.interfaces.LongParameter;
-import org.werk.parameters.interfaces.ParameterType;
-import org.werk.parameters.interfaces.StringParameter;
+import org.werk.meta.inputparameters.impl.DefaultValueJobInputParameterImpl;
+import org.werk.meta.inputparameters.impl.JobInputParameterImpl;
+import org.werk.processing.parameters.BoolParameter;
+import org.werk.processing.parameters.DictionaryParameter;
+import org.werk.processing.parameters.DoubleParameter;
+import org.werk.processing.parameters.ListParameter;
+import org.werk.processing.parameters.LongParameter;
+import org.werk.processing.parameters.ParameterType;
+import org.werk.processing.parameters.StringParameter;
+import org.werk.processing.parameters.impl.BoolParameterImpl;
+import org.werk.processing.parameters.impl.DictionaryParameterImpl;
+import org.werk.processing.parameters.impl.DoubleParameterImpl;
+import org.werk.processing.parameters.impl.ListParameterImpl;
+import org.werk.processing.parameters.impl.LongParameterImpl;
+import org.werk.processing.parameters.impl.StringParameterImpl;
 
 public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 	@SuppressWarnings("deprecation")
@@ -113,7 +114,7 @@ public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 				boolean isOptional = jobInputParameter.isOptional();
 				String description = jobInputParameter.description();
 				
-				return new org.werk.meta.inputparameters.JobInputParameter(name, type, isOptional, description);
+				return new JobInputParameterImpl(name, type, isOptional, description);
 			}
 		}
 		
@@ -132,7 +133,7 @@ public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 				boolean isDefaultValueImmutable = defaultLongParameter.isDefaultValueImmutable();
 				LongParameter defaultValue = new LongParameterImpl(defaultLongParameter.defaultValue());
 				
-				return new DefaultValueJobInputParameter(name, type, isOptional, description, 
+				return new DefaultValueJobInputParameterImpl(name, type, isOptional, description, 
 						isDefaultValueImmutable, defaultValue);
 			}
 		}
@@ -152,7 +153,7 @@ public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 				boolean isDefaultValueImmutable = defaultDoubleParameter.isDefaultValueImmutable();
 				DoubleParameter defaultValue = new DoubleParameterImpl(defaultDoubleParameter.defaultValue());
 				
-				return new DefaultValueJobInputParameter(name, type, isOptional, description, 
+				return new DefaultValueJobInputParameterImpl(name, type, isOptional, description, 
 						isDefaultValueImmutable, defaultValue);
 			}
 		}
@@ -172,7 +173,7 @@ public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 				boolean isDefaultValueImmutable = defaultBoolParameter.isDefaultValueImmutable();
 				BoolParameter defaultValue = new BoolParameterImpl(defaultBoolParameter.defaultValue());
 				
-				return new DefaultValueJobInputParameter(name, type, isOptional, description, 
+				return new DefaultValueJobInputParameterImpl(name, type, isOptional, description, 
 						isDefaultValueImmutable, defaultValue);
 			}
 		}
@@ -192,7 +193,7 @@ public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 				boolean isDefaultValueImmutable = defaultStringParameter.isDefaultValueImmutable();
 				StringParameter defaultValue = new StringParameterImpl(defaultStringParameter.defaultValue());
 				
-				return new DefaultValueJobInputParameter(name, type, isOptional, description, 
+				return new DefaultValueJobInputParameterImpl(name, type, isOptional, description, 
 						isDefaultValueImmutable, defaultValue);
 			}
 		}
@@ -221,11 +222,11 @@ public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 						);					
 				}
 				
-				List<org.werk.parameters.interfaces.Parameter> list = 
-						(List<org.werk.parameters.interfaces.Parameter>)listGetter.invoke(null);
+				List<org.werk.processing.parameters.Parameter> list = 
+						(List<org.werk.processing.parameters.Parameter>)listGetter.invoke(null);
 				ListParameter defaultValue = new ListParameterImpl(list);
 				
-				return new DefaultValueJobInputParameter(name, type, isOptional, description, 
+				return new DefaultValueJobInputParameterImpl(name, type, isOptional, description, 
 						isDefaultValueImmutable, defaultValue);
 			}
 		}
@@ -254,11 +255,11 @@ public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 						);					
 				}
 				
-				Map<String, org.werk.parameters.interfaces.Parameter> dictionary = 
-						(Map<String, org.werk.parameters.interfaces.Parameter>)dictGetter.invoke(null);
+				Map<String, org.werk.processing.parameters.Parameter> dictionary = 
+						(Map<String, org.werk.processing.parameters.Parameter>)dictGetter.invoke(null);
 				DictionaryParameter defaultValue = new DictionaryParameterImpl(dictionary);
 				
-				return new DefaultValueJobInputParameter(name, type, isOptional, description, 
+				return new DefaultValueJobInputParameterImpl(name, type, isOptional, description, 
 						isDefaultValueImmutable, defaultValue);
 			}
 		}

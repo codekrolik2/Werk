@@ -6,58 +6,41 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.werk.engine.WerkParameterException;
-import org.werk.engine.processing.mapped.MappedParameter;
-import org.werk.parameters.interfaces.Parameter;
+import org.werk.processing.parameters.Parameter;
 
-import lombok.AllArgsConstructor;
+public class StepContext extends JobContext {
+	protected long executionCount;
+	protected List<String> processingLog;
 
-@AllArgsConstructor
-public class StepContext {
-	long executionCount;
-	Map<String, Parameter> stepParameters;
-	List<String> processingLog;
-	
-	StepContext cloneContext() {
+	public StepContext cloneContext() {
 		long executionCount0 = executionCount;
-		Map<String, Parameter> stepParameters0 = new HashMap<String, Parameter>(stepParameters);
-		List<String> processingLog0 = new ArrayList<String>(processingLog);
+		
+		Map<String, Parameter> stepParameters0 = new HashMap<>();
+		for (Map.Entry<String, Parameter> stepParameter : parameters.entrySet())
+			stepParameters0.put(stepParameter.getKey(), cloneParameter(stepParameter.getValue()));
+		List<String> processingLog0 = new ArrayList<>(processingLog);
 		
 		return new StepContext(executionCount0, stepParameters0, processingLog0);
+	}
+	
+	public StepContext(long executionCount, Map<String, Parameter> stepParameters, List<String> processingLog) {
+		super(stepParameters);
+		this.executionCount = executionCount;
+		this.processingLog = processingLog;
 	}
 	
 	public long getExecutionCount() {
 		return executionCount;
 	}
+	
 	public long incrementExecutionCount() {
 		return ++executionCount;
-	}
-	
-	public Map<String, Parameter> getStepParameters() {
-		return Collections.unmodifiableMap(stepParameters);
-	}
-	public Parameter getStepParameter(String parameterName) {
-		return stepParameters.get(parameterName);
-	}
-	public Parameter removeStepParameter(String parameterName) {
-		return stepParameters.remove(parameterName);
-	}
-	public void putStepParameter(String parameterName, Parameter parameter) {
-		Parameter oldPrm = stepParameters.get(parameterName);
-		
-		if (oldPrm instanceof MappedParameter) {
-			try {
-				((MappedParameter)oldPrm).update(parameter);
-			} catch (WerkParameterException e) {
-				throw new RuntimeException(e);
-			}
-		} else
-			stepParameters.put(parameterName, parameter);
 	}
 	
 	public List<String> getProcessingLog() {
 		return Collections.unmodifiableList(processingLog);
 	}
+	
 	public void appendToProcessingLog(String message) {
 		processingLog.add(message);
 	}

@@ -2,8 +2,7 @@ package org.werk.engine.processing.mapped;
 
 import java.lang.reflect.Field;
 
-import org.werk.engine.WerkParameterException;
-import org.werk.parameters.interfaces.Parameter;
+import org.werk.processing.parameters.Parameter;
 
 public abstract class MappedParameter implements Parameter {
 	protected Field field;
@@ -23,5 +22,5 @@ public abstract class MappedParameter implements Parameter {
 		field.set(objectInstance, value);
 	}
 	
-	public abstract void update(Parameter parameter) throws WerkParameterException;
+	public abstract void update(Parameter parameter);
 }

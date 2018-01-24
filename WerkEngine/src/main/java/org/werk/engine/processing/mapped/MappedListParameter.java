@@ -3,10 +3,9 @@ package org.werk.engine.processing.mapped;
 import java.lang.reflect.Field;
 import java.util.List;
 
-import org.werk.engine.WerkParameterException;
-import org.werk.parameters.interfaces.ListParameter;
-import org.werk.parameters.interfaces.Parameter;
-import org.werk.parameters.interfaces.ParameterType;
+import org.werk.processing.parameters.ListParameter;
+import org.werk.processing.parameters.Parameter;
+import org.werk.processing.parameters.ParameterType;
 
 public class MappedListParameter extends MappedParameter implements ListParameter {
 	public MappedListParameter(Field field, Object objectInstance) {
@@ -36,9 +35,9 @@ public class MappedListParameter extends MappedParameter implements ListParamete
 		}
 	}
 
-	public void update(Parameter parameter) throws WerkParameterException {
+	public void update(Parameter parameter) {
 		if (!(parameter instanceof ListParameter)) {
-			throw new WerkParameterException(
+			throw new IllegalArgumentException(
 				String.format("Mapped parameter of type ListParameter can't be assigned a value of type [%s]. Class [%s] field [%s]", 
 					parameter.getClass(), objectInstance.getClass(), field.toString())
 			);

@@ -3,7 +3,7 @@ package org.werk.config;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.werk.config.interfaces.WerkConfig;
+import org.werk.config.WerkConfig;
 import org.werk.meta.JobType;
 import org.werk.meta.StepType;
 

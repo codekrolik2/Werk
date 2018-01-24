@@ -1,0 +1,5 @@
+package org.werk.processing.parameters;
+
+public interface BoolParameter extends Parameter {
+	boolean isValue();
+}

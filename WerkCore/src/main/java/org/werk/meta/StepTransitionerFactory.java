@@ -1,6 +1,6 @@
 package org.werk.meta;
 
-import org.werk.steps.StepTransitioner;
+import org.werk.processing.steps.StepTransitioner;
 
 public interface StepTransitionerFactory {
 	StepTransitioner createStepTransitioner() throws Exception;

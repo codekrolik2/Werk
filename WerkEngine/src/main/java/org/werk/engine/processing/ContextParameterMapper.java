@@ -6,17 +6,16 @@ import java.util.Map;
 
 import org.werk.config.annotations.inject.JobParameter;
 import org.werk.config.annotations.inject.StepParameter;
-import org.werk.engine.WerkParameterException;
 import org.werk.engine.processing.mapped.MappedBoolParameter;
 import org.werk.engine.processing.mapped.MappedDictionaryParameter;
 import org.werk.engine.processing.mapped.MappedDoubleParameter;
 import org.werk.engine.processing.mapped.MappedListParameter;
 import org.werk.engine.processing.mapped.MappedLongParameter;
 import org.werk.engine.processing.mapped.MappedStringParameter;
-import org.werk.parameters.interfaces.Parameter;
+import org.werk.processing.parameters.Parameter;
 
 public class ContextParameterMapper {
-	public static void remapParameters(JobContext jobContext, StepContext stepContext, Object obj) throws WerkParameterException {
+	public static void remapParameters(JobContext jobContext, StepContext stepContext, Object obj) {
 		for (Field field : obj.getClass().getDeclaredFields()) {
 			JobParameter jp = null;
 			try {
@@ -29,7 +28,7 @@ public class ContextParameterMapper {
 			} catch(NullPointerException npe) {}
 			
 			if ((jp != null) && (sp != null)) {
-				throw new WerkParameterException(
+				throw new IllegalArgumentException(
 						String.format("Class [%s] Field [%s] is annotated as both @JobParameter and @StepParameter", 
 								obj.getClass(), field.getName())
 					);
@@ -53,7 +52,7 @@ public class ContextParameterMapper {
 					prm = new MappedListParameter(field, obj);
 				} else if (fieldClass.equals(Map.class)) {
 					prm = new MappedDictionaryParameter(field, obj);
-				} else throw new WerkParameterException(
+				} else throw new IllegalArgumentException(
 					String.format("Class [%s] Field [%s] is annotated as @%s, " + 
 							"but its type is not allowed [%s]", 
 							obj.getClass(), field.getName(), sp == null ? "JobParameter" : "StepParameter", 
@@ -65,13 +64,13 @@ public class ContextParameterMapper {
 					if ((name == null) || (name.equals("")))
 						name = field.getName();
 					
-					stepContext.putStepParameter(name, prm);
+					stepContext.putParameter(name, prm);
 				} else {
 					String name = jp.name() == null ? null : jp.name().trim();
 					if ((name == null) || (name.equals("")))
 						name = field.getName();
 					
-					jobContext.putJobParameter(name, prm);
+					jobContext.putParameter(name, prm);
 				}
 			}
 		}
