@@ -10,8 +10,6 @@ import java.lang.reflect.Parameter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -74,6 +72,180 @@ public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 		return list;
 	}
 	
+	@Override
+	public WerkConfig loadWerkConfig() throws WerkConfigException {
+		try {
+			URL[] urls = findClassPaths().toArray(new URL[] {});
+			AnnotationDB db = new AnnotationDB();
+			db.scanArchives(urls);
+			
+			WerkConfigImpl config = new WerkConfigImpl();
+			
+			Set<String> jobClassesSet = db.getAnnotationIndex().get(JobType.class.getName());
+			for (String className : jobClassesSet) {
+				JobType jobTypeObj = loadJobType(className);
+				config.addJobType(jobTypeObj);
+			}
+			
+			Set<String> stepsClassesSet = db.getAnnotationIndex().get(StepType.class.getName());
+			for (String className : stepsClassesSet) {
+				org.werk.meta.StepType stepTypeObj = loadStepType(className);
+				config.addStepType(stepTypeObj);
+			}
+			
+			Set<String> stepsClassesSetF = db.getAnnotationIndex().get(StepTypeFactories.class.getName());
+			for (String className : stepsClassesSetF) {
+				org.werk.meta.StepType stepTypeObj = loadStepTypeF(className);
+				config.addStepType(stepTypeObj);
+			}
+			
+			return config;
+		} catch (ClassNotFoundException | IOException | NoSuchMethodException | SecurityException | 
+				IllegalAccessException | IllegalArgumentException | InvocationTargetException | InstantiationException e) {
+			throw new WerkConfigException(e);
+		}
+	}
+
+	public static void main(String[] args) throws Exception {
+		new AnnotationsWerkConfigLoader().loadWerkConfig();
+	}
+	
+	
+	protected JobType loadJobType(String className) throws NoSuchMethodException, SecurityException, IllegalAccessException, 
+			IllegalArgumentException, InvocationTargetException, WerkConfigException, ClassNotFoundException {
+		@SuppressWarnings("rawtypes")
+		Class classObj = Class.forName(className);
+		@SuppressWarnings("unchecked")
+		JobType jobType = (JobType)classObj.getAnnotation(JobType.class);
+		
+		String jobTypeName = jobType.getJobTypeName();
+		String firstStepTypeName = jobType.getFirstStepTypeName();
+		List<String> stepTypes = jobType.getStepTypes();
+		String description = jobType.getDescription();
+		String customInfo = jobType.getCustomInfo();
+		boolean forceAcyclic = jobType.isForceAcyclic();
+		long version = jobType.getVersion();
+		
+		List<List<org.werk.meta.inputparameters.JobInputParameter>> initInfo = new ArrayList<>();
+		Method[] methods = classObj.getDeclaredMethods();
+		for (Method method : methods) {
+			JobInit jobInit = null;
+			try {
+				jobInit = (JobInit)method.getAnnotation(JobInit.class);
+			} catch(NullPointerException npe) { }
+			
+			if (jobInit != null) {
+				List<org.werk.meta.inputparameters.JobInputParameter> methodParams = new ArrayList<>(); 
+				for (Parameter param : method.getParameters())
+					methodParams.add(loadInputParameter(param, className, method.getName()));
+				initInfo.add(methodParams);
+			}
+		}
+		
+		return new JobTypeImpl(jobTypeName, stepTypes, initInfo, firstStepTypeName, description, customInfo, forceAcyclic, version);
+	}
+	
+	protected List<String> loadAllowedTransitions(@SuppressWarnings("rawtypes") Class classObj) throws WerkConfigException {
+		List<String> allowedTransitions = new ArrayList<>();
+		for (Field field : classObj.getDeclaredFields()) {
+			Transition t = null;
+			try {
+				t = (Transition)field.getAnnotation(Transition.class);
+			} catch(NullPointerException e) {}
+			
+			if (!field.getType().equals(String.class))
+				throw new WerkConfigException(
+						String.format("Class [%s] Field [%s] is annotated as @Transition, must be of type String, but is [%s]", 
+								classObj.toString(), field.toString(), field.getType().toString())
+					);
+			
+			String name = t.name() == null ? null : t.name().trim();
+			if ((name == null) || (name.equals("")))
+				name = field.getName();
+			
+			allowedTransitions.add(name);
+		}
+		
+		return allowedTransitions;
+	}
+	
+	protected List<String> loadAllowedRollbackTransitions(@SuppressWarnings("rawtypes") Class classObj) throws WerkConfigException {
+		List<String> allowedRollbackTransitions = new ArrayList<>();
+		for (Field field : classObj.getDeclaredFields()) {
+			RollbackTransition t = null;
+			try {
+				t = (RollbackTransition)field.getAnnotation(RollbackTransition.class);
+			} catch(NullPointerException e) {}
+			
+			if (!field.getType().equals(String.class))
+				throw new WerkConfigException(
+						String.format("Class [%s] Field [%s] is annotated as @RollbackTransition, must be of type String, but is [%s]", 
+								classObj.toString(), field.toString(), field.getType().toString())
+					);
+			
+			String name = t.name() == null ? null : t.name().trim();
+			if ((name == null) || (name.equals("")))
+				name = field.getName();
+			
+			allowedRollbackTransitions.add(name);
+		}
+		
+		return allowedRollbackTransitions;
+	}
+	
+	protected org.werk.meta.StepType loadStepType(String className) throws ClassNotFoundException, WerkConfigException {
+		@SuppressWarnings("rawtypes")
+		Class classObj = Class.forName(className);
+		
+		@SuppressWarnings("unchecked")
+		StepType stepType = (StepType)classObj.getAnnotation(StepType.class);
+		
+		String stepTypeName = stepType.name();
+		String processingDescription = stepType.processingDescription();
+		String rollbackDescription = stepType.rollbackDescription();
+		
+		List<String> allowedTransitions = loadAllowedTransitions(classObj);
+		List<String> allowedRollbackTransitions = loadAllowedRollbackTransitions(classObj);
+		String execConfig = stepType.execConfig();
+		String transitionerConfig = stepType.transitionerConfig();
+
+		StepExecFactory stepExecFactory = new StepExecFactoryImpl(stepType.stepExecClass());
+		StepTransitionerFactory stepTransitionerFactory = new StepTransitionerFactoryImpl(stepType.stepTransitionerClass());
+		
+		return new StepTypeImpl(stepTypeName, allowedTransitions, allowedRollbackTransitions, 
+				stepExecFactory, stepTransitionerFactory, processingDescription, rollbackDescription, execConfig, transitionerConfig);
+	}
+	
+	protected org.werk.meta.StepType loadStepTypeF(String className) throws ClassNotFoundException, 
+			NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, 
+			IllegalArgumentException, InvocationTargetException, WerkConfigException {
+		@SuppressWarnings("rawtypes")
+		Class classObj = Class.forName(className);
+		
+		@SuppressWarnings("unchecked")
+		StepTypeFactories stepType = (StepTypeFactories)classObj.getAnnotation(StepTypeFactories.class);
+		
+		String stepTypeName = stepType.name();
+		String processingDescription = stepType.processingDescription();
+		String rollbackDescription = stepType.rollbackDescription();
+		
+		List<String> allowedTransitions = loadAllowedTransitions(classObj);
+		List<String> allowedRollbackTransitions = loadAllowedRollbackTransitions(classObj);
+		String execConfig = stepType.execConfig();
+		String transitionerConfig = stepType.transitionerConfig();
+		
+		Class<StepExecFactory> stepExecClass = stepType.stepExecFactoryClass();
+		Constructor<StepExecFactory> stepExecConstr = stepExecClass.getConstructor();
+		StepExecFactory stepExecFactory = stepExecConstr.newInstance();
+		
+		Class<StepTransitionerFactory> stepTransitionerClass = stepType.stepTransitionerFactoryClass();
+		Constructor<StepTransitionerFactory> stepTransitionerConstr = stepTransitionerClass.getConstructor();
+		StepTransitionerFactory stepTransitionerFactory = stepTransitionerConstr.newInstance();
+		
+		return new StepTypeImpl(stepTypeName, allowedTransitions, allowedRollbackTransitions, stepExecFactory, 
+				stepTransitionerFactory, processingDescription, rollbackDescription, execConfig, transitionerConfig);
+	}
+	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	protected org.werk.meta.inputparameters.JobInputParameter 
 		loadInputParameter(Parameter param, String clazz, String method) throws WerkConfigException, 
@@ -89,12 +261,11 @@ public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 			if (jobInputParameter != null) {
 				ParameterType type;
 				
-				if (paramClass.equals(int.class) || paramClass.equals(Integer.class) 
-					|| paramClass.equals(long.class) || paramClass.equals(Long.class)) {
+				if (paramClass.equals(Integer.class) || paramClass.equals(Long.class)) {
 					type = ParameterType.LONG;
-				} else if (paramClass.equals(double.class) || paramClass.equals(Double.class)) {
+				} else if (paramClass.equals(Double.class)) {
 					type = ParameterType.DOUBLE;
-				} else if (paramClass.equals(boolean.class) || paramClass.equals(Boolean.class)) {
+				} else if (paramClass.equals(Boolean.class)) {
 					type = ParameterType.BOOL;
 				} else if (paramClass.equals(String.class)) {
 					type = ParameterType.STRING;
@@ -102,9 +273,31 @@ public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 					type = ParameterType.LIST;
 				} else if (paramClass.equals(Map.class)) {
 					type = ParameterType.DICTIONARY;
+				} else if (paramClass.equals(int.class) || paramClass.equals(long.class)) {
+					throw new WerkConfigException(
+						String.format("Class [%s] Method [%s] is annotated as @JobInit, " + 
+								"but its Parameter [%s] type \"int\" or \"long\" is not allowed. " + 
+								"Please use boxed type \"Integer\" or \"Long\"", 
+								clazz, method, param.getName(), paramClass.toString())
+					);
+				} else if (paramClass.equals(double.class)) {
+					throw new WerkConfigException(
+							String.format("Class [%s] Method [%s] is annotated as @JobInit, " + 
+									"but its Parameter [%s] type \"double\" is not allowed. " + 
+									"Please use boxed type \"Double\"", 
+									clazz, method, param.getName(), paramClass.toString())
+						);
+				} else if (paramClass.equals(boolean.class)) {
+					throw new WerkConfigException(
+							String.format("Class [%s] Method [%s] is annotated as @JobInit, " + 
+									"but its Parameter [%s] type \"double\" is not allowed. " + 
+									"Please use boxed type \"Double\"", 
+									clazz, method, param.getName(), paramClass.toString())
+						);
 				} else throw new WerkConfigException(
 					String.format("Class [%s] Method [%s] is annotated as @JobInit, " + 
-							"but its Parameter [%s] type is not allowed job input parameter [%s]", 
+							"but its Parameter [%s] type is not allowed for Werk parameter [%s]. " + 
+							"Allowed types: [\"Integer\" \"Long\" \"Double\" \"Boolean\" \"String\" \"List\" \"Map\"]", 
 							clazz, method, param.getName(), paramClass.toString())
 				);
 				
@@ -268,213 +461,5 @@ public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 			String.format("Class [%s] Method [%s] is annotated as @JobInit, but its Parameter #%d is not annotated as a job input parameter ", 
 					clazz, method, param.getName())
 		);
-	}
-	
-	protected JobType loadJobType(String className) throws NoSuchMethodException, SecurityException, IllegalAccessException, 
-			IllegalArgumentException, InvocationTargetException, WerkConfigException, ClassNotFoundException {
-		@SuppressWarnings("rawtypes")
-		Class classObj = Class.forName(className);
-		@SuppressWarnings("unchecked")
-		JobType jobType = (JobType)classObj.getAnnotation(JobType.class);
-		
-		String jobTypeName = jobType.getJobTypeName();
-		String firstStepTypeName = jobType.getFirstStepTypeName();
-		String description = jobType.getDescription();
-		String customInfo = jobType.getCustomInfo();
-		boolean forceAcyclic = jobType.isForceAcyclic();
-		
-		List<List<org.werk.meta.inputparameters.JobInputParameter>> initInfo = new ArrayList<>();
-		Method[] methods = classObj.getDeclaredMethods();
-		for (Method method : methods) {
-			JobInit jobInit = null;
-			try {
-				jobInit = (JobInit)method.getAnnotation(JobInit.class);
-			} catch(NullPointerException npe) { }
-			
-			if (jobInit != null) {
-				List<org.werk.meta.inputparameters.JobInputParameter> methodParams = new ArrayList<>(); 
-				for (Parameter param : method.getParameters())
-					methodParams.add(loadInputParameter(param, className, method.getName()));
-				initInfo.add(methodParams);
-			}
-		}
-		
-		return new JobTypeImpl(jobTypeName, initInfo, firstStepTypeName, description, customInfo, forceAcyclic);
-	}
-	
-	protected List<String> loadAllowedTransitions(@SuppressWarnings("rawtypes") Class classObj) throws WerkConfigException {
-		List<String> allowedTransitions = new ArrayList<>();
-		for (Field field : classObj.getDeclaredFields()) {
-			Transition t = null;
-			try {
-				t = (Transition)field.getAnnotation(Transition.class);
-			} catch(NullPointerException e) {}
-			
-			if (!field.getType().equals(String.class))
-				throw new WerkConfigException(
-						String.format("Class [%s] Field [%s] is annotated as @Transition, must be of type String, but is [%s]", 
-								classObj.toString(), field.toString(), field.getType().toString())
-					);
-			
-			String name = t.name() == null ? null : t.name().trim();
-			if ((name == null) || (name.equals("")))
-				name = field.getName();
-			
-			allowedTransitions.add(name);
-		}
-		
-		return allowedTransitions;
-	}
-	
-	protected List<String> loadAllowedRollbackTransitions(@SuppressWarnings("rawtypes") Class classObj) throws WerkConfigException {
-		List<String> allowedRollbackTransitions = new ArrayList<>();
-		for (Field field : classObj.getDeclaredFields()) {
-			RollbackTransition t = null;
-			try {
-				t = (RollbackTransition)field.getAnnotation(RollbackTransition.class);
-			} catch(NullPointerException e) {}
-			
-			if (!field.getType().equals(String.class))
-				throw new WerkConfigException(
-						String.format("Class [%s] Field [%s] is annotated as @RollbackTransition, must be of type String, but is [%s]", 
-								classObj.toString(), field.toString(), field.getType().toString())
-					);
-			
-			String name = t.name() == null ? null : t.name().trim();
-			if ((name == null) || (name.equals("")))
-				name = field.getName();
-			
-			allowedRollbackTransitions.add(name);
-		}
-		
-		return allowedRollbackTransitions;
-	}
-	
-	protected org.werk.meta.StepType loadStepType(String className) throws ClassNotFoundException, WerkConfigException {
-		@SuppressWarnings("rawtypes")
-		Class classObj = Class.forName(className);
-		
-		@SuppressWarnings("unchecked")
-		StepType stepType = (StepType)classObj.getAnnotation(StepType.class);
-		
-		String stepTypeName = stepType.getName();
-		String processingDescription = stepType.getProcessingDescription();
-		String rollbackDescription = stepType.getRollbackDescription();
-		List<String> jobTypeNames = Arrays.asList(stepType.getJobNames());
-		
-		List<String> allowedTransitions = loadAllowedTransitions(classObj);
-		List<String> allowedRollbackTransitions = loadAllowedRollbackTransitions(classObj);
-		String customInfo = stepType.customInfo();
-
-		StepExecFactory stepExecFactory = new StepExecFactoryImpl(stepType.getStepExecClass());
-		StepTransitionerFactory stepTransitionerFactory = new StepTransitionerFactoryImpl(stepType.getStepTransitionerClass());
-		
-		return new StepTypeImpl(stepTypeName, jobTypeNames, allowedTransitions, allowedRollbackTransitions, 
-				stepExecFactory, stepTransitionerFactory, processingDescription, rollbackDescription, customInfo);
-	}
-	
-	protected org.werk.meta.StepType loadStepTypeF(String className) throws ClassNotFoundException, 
-			NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, 
-			IllegalArgumentException, InvocationTargetException, WerkConfigException {
-		@SuppressWarnings("rawtypes")
-		Class classObj = Class.forName(className);
-		
-		@SuppressWarnings("unchecked")
-		StepTypeFactories stepType = (StepTypeFactories)classObj.getAnnotation(StepTypeFactories.class);
-		
-		String stepTypeName = stepType.getName();
-		String processingDescription = stepType.getProcessingDescription();
-		String rollbackDescription = stepType.getRollbackDescription();
-		List<String> jobTypeNames = Arrays.asList(stepType.getJobNames());
-		
-		List<String> allowedTransitions = loadAllowedTransitions(classObj);
-		List<String> allowedRollbackTransitions = loadAllowedRollbackTransitions(classObj);
-		String customInfo = stepType.customInfo();
-		
-		Class<StepExecFactory> stepExecClass = stepType.getStepExecFactoryClass();
-		Constructor<StepExecFactory> stepExecConstr = stepExecClass.getConstructor();
-		StepExecFactory stepExecFactory = stepExecConstr.newInstance();
-		
-		Class<StepTransitionerFactory> stepTransitionerClass = stepType.getStepTransitionerFactoryClass();
-		Constructor<StepTransitionerFactory> stepTransitionerConstr = stepTransitionerClass.getConstructor();
-		StepTransitionerFactory stepTransitionerFactory = stepTransitionerConstr.newInstance();
-		
-		return new StepTypeImpl(stepTypeName, jobTypeNames, allowedTransitions, allowedRollbackTransitions, 
-				stepExecFactory, stepTransitionerFactory, processingDescription, rollbackDescription, customInfo);
-	}
-	
-	@Override
-	public WerkConfig loadWerkConfig() throws WerkConfigException {
-		try {
-			URL[] urls = findClassPaths().toArray(new URL[] {});
-			AnnotationDB db = new AnnotationDB();
-			db.scanArchives(urls);
-			
-			Map<String, JobType> jobTypes = new HashMap<>();
-			Set<String> jobClassesSet = db.getAnnotationIndex().get(JobType.class.getName());
-			for (String className : jobClassesSet) {
-				JobType jobTypeObj = loadJobType(className);
-				String jobTypeName = jobTypeObj.getJobTypeName(); 
-				
-				if (jobTypes.containsKey(jobTypeName))
-					throw new WerkConfigException(
-						String.format("Class [%s] Duplicate JobTypeName [%s]", className, jobTypeName)
-					);					
-				
-				jobTypes.put(jobTypeName, jobTypeObj);
-			}
-			
-			Map<String, Map<String, org.werk.meta.StepType>> jobStepTypes = new HashMap<>();
-			Set<String> stepsClassesSet = db.getAnnotationIndex().get(StepType.class.getName());
-			for (String className : stepsClassesSet) {
-				org.werk.meta.StepType stepTypeObj = loadStepType(className);
-				String stepTypeName = stepTypeObj.getStepTypeName(); 
-				
-				if (jobStepTypes.containsKey(stepTypeName))
-					throw new WerkConfigException(
-						String.format("Class [%s] Duplicate StepTypeName [%s]", className, stepTypeName)
-					);					
-				
-				for (String jobTypeName : stepTypeObj.getJobTypeNames()) {
-					Map<String, org.werk.meta.StepType> stepTypes = jobStepTypes.get(jobTypeName);
-					if (stepTypes == null) {
-						stepTypes = new HashMap<>();
-						jobStepTypes.put(jobTypeName, stepTypes);
-					}
-					
-					stepTypes.put(stepTypeName, stepTypeObj);
-				}
-			}
-			
-			Set<String> stepsClassesSetF = db.getAnnotationIndex().get(StepTypeFactories.class.getName());
-			for (String className : stepsClassesSetF) {
-				org.werk.meta.StepType stepTypeObj = loadStepTypeF(className);
-				String stepTypeName = stepTypeObj.getStepTypeName(); 
-				
-				if (jobStepTypes.containsKey(stepTypeName))
-					throw new WerkConfigException(
-						String.format("Class [%s] Duplicate StepTypeName [%s]", className, stepTypeName)
-					);					
-				
-				for (String jobTypeName : stepTypeObj.getJobTypeNames()) {
-					Map<String, org.werk.meta.StepType> stepTypes = jobStepTypes.get(jobTypeName);
-					if (stepTypes == null) {
-						stepTypes = new HashMap<>();
-						jobStepTypes.put(jobTypeName, stepTypes);
-					}
-					
-					stepTypes.put(stepTypeName, stepTypeObj);
-				}
-			}
-			
-			return new WerkConfigImpl(jobTypes, jobStepTypes);
-		} catch (ClassNotFoundException | IOException | NoSuchMethodException | SecurityException | 
-				IllegalAccessException | IllegalArgumentException | InvocationTargetException | InstantiationException e) {
-			throw new WerkConfigException(e);
-		}
-	}
-
-	public static void main(String[] args) throws Exception {
-		new AnnotationsWerkConfigLoader().loadWerkConfig();
 	}
 }

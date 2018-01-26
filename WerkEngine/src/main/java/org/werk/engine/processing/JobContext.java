@@ -1,88 +1,40 @@
 package org.werk.engine.processing;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import org.werk.engine.processing.mapped.MappedParameter;
-import org.werk.processing.parameters.BoolParameter;
-import org.werk.processing.parameters.DictionaryParameter;
-import org.werk.processing.parameters.DoubleParameter;
-import org.werk.processing.parameters.ListParameter;
-import org.werk.processing.parameters.LongParameter;
+import org.werk.processing.jobs.JobToken;
 import org.werk.processing.parameters.Parameter;
-import org.werk.processing.parameters.StringParameter;
-import org.werk.processing.parameters.impl.BoolParameterImpl;
-import org.werk.processing.parameters.impl.DictionaryParameterImpl;
-import org.werk.processing.parameters.impl.DoubleParameterImpl;
-import org.werk.processing.parameters.impl.ListParameterImpl;
-import org.werk.processing.parameters.impl.LongParameterImpl;
-import org.werk.processing.parameters.impl.StringParameterImpl;
 
-public class JobContext {
-	protected Map<String, Parameter> parameters;
-	protected Map<String, MappedParameter> removedMappedParameters;
+public class JobContext extends ParameterContext {
+	protected List<JobToken> createdJobs;
+
+	public JobContext(Map<String, Parameter> stepParameters) {
+		this(stepParameters, new ArrayList<>());
+	}
 	
-	protected Parameter cloneParameter(Parameter parameter) {
-		if (parameter instanceof LongParameter) {
-			return new LongParameterImpl(((LongParameter)parameter).getValue());
-		} else if (parameter instanceof DoubleParameter) {
-			return new DoubleParameterImpl(((DoubleParameter)parameter).getValue());
-		} else if (parameter instanceof BoolParameter) {
-			return new BoolParameterImpl(((BoolParameter)parameter).isValue());
-		} else if (parameter instanceof StringParameter) {
-			return new StringParameterImpl(((StringParameter)parameter).getValue());
-		} else if (parameter instanceof ListParameter) {
-			return new ListParameterImpl(((ListParameter)parameter).getValue());
-		} else if (parameter instanceof DictionaryParameter) {
-			return new DictionaryParameterImpl(((DictionaryParameter)parameter).getValue());
-		} else
-			throw new IllegalArgumentException(
-				String.format("Unknown parameter type [%s]", parameter.getClass())
-			);
+	public JobContext(Map<String, Parameter> stepParameters, List<JobToken> createdJobs) {
+		super(stepParameters);
+		this.createdJobs = createdJobs;
 	}
 	
 	public JobContext cloneContext() {
-		Map<String, Parameter> jobParameters0 = new HashMap<String, Parameter>();
-		for (Map.Entry<String, Parameter> jobParameter : parameters.entrySet())
-			jobParameters0.put(jobParameter.getKey(), cloneParameter(jobParameter.getValue()));
+		Map<String, Parameter> stepParameters0 = new HashMap<>();
+		for (Map.Entry<String, Parameter> stepParameter : parameters.entrySet())
+			stepParameters0.put(stepParameter.getKey(), cloneParameter(stepParameter.getValue()));
+		List<JobToken> createdJobs = new ArrayList<>(this.createdJobs);
 		
-		return new JobContext(jobParameters0);
+		return new JobContext(stepParameters0, createdJobs);
 	}
 	
-	public JobContext(Map<String, Parameter> parameters) {
-		this.parameters = parameters;
-		removedMappedParameters = new HashMap<>();
+	public List<JobToken> getCreatedJobs() {
+		return Collections.unmodifiableList(createdJobs);
 	}
 	
-	public Map<String, Parameter> getParameters() {
-		return Collections.unmodifiableMap(parameters);
-	}
-
-	public Parameter getParameter(String parameterName) {
-		return parameters.get(parameterName);
-	}
-
-	public Parameter removeParameter(String parameterName) {
-		Parameter parameter = parameters.remove(parameterName);
-		
-		if (parameter instanceof MappedParameter)
-			removedMappedParameters.put(parameterName, (MappedParameter)parameter);
-		
-		return parameter;
-	}
-
-	public void putParameter(String parameterName, Parameter parameter) {
-		Parameter oldPrm = parameters.get(parameterName);
-		if (oldPrm == null) {
-			oldPrm = removedMappedParameters.remove(parameterName);
-			if (oldPrm != null)
-				parameters.put(parameterName, oldPrm);
-		}
-		
-		if ((oldPrm != null) && (oldPrm instanceof MappedParameter)) {
-			((MappedParameter)oldPrm).update(parameter);
-		} else
-			parameters.put(parameterName, parameter);
+	public void addCreatedJob(JobToken jobToken) {
+		createdJobs.add(jobToken);
 	}
 }

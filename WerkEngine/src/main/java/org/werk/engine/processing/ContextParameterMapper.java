@@ -39,12 +39,11 @@ public class ContextParameterMapper {
 				Class fieldClass = field.getType();
 				
 				Parameter prm;
-				if (fieldClass.equals(int.class) || fieldClass.equals(Integer.class) 
-						|| fieldClass.equals(long.class) || fieldClass.equals(Long.class)) {
+				if (fieldClass.equals(Integer.class) || fieldClass.equals(Long.class)) {
 					prm = new MappedLongParameter(field, obj);
-				} else if (fieldClass.equals(double.class) || fieldClass.equals(Double.class)) {
+				} else if (fieldClass.equals(Double.class)) {
 					prm = new MappedDoubleParameter(field, obj);
-				} else if (fieldClass.equals(boolean.class) || fieldClass.equals(Boolean.class)) {
+				} else if (fieldClass.equals(Boolean.class)) {
 					prm = new MappedBoolParameter(field, obj);
 				} else if (fieldClass.equals(String.class)) {
 					prm = new MappedStringParameter(field, obj);
@@ -52,6 +51,30 @@ public class ContextParameterMapper {
 					prm = new MappedListParameter(field, obj);
 				} else if (fieldClass.equals(Map.class)) {
 					prm = new MappedDictionaryParameter(field, obj);
+				} else if (fieldClass.equals(int.class) || fieldClass.equals(long.class)) {
+					throw new IllegalArgumentException(
+						String.format("Class [%s] Field [%s] is annotated as @%s, " +
+								"but its type \"int\" or \"long\" is not allowed. " +
+								"Please use boxed type \"Integer\" or \"Long\"",
+								obj.getClass(), field.getName(),
+								sp == null ? "JobParameter" : "StepParameter", fieldClass.toString())
+					);
+				} else if (fieldClass.equals(double.class)) {
+					throw new IllegalArgumentException(
+						String.format("Class [%s] Field [%s] is annotated as @%s, " +
+								"but its type \"double\" is not allowed. " +
+								"Please use boxed type \"Double\"",
+								obj.getClass(), field.getName(),
+								sp == null ? "JobParameter" : "StepParameter", fieldClass.toString())
+					);
+				} else if (fieldClass.equals(boolean.class)) {
+					throw new IllegalArgumentException(
+						String.format("Class [%s] Field [%s] is annotated as @%s, " +
+								"but its type \"double\" is not allowed. " +
+								"Please use boxed type \"Double\"",
+								obj.getClass(), field.getName(),
+								sp == null ? "JobParameter" : "StepParameter", fieldClass.toString())
+					);
 				} else throw new IllegalArgumentException(
 					String.format("Class [%s] Field [%s] is annotated as @%s, " + 
 							"but its type is not allowed [%s]", 

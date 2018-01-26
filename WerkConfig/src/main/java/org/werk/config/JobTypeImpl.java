@@ -13,7 +13,9 @@ public class JobTypeImpl implements JobType {
 	@Getter
 	protected String jobTypeName;
 	@Getter
-	protected List<List<JobInputParameter>> initInfo;
+	List<String> stepTypes;
+	@Getter
+	protected List<List<JobInputParameter>> initParameters;
 	@Getter
 	protected String firstStepTypeName;
 	@Getter
@@ -22,4 +24,6 @@ public class JobTypeImpl implements JobType {
 	protected String customInfo;
 	@Getter
 	protected boolean forceAcyclic;
+	@Getter
+	protected long version;
 }

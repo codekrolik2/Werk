@@ -1,5 +1,7 @@
 package org.werk.processing.steps;
 
+import org.werk.processing.jobs.Job;
+
 public interface StepTransitioner {
-	Transition transition(StepExecutionResult result, Step step);
+	Transition transition(boolean isSuccess, Job job);
 }

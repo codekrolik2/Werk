@@ -14,8 +14,6 @@ public class StepTypeImpl implements StepType {
 	@Getter
 	String stepTypeName;
 	@Getter
-	List<String> jobTypeNames;
-	@Getter
 	List<String> allowedTransitions;
 	@Getter
 	List<String> allowedRollbackTransitions;
@@ -28,5 +26,7 @@ public class StepTypeImpl implements StepType {
 	@Getter
 	String rollbackDescription;
 	@Getter
-	String customInfo;
+	String execConfig;
+	@Getter
+	String transitionerConfig;
 }

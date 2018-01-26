@@ -10,7 +10,12 @@ import java.lang.annotation.Target;
 public @interface JobType {
 	String name();
 	String description() default "";
-	String firstStep();
-	String customInfo() default "";
+	
+	String firstStepType();
+	String[] stepTypes();
+
 	boolean forceAcyclic() default false;
+	long version() default 1;
+
+	String jobConfig() default "";
 }

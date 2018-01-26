@@ -8,7 +8,7 @@ import java.util.Map;
 
 import org.werk.processing.parameters.Parameter;
 
-public class StepContext extends JobContext {
+public class StepContext extends ParameterContext {
 	protected long executionCount;
 	protected List<String> processingLog;
 

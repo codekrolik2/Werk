@@ -1,6 +1,6 @@
 package org.werk.processing.steps;
 
 public interface StepExec {
-	StepExecutionResult process(Step step);
-	StepExecutionResult rollback(Step step);
+	ExecutionResult process(Step step);
+	ExecutionResult rollback(Step step);
 }

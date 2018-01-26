@@ -8,6 +8,8 @@
   	<module>WerkCore</module>
   	<module>WerkConfig</module>
   	<module>WerkEngine</module>
+  	<module>WerkLocalEngine</module>
+  	<module>WerkSQLEngine</module>
   </modules>
   
   <properties>
@@ -31,6 +33,11 @@
       <dependency>
         <groupId>org.werk</groupId>
         <artifactId>WerkConfig</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.werk</groupId>
+        <artifactId>WerkEngine</artifactId>
         <version>${project.version}</version>
       </dependency>
     

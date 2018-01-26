@@ -17,7 +17,7 @@ public class MappedLongParameter extends MappedParameter implements LongParamete
 	}
 
 	@Override
-	public long getValue() {
+	public Long getValue() {
 		try {
 			return (long)getFieldValue();
 		} catch (Exception e) {

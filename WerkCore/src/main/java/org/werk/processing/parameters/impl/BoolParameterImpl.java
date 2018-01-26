@@ -7,7 +7,7 @@ import lombok.Getter;
 
 public class BoolParameterImpl implements BoolParameter {
 	@Getter
-	protected boolean value;
+	protected Boolean value;
 	
 	public BoolParameterImpl(boolean value) {
 		this.value = value;

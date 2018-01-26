@@ -7,7 +7,7 @@ import lombok.Getter;
 
 public class DoubleParameterImpl implements DoubleParameter {
 	@Getter
-	protected double value;
+	protected Double value;
 	
 	public DoubleParameterImpl(double value) {
 		this.value = value;

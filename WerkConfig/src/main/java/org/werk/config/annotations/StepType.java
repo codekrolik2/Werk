@@ -11,13 +11,14 @@ import org.werk.processing.steps.StepTransitioner;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface StepType {
-	String getName();
-	String[] getJobNames();
-	String getProcessingDescription();
-	String getRollbackDescription();
+	String name();
 	
-	Class<StepExec> getStepExecClass();
-	Class<StepTransitioner> getStepTransitionerClass();
+	String processingDescription();
+	String rollbackDescription();
+	
+	Class<StepExec> stepExecClass();
+	Class<StepTransitioner> stepTransitionerClass();
 
-	String customInfo() default "";
+	String execConfig() default "";
+	String transitionerConfig() default "";
 }

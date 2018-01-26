@@ -6,8 +6,12 @@ import org.werk.meta.inputparameters.JobInputParameter;
 
 public interface JobType {
 	String getJobTypeName();
-	List<List<JobInputParameter>> getInitInfo();
+	long getVersion();
+	
+	List<List<JobInputParameter>> getInitParameters();
+	
 	String getFirstStepTypeName();
+	List<String> getStepTypes();
 
 	//-------------------------
 	

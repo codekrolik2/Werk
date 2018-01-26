@@ -11,13 +11,13 @@ import org.werk.meta.StepTransitionerFactory;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface StepTypeFactories {
-	String getName();
-	String[] getJobNames();
-	String getProcessingDescription();
-	String getRollbackDescription();
+	String name();
+	String processingDescription();
+	String rollbackDescription();
 	
-	Class<StepExecFactory> getStepExecFactoryClass();
-	Class<StepTransitionerFactory> getStepTransitionerFactoryClass();
+	Class<StepExecFactory> stepExecFactoryClass();
+	Class<StepTransitionerFactory> stepTransitionerFactoryClass();
 
-	String customInfo() default "";
+	String execConfig() default "";
+	String transitionerConfig() default "";
 }

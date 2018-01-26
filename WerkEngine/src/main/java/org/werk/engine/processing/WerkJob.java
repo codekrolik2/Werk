@@ -1,5 +1,6 @@
 package org.werk.engine.processing;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -8,15 +9,17 @@ import java.util.Optional;
 import org.pillar.time.interfaces.Timestamp;
 import org.werk.processing.jobs.Job;
 import org.werk.processing.jobs.JobStatus;
-import org.werk.processing.jobs.ReadOnlyStep;
+import org.werk.processing.jobs.JobToken;
 import org.werk.processing.parameters.Parameter;
 
 import lombok.Getter;
 import lombok.Setter;
 
-public class WerkJob implements Job {
+public abstract class WerkJob implements Job {
 	@Getter
 	protected String jobTypeName;
+	@Getter
+	protected long version;
 	@Getter
 	protected Optional<String> jobName;
 	@Getter @Setter
@@ -33,16 +36,24 @@ public class WerkJob implements Job {
 	@Getter
 	protected JobContext tempContext;
 	
-	public WerkJob(String jobTypeName, Optional<String> jobName, JobStatus status, WerkStep currentStep, 
-			Map<String, Parameter> jobInitialParameters, Map<String, Parameter> jobParameters, Timestamp nextExecutionTime) {
+	protected List<JobToken> jobsToJoin;
+	
+	protected List<JobToken> createdJobs;
+	
+	public WerkJob(String jobTypeName, long version, Optional<String> jobName, JobStatus status, 
+			Map<String, Parameter> jobInitialParameters, Map<String, Parameter> jobParameters, Timestamp nextExecutionTime,
+			List<JobToken> jobsToJoin) {
 		this.jobTypeName = jobTypeName;
+		this.version = version;
 		this.jobName = jobName;
 		this.status = status;
-		this.currentStep = currentStep;
+		this.jobsToJoin = jobsToJoin;
 		
 		this.jobInitialParameters = jobInitialParameters;
 		mainContext = new JobContext(jobParameters);
 		this.nextExecutionTime = nextExecutionTime;
+		
+		createdJobs = new ArrayList<>();
 	}
 	
 	//------------------------------------------------
@@ -66,6 +77,16 @@ public class WerkJob implements Job {
 	public void commitTempContext() {
 		currentStep.commitTempContext();
 		mainContext = tempContext;
+		tempContext = null;
+	}
+
+	@Override
+	public void rollbackTempContext() {
+		currentStep.rollbackTempContext();
+		
+		if (tempContext == null)
+			throw new IllegalStateException("Temp context not opened");
+		
 		tempContext = null;
 	}
 	
@@ -105,17 +126,81 @@ public class WerkJob implements Job {
 		getCurrentContext().putParameter(parameterName, parameter);
 	}
 
-	//------------------------------------------------
-	
 	@Override
-	public List<ReadOnlyStep> loadProcessingHistory() {
-		// TODO: implement load from DB
-		return null;
+	public Long getLongParameter(String parameterName) {
+		return getCurrentContext().getLongParameter(parameterName);
 	}
 
 	@Override
-	public List<ReadOnlyStep> loadFilteredProcessingHistory(String stepName) {
-		// TODO: implement load from DB
-		return null;
+	public void putLongParameter(String parameterName, Long value) {
+		getCurrentContext().putLongParameter(parameterName, value);
 	}
+	
+	@Override
+	public Double getDoubleParameter(String parameterName) {
+		return getCurrentContext().getDoubleParameter(parameterName);
+	}
+
+	@Override
+	public void putDoubleParameter(String parameterName, Double value) {
+		getCurrentContext().putDoubleParameter(parameterName, value);
+	}
+	
+	@Override
+	public Boolean getBoolParameter(String parameterName) {
+		return getCurrentContext().getBoolParameter(parameterName);
+	}
+
+	@Override
+	public void putBoolParameter(String parameterName, Boolean value) {
+		getCurrentContext().putBoolParameter(parameterName, value);
+	}
+	
+	@Override
+	public String getStringParameter(String parameterName) {
+		return getCurrentContext().getStringParameter(parameterName);
+	}
+
+	@Override
+	public void putStringParameter(String parameterName, String value) {
+		getCurrentContext().putStringParameter(parameterName, value);
+	}
+	
+	@Override
+	public Map<String, Parameter> getDictionaryParameter(String parameterName) {
+		return getCurrentContext().getDictionaryParameter(parameterName);
+	}
+
+	@Override
+	public void putDictionaryParameter(String parameterName, Map<String, Parameter> value) {
+		getCurrentContext().putDictionaryParameter(parameterName, value);
+	}
+	
+	@Override
+	public List<Parameter> getListParameter(String parameterName) {
+		return getCurrentContext().getListParameter(parameterName);
+	}
+
+	@Override
+	public void putListParameter(String parameterName, List<Parameter> value) {
+		getCurrentContext().putListParameter(parameterName, value);
+	}
+	
+	protected void addCreatedJob(JobToken jobToken) {
+		getCurrentContext().addCreatedJob(jobToken);
+	}
+	
+	//------------------------------------------------
+
+	@Override
+	public List<JobToken> getJobsToJoin() {
+		return Collections.unmodifiableList(jobsToJoin);
+	}
+
+	@Override
+	public List<JobToken> getCreatedJobs() {
+		return Collections.unmodifiableList(createdJobs);
+	}
+	
+	//------------------------------------------------
 }

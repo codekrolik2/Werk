@@ -7,7 +7,8 @@ import org.slf4j.LoggerFactory;
 import org.werk.processing.jobs.Job;
 import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.steps.StepExec;
-import org.werk.processing.steps.StepExecutionResult;
+import org.werk.processing.steps.ExecutionResult;
+import org.werk.processing.steps.StepExecutionStatus;
 import org.werk.processing.steps.StepTransitioner;
 import org.werk.processing.steps.Transition;
 
@@ -24,7 +25,7 @@ public class WerkRunnable extends WorkThreadPoolRunnable<Job> {
 	@Override
 	public void process(Job job) {
 		Exception execException = null;
-		StepExecutionResult result = null;
+		ExecutionResult execResult = null;
 		try {
 			//get stepExec
 			StepExec stepExec = job.getCurrentStep().getStepExec();
@@ -34,58 +35,65 @@ public class WerkRunnable extends WorkThreadPoolRunnable<Job> {
 			
 			//execute stepExec
 			if (job.getStatus() == JobStatus.ROLLING_BACK)
-				result = stepExec.rollback(job.getCurrentStep());
+				execResult = stepExec.rollback(job.getCurrentStep());
 			else
-				result = stepExec.process(job.getCurrentStep());
+				execResult = stepExec.process(job.getCurrentStep());
 			
 			//commit Job/Step context
 			job.commitTempContext();
 		} catch (Exception e) {
+			job.rollbackTempContext();
 			execException = e;
 		}
 		
 		Exception transitionException = null;
 		Transition transition = null;
-		if (execException == null) {
-			try {
-				//get stepTransitioner
-				StepTransitioner transitioner = job.getCurrentStep().getStepTransitioner();
-				
-				//open Job/Step context and inject properties
-				job.openTempContextAndRemap(transitioner);
-				
-				//execute stepTransitioner
-				transition = transitioner.transition(result, job.getCurrentStep());
-				
-				//commit Job/Step context
-				job.commitTempContext();
-			} catch (Exception e) {
-				transitionException = e;
+		if ((execResult.getStatus() != StepExecutionStatus.REDO) &&
+			(execResult.getStatus() != StepExecutionStatus.JOIN)) {
+			if (execException == null) {
+				try {
+					//get stepTransitioner
+					StepTransitioner transitioner = job.getCurrentStep().getStepTransitioner();
+					
+					//open Job/Step context and inject properties
+					job.openTempContextAndRemap(transitioner);
+					
+					//execute stepTransitioner
+					transition = transitioner.transition(
+						execResult.getStatus() == StepExecutionStatus.SUCCESS, job);
+					
+					//commit Job/Step context
+					job.commitTempContext();
+				} catch (Exception e) {
+					job.rollbackTempContext();
+					transitionException = e;
+				}
 			}
 		}
 		
 		//switch step
-		try {
-			StepSwitchResult switchResult;
-			if (execException != null) {
-				switchResult = stepSwitcher.stepExecError(job, execException);
-			} else if (transitionException != null) {
-				switchResult = stepSwitcher.stepTransitionError(job, transitionException);
-			} else {
-				switchResult = stepSwitcher.switchStep(job, transition);
-			}
-			
-			if (switchResult == StepSwitchResult.PROCESS) {
-				long delayMS = 0;
-				if (result != null)
-					if (result.getDelayMS().isPresent())
-						delayMS = result.getDelayMS().get();
-						
-				pool.addUnitOfWork(job, delayMS);
-			} else
-				logger.info("Processing finished: job [%s]", job.toString());
-		} catch(Exception e) {
-			logger.error(String.format("Switcher error: job [%s]", job.toString()), e);
+		StepSwitchResult switchResult;
+		
+		if (execException != null) {
+			switchResult = stepSwitcher.stepExecError(job, execException);
+		} else if (transitionException != null) {
+			switchResult = stepSwitcher.stepTransitionError(job, transitionException);
+		} else if (execResult.getStatus() == StepExecutionStatus.REDO) {
+			switchResult = stepSwitcher.redo(job, execResult);
+		} else if (execResult.getStatus() == StepExecutionStatus.JOIN) {
+			switchResult = stepSwitcher.join(job, execResult);
+		} else {
+			switchResult = stepSwitcher.transition(job, transition);
 		}
+		
+		if (switchResult.getStatus() == SwitchStatus.PROCESS) {
+			long delayMS = 0;
+			if (switchResult.getDelayMS().isPresent())
+				delayMS = execResult.getDelayMS().get();
+			
+			pool.addUnitOfWork(job, delayMS);
+		} else
+			logger.info("Unloading job: [%s / %s / %s]", job.getJobTypeName(), job.getJobName(), 
+					job.getStatus());
 	}
 }

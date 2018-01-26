@@ -17,7 +17,7 @@ public class MappedDoubleParameter extends MappedParameter implements DoublePara
 	}
 
 	@Override
-	public double getValue() {
+	public Double getValue() {
 		try {
 			return (double)getFieldValue();
 		} catch (Exception e) {

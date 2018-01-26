@@ -4,7 +4,6 @@ import java.util.List;
 
 public interface StepType {
 	String getStepTypeName();
-	List<String> getJobTypeNames();
 	
 	List<String> getAllowedTransitions();
 	List<String> getAllowedRollbackTransitions();
@@ -17,5 +16,6 @@ public interface StepType {
 	String getProcessingDescription();
 	String getRollbackDescription();
 
-	String getCustomInfo();
+	String getExecConfig();
+	String getTransitionerConfig();
 }

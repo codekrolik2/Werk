@@ -1,6 +1,14 @@
 package org.werk.engine;
 
-public enum StepSwitchResult {
-	PROCESS,
-	UNLOAD
+import java.util.Optional;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@AllArgsConstructor
+public class StepSwitchResult {
+	@Getter
+	protected SwitchStatus status;
+	@Getter
+	protected Optional<Long> delayMS;
 }

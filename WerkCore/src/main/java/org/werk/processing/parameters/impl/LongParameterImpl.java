@@ -7,7 +7,7 @@ import lombok.Getter;
 
 public class LongParameterImpl implements LongParameter {
 	@Getter
-	protected long value;
+	protected Long value;
 	
 	public LongParameterImpl(long value) {
 		this.value = value;

@@ -17,7 +17,7 @@ public class MappedBoolParameter extends MappedParameter implements BoolParamete
 	}
 
 	@Override
-	public boolean isValue() {
+	public Boolean getValue() {
 		try {
 			return (boolean)getFieldValue();
 		} catch (Exception e) {
@@ -40,7 +40,7 @@ public class MappedBoolParameter extends MappedParameter implements BoolParamete
 					parameter.getClass(), objectInstance.getClass(), field.toString())
 			);
 		} else {
-			setValue(((BoolParameter)parameter).isValue());
+			setValue(((BoolParameter)parameter).getValue());
 		}
 	}
 }
