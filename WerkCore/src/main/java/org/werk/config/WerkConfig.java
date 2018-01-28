@@ -8,6 +8,7 @@ import org.werk.meta.JobType;
 import org.werk.meta.StepType;
 
 public interface WerkConfig<J> {
+	Collection<JobType> getAllJobTypes();
 	Collection<String> getAllJobTypeNames();
 	Collection<Long> getJobTypeVersions(String jobTypeName);
 

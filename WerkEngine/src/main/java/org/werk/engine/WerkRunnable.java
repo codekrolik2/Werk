@@ -74,17 +74,16 @@ public class WerkRunnable<J> extends WorkThreadPoolRunnable<Job<J>> {
 		//switch step
 		StepSwitchResult switchResult;
 		
-		if (execException != null) {
+		if (execException != null)
 			switchResult = stepSwitcher.stepExecError(job, execException);
-		} else if (transitionException != null) {
+		else if (transitionException != null)
 			switchResult = stepSwitcher.stepTransitionError(job, transitionException);
-		} else if (execResult.getStatus() == StepExecutionStatus.REDO) {
+		else if (execResult.getStatus() == StepExecutionStatus.REDO)
 			switchResult = stepSwitcher.redo(job, execResult);
-		} else if (execResult.getStatus() == StepExecutionStatus.JOIN) {
+		else if (execResult.getStatus() == StepExecutionStatus.JOIN)
 			switchResult = stepSwitcher.join(job, execResult);
-		} else {
+		else
 			switchResult = stepSwitcher.transition(job, transition);
-		}
 		
 		if (switchResult.getStatus() == SwitchStatus.PROCESS) {
 			long delayMS = 0;

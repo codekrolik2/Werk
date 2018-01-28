@@ -76,24 +76,37 @@ public class AnnotationsWerkConfigLoader<J> implements WerkConfigLoader<J> {
 	public WerkConfig<J> loadWerkConfig() throws WerkConfigException {
 		try {
 			URL[] urls = findClassPaths().toArray(new URL[] {});
+			return loadWerkConfig(urls);
+		} catch (IOException e) {
+			throw new WerkConfigException(e);
+		}
+	}
+	
+	@Override
+	public WerkConfig<J> loadWerkConfig(Object[] loadParameters) throws WerkConfigException {
+		try {
+			URL[] urls = (URL[])loadParameters;
 			AnnotationDB db = new AnnotationDB();
 			db.scanArchives(urls);
 			
 			WerkConfigImpl<J> config = new WerkConfigImpl<J>();
 			
 			Set<String> jobClassesSet = db.getAnnotationIndex().get(JobType.class.getName());
+			if (jobClassesSet != null)
 			for (String className : jobClassesSet) {
 				JobType jobTypeObj = loadJobType(className);
 				config.addJobType(jobTypeObj);
 			}
 			
 			Set<String> stepsClassesSet = db.getAnnotationIndex().get(StepType.class.getName());
+			if (stepsClassesSet != null)
 			for (String className : stepsClassesSet) {
 				org.werk.meta.StepType<J> stepTypeObj = loadStepType(className);
 				config.addStepType(stepTypeObj);
 			}
 			
 			Set<String> stepsClassesSetF = db.getAnnotationIndex().get(StepTypeFactories.class.getName());
+			if (stepsClassesSetF != null)
 			for (String className : stepsClassesSetF) {
 				org.werk.meta.StepType<J> stepTypeObj = loadStepTypeF(className);
 				config.addStepType(stepTypeObj);

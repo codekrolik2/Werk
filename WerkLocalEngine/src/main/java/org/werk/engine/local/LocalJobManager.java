@@ -34,6 +34,7 @@ import org.werk.processing.steps.Step;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 
 public class LocalJobManager<J> {
 	final Logger logger = LoggerFactory.getLogger(LocalJobManager.class);
@@ -44,7 +45,9 @@ public class LocalJobManager<J> {
 		protected Set<J> jobs;
 	}
 	
+	@Setter
 	protected JobStepFactory<J> jobStepFactory;
+	@Setter
 	protected WerkEngine<J> werkEngine;
 	
 	protected ReentrantLock lock;
@@ -61,6 +64,10 @@ public class LocalJobManager<J> {
 	
 	//[ JoinedJob Id : Set [ Awaiting Job Id ] ]
 	protected Map<J, Set<J>> joinedJobs;
+	
+	public LocalJobManager(long maxJobCacheSize) {
+		this(null, null, maxJobCacheSize);
+	}
 	
 	public LocalJobManager(JobStepFactory<J> jobStepFactory, WerkEngine<J> werkEngine,
 			long maxJobCacheSize) {

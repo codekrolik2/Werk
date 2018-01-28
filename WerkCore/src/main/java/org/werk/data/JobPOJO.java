@@ -9,19 +9,18 @@ import org.werk.processing.jobs.JoinStatusRecord;
 import org.werk.processing.parameters.Parameter;
 
 public interface JobPOJO<J> {
-	J getJobId();
-	
-	Optional<J> getParentJobId();
 	String getJobTypeName();
 	long getVersion();
 	
+	J getJobId();
 	Optional<String> getJobName();
-	JobStatus getStatus();
-	
+	Optional<J> getParentJobId();
 	Map<String, Parameter> getJobInitialParameters();
-	Map<String, Parameter> getJobParameters();
 	
+	
+	JobStatus getStatus();
 	Timestamp getNextExecutionTime();
+	Map<String, Parameter> getJobParameters();
 	
 	Optional<JoinStatusRecord<J>> getJoinStatusRecord();
 }

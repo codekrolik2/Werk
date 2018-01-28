@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.werk.exceptions.WerkConfigException;
 import org.werk.meta.JobType;
@@ -51,6 +52,14 @@ public class WerkConfigImpl<J> implements WerkConfig<J> {
 		return Collections.unmodifiableCollection(jobTypes.keySet());
 	}
 
+	@Override
+	public Collection<JobType> getAllJobTypes() {
+		return jobTypes.values().stream()
+				.map(a -> a.jobTypeVersions.values())
+				.flatMap(x -> x.stream())
+				.collect(Collectors.toList());
+	}
+	
 	@Override
 	public Collection<Long> getJobTypeVersions(String jobTypeName) {
 		JobTypeRegistry registry = jobTypes.get(jobTypeName);
