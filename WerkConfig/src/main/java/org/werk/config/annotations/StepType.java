@@ -16,7 +16,9 @@ public @interface StepType {
 	String processingDescription();
 	String rollbackDescription();
 	
+	@SuppressWarnings("rawtypes")
 	Class<StepExec> stepExecClass();
+	@SuppressWarnings("rawtypes")
 	Class<StepTransitioner> stepTransitionerClass();
 
 	String execConfig() default "";

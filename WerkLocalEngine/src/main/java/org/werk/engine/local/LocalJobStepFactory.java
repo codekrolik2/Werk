@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import org.pillar.time.interfaces.TimeProvider;
@@ -23,7 +22,6 @@ import org.werk.meta.inputparameters.DefaultValueJobInputParameter;
 import org.werk.meta.inputparameters.JobInputParameter;
 import org.werk.processing.jobs.Job;
 import org.werk.processing.jobs.JobStatus;
-import org.werk.processing.jobs.JobToken;
 import org.werk.processing.jobs.JoinStatusRecord;
 import org.werk.processing.parameters.BoolParameter;
 import org.werk.processing.parameters.DictionaryParameter;
@@ -36,22 +34,22 @@ import org.werk.processing.steps.Step;
 import org.werk.processing.steps.StepExec;
 import org.werk.processing.steps.StepTransitioner;
 
-public class LocalJobStepFactory implements JobStepFactory {
-	protected AtomicLong jobIdCounter;
-	protected WerkConfig werkConfig;
+public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
+	protected WerkConfig<J> werkConfig;
 	protected TimeProvider timeProvider;
-	protected LocalJobManager localJobManager;
+	protected LocalJobManager<J> localJobManager;
 	
-	public LocalJobStepFactory(WerkConfig werkConfig, TimeProvider timeProvider, LocalJobManager localJobManager) {
-		jobIdCounter = new AtomicLong(0);
+	public LocalJobStepFactory(WerkConfig<J> werkConfig, TimeProvider timeProvider, LocalJobManager<J> localJobManager) {
 		this.werkConfig = werkConfig;
 		this.timeProvider = timeProvider;
 		this.localJobManager = localJobManager;
 	}
 	
+	protected abstract J getNextJobId();
+	
 	@Override
-	public Job createNewJob(String jobTypeName, Map<String, Parameter> jobInitialParameters, 
-			Optional<String> jobName, Optional<JobToken> parentJob) throws Exception {
+	public Job<J> createNewJob(String jobTypeName, Map<String, Parameter> jobInitialParameters, 
+			Optional<String> jobName, Optional<J> parentJob) throws Exception {
 		JobType jobType = werkConfig.getJobTypeLatestVersion(jobTypeName);
 		if (jobType == null)
 			throw new WerkConfigException(
@@ -64,16 +62,16 @@ public class LocalJobStepFactory implements JobStepFactory {
 		JobStatus status = JobStatus.INACTIVE;
 		Map<String, Parameter> jobParameters = new HashMap<>();
 		Timestamp nextExecutionTime = timeProvider.getCurrentTime();
-		Optional<JoinStatusRecord> joinStatusRecord = Optional.empty();
+		Optional<JoinStatusRecord<J>> joinStatusRecord = Optional.empty();
 		
-		return new LocalWerkJob(jobIdCounter.incrementAndGet(), jobTypeName, version, jobName, status, 
+		return new LocalWerkJob<J>(getNextJobId(), jobTypeName, version, jobName, status, 
 				jobInitialParameters, jobParameters, nextExecutionTime, joinStatusRecord, parentJob,
 				localJobManager);
 	}
 
 	@Override
-	public Job createOldVersionJob(String jobTypeName, long oldVersion, Map<String, Parameter> jobInitialParameters, 
-			Optional<String> jobName, Optional<JobToken> parentJob) throws Exception {
+	public Job<J> createOldVersionJob(String jobTypeName, long oldVersion, Map<String, Parameter> jobInitialParameters, 
+			Optional<String> jobName, Optional<J> parentJob) throws Exception {
 		JobType jobType = werkConfig.getJobTypeForOldVersion(oldVersion, jobTypeName);
 		if (jobType == null)
 			throw new WerkConfigException(
@@ -86,15 +84,15 @@ public class LocalJobStepFactory implements JobStepFactory {
 		JobStatus status = JobStatus.INACTIVE;
 		Map<String, Parameter> jobParameters = new HashMap<>();
 		Timestamp nextExecutionTime = timeProvider.getCurrentTime();
-		Optional<JoinStatusRecord> joinStatusRecord = Optional.empty();
+		Optional<JoinStatusRecord<J>> joinStatusRecord = Optional.empty();
 		
-		return new LocalWerkJob(jobIdCounter.incrementAndGet(), jobTypeName, version, jobName, status, 
+		return new LocalWerkJob<J>(getNextJobId(), jobTypeName, version, jobName, status, 
 				jobInitialParameters, jobParameters, nextExecutionTime, joinStatusRecord, parentJob,
 				localJobManager);
 	}
 
 	@Override
-	public Job createJob(JobPOJO job) throws Exception {
+	public Job<J> createJob(JobPOJO<J> job) throws Exception {
 		String jobTypeName = job.getJobTypeName();
 		long version = job.getVersion();
 		
@@ -109,10 +107,10 @@ public class LocalJobStepFactory implements JobStepFactory {
 		Map<String, Parameter> jobInitialParameters = job.getJobInitialParameters();
 		Map<String, Parameter> jobParameters = job.getJobParameters();
 		Timestamp nextExecutionTime = job.getNextExecutionTime();
-		Optional<JoinStatusRecord> joinStatusRecord = job.getJoinStatusRecord();
-		Optional<JobToken> parentJob = job.getParentJobToken();
+		Optional<JoinStatusRecord<J>> joinStatusRecord = job.getJoinStatusRecord();
+		Optional<J> parentJob = job.getParentJobId();
 		
-		return new LocalWerkJob(((LocalWerkJob)job).getJobId(), jobTypeName, version, jobName, status, 
+		return new LocalWerkJob<J>(((LocalWerkJob<J>)job).getJobId(), jobTypeName, version, jobName, status, 
 				jobInitialParameters, jobParameters, nextExecutionTime, joinStatusRecord, parentJob,
 				localJobManager);
 	}
@@ -120,7 +118,7 @@ public class LocalJobStepFactory implements JobStepFactory {
 	//---------------------------------------------
 	
 	@Override
-	public Step createStep(Job job, StepPOJO step) throws Exception {
+	public Step<J> createStep(Job<J> job, StepPOJO step) throws Exception {
 		String stepTypeName = step.getStepTypeName();
 		long stepNumber = step.getStepNumber();
 		List<Long> rollbackStepNumber = step.getRollbackStepNumbers();
@@ -128,15 +126,15 @@ public class LocalJobStepFactory implements JobStepFactory {
 		Map<String, Parameter> stepParameters = step.getStepParameters();
 		List<String> processingLog = step.getProcessingLog();
 
-		StepExec stepExec = getStepExec(stepTypeName);
-		StepTransitioner stepTransitioner = getStepTransitioner(stepTypeName); 
+		StepExec<J> stepExec = getStepExec(stepTypeName);
+		StepTransitioner<J> stepTransitioner = getStepTransitioner(stepTypeName); 
 		
-		return new WerkStep(job, stepTypeName, stepNumber, rollbackStepNumber, 
+		return new WerkStep<J>(job, stepTypeName, stepNumber, rollbackStepNumber, 
 			executionCount, stepParameters, processingLog, stepExec, stepTransitioner);
 	}
 
 	@Override
-	public Step createFirstStep(Job job, long stepNumber) throws Exception {
+	public Step<J> createFirstStep(Job<J> job, long stepNumber) throws Exception {
 		JobType jobType = werkConfig.getJobTypeForAnyVersion(job.getVersion(), job.getJobTypeName());
 		if (jobType == null)
 			throw new WerkConfigException(
@@ -149,39 +147,39 @@ public class LocalJobStepFactory implements JobStepFactory {
 	}
 
 	@Override
-	public Step createNewStep(Job job, long stepNumber, String stepType) throws Exception {
+	public Step<J> createNewStep(Job<J> job, long stepNumber, String stepType) throws Exception {
 		return createNewStep(job, stepNumber, new ArrayList<>(), stepType);
 	}
 
 	@Override
-	public Step createNewStep(Job job, long stepNumber, List<Long> rollbackStepNumbers, 
+	public Step<J> createNewStep(Job<J> job, long stepNumber, List<Long> rollbackStepNumbers, 
 			String stepType) throws Exception {
 		String stepTypeName = stepType;
 		long executionCount = 0; 
 		Map<String, Parameter> stepParameters = new HashMap<>();
 		List<String> processingLog = new ArrayList<>();
 
-		StepExec stepExec = getStepExec(stepType);
-		StepTransitioner stepTransitioner = getStepTransitioner(stepType); 
+		StepExec<J> stepExec = getStepExec(stepType);
+		StepTransitioner<J> stepTransitioner = getStepTransitioner(stepType); 
 		
-		return new WerkStep(job, stepTypeName, stepNumber, rollbackStepNumbers, 
+		return new WerkStep<J>(job, stepTypeName, stepNumber, rollbackStepNumbers, 
 			executionCount, stepParameters, processingLog, stepExec, stepTransitioner); 
 	}
 
-	protected StepType getStepType(String stepTypeName) throws WerkConfigException {
+	protected StepType<J> getStepType(String stepTypeName) throws WerkConfigException {
 		return werkConfig.getStepType(stepTypeName);
 	}
 	
-	protected StepExec getStepExec(String stepType) throws Exception {
-		StepType stepTypeObj = getStepType(stepType);
-		StepExec stepExec = stepTypeObj.getStepExecFactory().createStepExec();
+	protected StepExec<J> getStepExec(String stepType) throws Exception {
+		StepType<J> stepTypeObj = getStepType(stepType);
+		StepExec<J> stepExec = stepTypeObj.getStepExecFactory().createStepExec();
 		
 		return stepExec;
 	}
 	
-	protected StepTransitioner getStepTransitioner(String stepType) throws Exception {
-		StepType stepTypeObj = getStepType(stepType);
-		StepTransitioner stepTransitioner = stepTypeObj.getStepTransitionerFactory().createStepTransitioner();
+	protected StepTransitioner<J> getStepTransitioner(String stepType) throws Exception {
+		StepType<J> stepTypeObj = getStepType(stepType);
+		StepTransitioner<J> stepTransitioner = stepTypeObj.getStepTransitionerFactory().createStepTransitioner();
 		
 		return stepTransitioner;
 	}

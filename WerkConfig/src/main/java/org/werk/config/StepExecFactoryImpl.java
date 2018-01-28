@@ -9,13 +9,15 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @AllArgsConstructor
-public class StepExecFactoryImpl implements StepExecFactory {
+public class StepExecFactoryImpl<J> implements StepExecFactory<J> {
+	@SuppressWarnings("rawtypes")
 	@Getter
 	protected Class<StepExec> stepExec;
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-	public StepExec createStepExec() throws Exception {
+	public StepExec<J> createStepExec() throws Exception {
 		Constructor<StepExec> constr = stepExec.getConstructor();
-		return constr.newInstance();
+		return (StepExec<J>)constr.newInstance();
 	}
 }

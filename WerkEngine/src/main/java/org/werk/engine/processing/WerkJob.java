@@ -9,18 +9,17 @@ import java.util.Optional;
 import org.pillar.time.interfaces.Timestamp;
 import org.werk.processing.jobs.Job;
 import org.werk.processing.jobs.JobStatus;
-import org.werk.processing.jobs.JobToken;
 import org.werk.processing.jobs.JoinStatusRecord;
 import org.werk.processing.parameters.Parameter;
 
 import lombok.Getter;
 import lombok.Setter;
 
-public abstract class WerkJob implements Job {
+public abstract class WerkJob<J> implements Job<J> {
 	@Getter
 	protected String jobTypeName;
 	@Getter
-	protected Optional<JobToken> parentJobToken;
+	protected Optional<J> parentJobId;
 	@Getter
 	protected long version;
 	@Getter
@@ -28,33 +27,33 @@ public abstract class WerkJob implements Job {
 	@Getter @Setter
 	protected JobStatus status;
 	@Getter @Setter
-	protected WerkStep currentStep;
+	protected WerkStep<J> currentStep;
 	@Getter
 	protected Timestamp nextExecutionTime;
 	
 	protected Map<String, Parameter> jobInitialParameters;
 	
 	@Getter
-	protected JobContext mainContext;
+	protected JobContext<J> mainContext;
 	@Getter
-	protected JobContext tempContext;
+	protected JobContext<J> tempContext;
 	@Getter
-	protected Optional<JoinStatusRecord> joinStatusRecord;
+	protected Optional<JoinStatusRecord<J>> joinStatusRecord;
 	
-	protected List<JobToken> createdJobs;
+	protected List<J> createdJobs;
 	
 	public WerkJob(String jobTypeName, long version, Optional<String> jobName, JobStatus status, 
 			Map<String, Parameter> jobInitialParameters, Map<String, Parameter> jobParameters, Timestamp nextExecutionTime,
-			Optional<JoinStatusRecord> joinStatusRecord, Optional<JobToken> parentJobToken) {
+			Optional<JoinStatusRecord<J>> joinStatusRecord, Optional<J> parentJobId) {
 		this.jobTypeName = jobTypeName;
 		this.version = version;
 		this.jobName = jobName;
 		this.status = status;
 		this.joinStatusRecord = joinStatusRecord;
-		this.parentJobToken = parentJobToken;
+		this.parentJobId = parentJobId;
 		
 		this.jobInitialParameters = jobInitialParameters;
-		mainContext = new JobContext(jobParameters);
+		mainContext = new JobContext<J>(jobParameters);
 		this.nextExecutionTime = nextExecutionTime;
 		
 		createdJobs = new ArrayList<>();
@@ -94,7 +93,7 @@ public abstract class WerkJob implements Job {
 		tempContext = null;
 	}
 	
-	protected JobContext getCurrentContext() {
+	protected JobContext<J> getCurrentContext() {
 		return tempContext == null ? mainContext : tempContext;
 	}
 	
@@ -190,14 +189,14 @@ public abstract class WerkJob implements Job {
 		getCurrentContext().putListParameter(parameterName, value);
 	}
 	
-	protected void addCreatedJob(JobToken jobToken) {
-		getCurrentContext().addCreatedJob(jobToken);
+	protected void addCreatedJob(J jobId) {
+		getCurrentContext().addCreatedJob(jobId);
 	}
 	
 	//------------------------------------------------
 
 	@Override
-	public List<JobToken> getCreatedJobs() {
+	public List<J> getCreatedJobs() {
 		return Collections.unmodifiableList(createdJobs);
 	}
 	

@@ -3,11 +3,9 @@ package org.werk.processing.steps;
 import java.util.List;
 import java.util.Optional;
 
-import org.werk.processing.jobs.JobToken;
-
 import lombok.Getter;
 
-public class ExecutionResult {
+public class ExecutionResult<J> {
 	@Getter
 	protected final StepExecutionStatus status;
 	@Getter
@@ -15,12 +13,12 @@ public class ExecutionResult {
 	@Getter
 	protected final Optional<Throwable> exception;
 	@Getter
-	protected final Optional<List<JobToken>> jobsToJoin;
+	protected final Optional<List<J>> jobsToJoin;
 	@Getter
 	protected final Optional<String> joinParameterName;
 	
 	protected ExecutionResult(StepExecutionStatus status, Optional<Long> delayMS, Optional<Throwable> exception, 
-			Optional<List<JobToken>> jobsToJoin, Optional<String> joinParameterName) {
+			Optional<List<J>> jobsToJoin, Optional<String> joinParameterName) {
 		this.status = status; 
 		this.delayMS = delayMS;
 		this.exception = exception;
@@ -28,28 +26,28 @@ public class ExecutionResult {
 		this.joinParameterName = joinParameterName;
 	}
 
-	public static ExecutionResult success() {
-		return new ExecutionResult(StepExecutionStatus.SUCCESS,
+	public static <J> ExecutionResult<J> success() {
+		return new ExecutionResult<J>(StepExecutionStatus.SUCCESS,
 			Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
 	}
 	
-	public static ExecutionResult failure(Throwable e) {
-		return new ExecutionResult(StepExecutionStatus.FAILURE,
+	public static <J> ExecutionResult<J> failure(Throwable e) {
+		return new ExecutionResult<J>(StepExecutionStatus.FAILURE,
 			Optional.empty(), Optional.of(e), Optional.empty(), Optional.empty());
 	}
 	
-	public static ExecutionResult redo() {
-		return new ExecutionResult(StepExecutionStatus.REDO,
+	public static <J> ExecutionResult<J> redo() {
+		return new ExecutionResult<J>(StepExecutionStatus.REDO,
 			Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
 	}
 	
-	public static ExecutionResult redo(Long delayMS) {
-		return new ExecutionResult(StepExecutionStatus.REDO,
+	public static <J> ExecutionResult<J> redo(Long delayMS) {
+		return new ExecutionResult<J>(StepExecutionStatus.REDO,
 			Optional.of(delayMS), Optional.empty(), Optional.empty(), Optional.empty());
 	}
 	
-	public static ExecutionResult join(List<JobToken> jobsToJoin, String joinParameterName) {
-		return new ExecutionResult(StepExecutionStatus.JOIN, Optional.empty(), Optional.empty(), 
+	public static <J> ExecutionResult<J> join(List<J> jobsToJoin, String joinParameterName) {
+		return new ExecutionResult<J>(StepExecutionStatus.JOIN, Optional.empty(), Optional.empty(), 
 				Optional.of(jobsToJoin), Optional.of(joinParameterName));
 	}
 }

@@ -2,14 +2,14 @@ package org.werk.meta;
 
 import java.util.List;
 
-public interface StepType {
+public interface StepType<J> {
 	String getStepTypeName();
 	
 	List<String> getAllowedTransitions();
 	List<String> getAllowedRollbackTransitions();
 	
-	StepExecFactory getStepExecFactory();
-	StepTransitionerFactory getStepTransitionerFactory();
+	StepExecFactory<J> getStepExecFactory();
+	StepTransitionerFactory<J> getStepTransitionerFactory();
 
 	//-------------------------
 	

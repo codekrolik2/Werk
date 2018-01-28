@@ -13,7 +13,7 @@ import org.werk.processing.readonly.ReadOnlyJob;
 import org.werk.processing.steps.JoinResult;
 import org.werk.processing.steps.Step;
 
-public interface Job extends ReadOnlyJob {
+public interface Job<J> extends ReadOnlyJob<J> {
 	//String getJobTypeName();
 	
 	//Processing
@@ -47,7 +47,7 @@ public interface Job extends ReadOnlyJob {
 	//JobStatus getStatus();
 	void setStatus(JobStatus status);
 	
-	Step getCurrentStep();
+	Step<J> getCurrentStep();
 	
 	void openTempContext();
 	void openTempContextAndRemap(Object obj);
@@ -56,26 +56,23 @@ public interface Job extends ReadOnlyJob {
 	
 	//-------------------------------------------------------------------
 	
-	JobToken fork(JobInitInfo jobInitInfo) throws Exception;
-	JobToken forkOldVersion(OldVersionJobInitInfo jobInitInfo) throws Exception;
+	J fork(JobInitInfo jobInitInfo) throws Exception;
+	J forkOldVersion(OldVersionJobInitInfo jobInitInfo) throws Exception;
 	
-	void revive(JobReviveInfo jobReviveInfo) throws Exception;
+	void revive(JobReviveInfo<J> jobReviveInfo) throws Exception;
 	
-	List<JobToken> getCreatedJobs();
+	List<J> getCreatedJobs();
 	
-	String tokenToStr(JobToken token);
-	JobToken strToToken(String token);
+	String joinResultToStr(JoinResult<J> joinResult);
+	JoinResult<J> strToJoinResult(String joinResultStr);
 	
-	String joinResultToStr(JoinResult joinResult);
-	JoinResult strToJoinResult(String joinResultStr);
+	ReadOnlyJob<J> loadJob(J jobId);
+	List<ReadOnlyJob<J>> loadJobs(Collection<J> jobIds);
+	List<ReadOnlyJob<J>> loadAllChildJobs();
+	List<ReadOnlyJob<J>> loadChildJobsOfTypes(Set<String> jobTypes);
 	
-	ReadOnlyJob loadJob(JobToken token);
-	List<ReadOnlyJob> loadJobs(Collection<JobToken> tokens);
-	List<ReadOnlyJob> loadAllChildJobs();
-	List<ReadOnlyJob> loadChildJobsOfTypes(Set<String> jobTypes);
-	
-	ReadOnlyJob loadJobAndHistory(JobToken token);
-	List<ReadOnlyJob> loadJobsAndHistory(Collection<JobToken> token);
-	List<ReadOnlyJob> loadAllChildJobsAndHistory();
-	List<ReadOnlyJob> loadChildJobsOfTypesAndHistory(Set<String> jobTypes);
+	ReadOnlyJob<J> loadJobAndHistory(J jobId);
+	List<ReadOnlyJob<J>> loadJobsAndHistory(Collection<J> jobIds);
+	List<ReadOnlyJob<J>> loadAllChildJobsAndHistory();
+	List<ReadOnlyJob<J>> loadChildJobsOfTypesAndHistory(Set<String> jobTypes);
 }

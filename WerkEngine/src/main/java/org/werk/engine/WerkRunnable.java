@@ -12,23 +12,23 @@ import org.werk.processing.steps.StepExecutionStatus;
 import org.werk.processing.steps.StepTransitioner;
 import org.werk.processing.steps.Transition;
 
-public class WerkRunnable extends WorkThreadPoolRunnable<Job> {
+public class WerkRunnable<J> extends WorkThreadPoolRunnable<Job<J>> {
 	final Logger logger = LoggerFactory.getLogger(WerkRunnable.class);
 	
-	protected WerkStepSwitcher stepSwitcher;
+	protected WerkStepSwitcher<J> stepSwitcher;
 	
-	public WerkRunnable(WorkThreadPool<Job> pool, WerkStepSwitcher stepSwitcher) {
+	public WerkRunnable(WorkThreadPool<Job<J>> pool, WerkStepSwitcher<J> stepSwitcher) {
 		super(pool);
 		this.stepSwitcher = stepSwitcher;
 	}
 	
 	@Override
-	public void process(Job job) {
+	public void process(Job<J> job) {
 		Exception execException = null;
-		ExecutionResult execResult = null;
+		ExecutionResult<J> execResult = null;
 		try {
 			//get stepExec
-			StepExec stepExec = job.getCurrentStep().getStepExec();
+			StepExec<J> stepExec = job.getCurrentStep().getStepExec();
 			
 			//open Job/Step context and inject properties
 			job.openTempContextAndRemap(stepExec);
@@ -53,7 +53,7 @@ public class WerkRunnable extends WorkThreadPoolRunnable<Job> {
 			if (execException == null) {
 				try {
 					//get stepTransitioner
-					StepTransitioner transitioner = job.getCurrentStep().getStepTransitioner();
+					StepTransitioner<J> transitioner = job.getCurrentStep().getStepTransitioner();
 					
 					//open Job/Step context and inject properties
 					job.openTempContextAndRemap(transitioner);

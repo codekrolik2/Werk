@@ -9,13 +9,15 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @AllArgsConstructor
-public class StepTransitionerFactoryImpl implements StepTransitionerFactory {
+public class StepTransitionerFactoryImpl<J> implements StepTransitionerFactory<J> {
+	@SuppressWarnings("rawtypes")
 	@Getter
 	protected Class<StepTransitioner> stepTransitioner;
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
-	public StepTransitioner createStepTransitioner() throws Exception {
+	public StepTransitioner<J> createStepTransitioner() throws Exception {
 		Constructor<StepTransitioner> constr = stepTransitioner.getConstructor();
-		return constr.newInstance();
+		return (StepTransitioner<J>)constr.newInstance();
 	}
 }

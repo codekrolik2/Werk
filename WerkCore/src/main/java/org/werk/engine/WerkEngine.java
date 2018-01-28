@@ -2,6 +2,6 @@ package org.werk.engine;
 
 import org.werk.processing.jobs.Job;
 
-public interface WerkEngine {
-	void addJob(Job job);
+public interface WerkEngine<J> {
+	void addJob(Job<J> job);
 }

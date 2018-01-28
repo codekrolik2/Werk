@@ -7,7 +7,7 @@ import org.werk.exceptions.WerkConfigException;
 import org.werk.meta.JobType;
 import org.werk.meta.StepType;
 
-public interface WerkConfig {
+public interface WerkConfig<J> {
 	Collection<String> getAllJobTypeNames();
 	Collection<Long> getJobTypeVersions(String jobTypeName);
 
@@ -15,11 +15,11 @@ public interface WerkConfig {
 	JobType getJobTypeForOldVersion(Long version, String jobTypeName);
 	JobType getJobTypeLatestVersion(String jobTypeName);
 	
-	Map<String, StepType> getAllStepTypes();
-	StepType getStepType(String stepTypeName);
+	Map<String, StepType<J>> getAllStepTypes();
+	StepType<J> getStepType(String stepTypeName);
 	
 	//-------------------------------------------
 	
 	void addJobType(JobType jobType) throws WerkConfigException;
-	void addStepType(StepType stepType) throws WerkConfigException;
+	void addStepType(StepType<J> stepType) throws WerkConfigException;
 }

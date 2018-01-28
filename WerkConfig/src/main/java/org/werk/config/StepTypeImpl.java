@@ -10,7 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @AllArgsConstructor
-public class StepTypeImpl implements StepType {
+public class StepTypeImpl<J> implements StepType<J> {
 	@Getter
 	String stepTypeName;
 	@Getter
@@ -18,9 +18,9 @@ public class StepTypeImpl implements StepType {
 	@Getter
 	List<String> allowedRollbackTransitions;
 	@Getter
-	StepExecFactory stepExecFactory;
+	StepExecFactory<J> stepExecFactory;
 	@Getter
-	StepTransitionerFactory stepTransitionerFactory;
+	StepTransitionerFactory<J> stepTransitionerFactory;
 	@Getter
 	String processingDescription;
 	@Getter

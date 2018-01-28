@@ -11,44 +11,44 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import org.pillar.time.interfaces.Timestamp;
+import org.werk.data.StepPOJO;
 import org.werk.engine.processing.WerkJob;
 import org.werk.meta.JobInitInfo;
 import org.werk.meta.JobReviveInfo;
 import org.werk.meta.OldVersionJobInitInfo;
 import org.werk.processing.jobs.JobStatus;
-import org.werk.processing.jobs.JobToken;
 import org.werk.processing.jobs.JoinStatusRecord;
 import org.werk.processing.parameters.Parameter;
 import org.werk.processing.readonly.ReadOnlyJob;
-import org.werk.processing.readonly.ReadOnlyStep;
 import org.werk.processing.steps.JoinResult;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.Getter;
 import lombok.Setter;
 
-public class LocalWerkJob extends WerkJob {
+public class LocalWerkJob<J> extends WerkJob<J> {
 	@Getter
-	protected long jobId;
+	protected J jobId;
 	@Getter @Setter
 	protected AtomicLong stepCount;
 	@Setter
-	protected List<ReadOnlyStep> processingHistory;
+	protected List<StepPOJO> processingHistory;
 	
-	protected LocalJobManager jobManager;  
+	protected LocalJobManager<J> jobManager;  
 	
-	public LocalWerkJob(long jobId, String jobTypeName, long version, Optional<String> jobName, JobStatus status,
+	public LocalWerkJob(J jobId, String jobTypeName, long version, Optional<String> jobName, JobStatus status,
 			Map<String, Parameter> jobInitialParameters, Map<String, Parameter> jobParameters,
-			Timestamp nextExecutionTime, Optional<JoinStatusRecord> joinStatusRecord, Optional<JobToken> parentJobToken,
-			LocalJobManager jobManager) {
+			Timestamp nextExecutionTime, Optional<JoinStatusRecord<J>> joinStatusRecord, Optional<J> parentJobId,
+			LocalJobManager<J> jobManager) {
 		super(jobTypeName, version, jobName, status, jobInitialParameters, jobParameters, nextExecutionTime, 
-				joinStatusRecord, parentJobToken);
+				joinStatusRecord, parentJobId);
 		this.jobId = jobId;
 		stepCount = new AtomicLong(0);
 		processingHistory = new ArrayList<>();
-		this.parentJobToken = parentJobToken;
+		this.parentJobId = parentJobId;
 		this.jobManager = jobManager;
 	}
 
@@ -57,39 +57,29 @@ public class LocalWerkJob extends WerkJob {
 	}
 	
 	@Override
-	public List<ReadOnlyStep> getProcessingHistory() {
+	public List<StepPOJO> getProcessingHistory() {
 		return processingHistory;
 	}
 
 	@Override
-	public List<ReadOnlyStep> getFilteredHistory(String stepTypeName) {
+	public List<StepPOJO> getFilteredHistory(String stepTypeName) {
 		return processingHistory.stream().
 				filter(a -> a.getStepTypeName().equals(stepTypeName)).collect(Collectors.toList());
 	}
 
 	@Override
-	public ReadOnlyStep getStep(long stepNumber) {
-		for (ReadOnlyStep historyStep : processingHistory)
+	public StepPOJO getStep(long stepNumber) {
+		for (StepPOJO historyStep : processingHistory)
 			if (historyStep.getStepNumber() == stepNumber)
 				return historyStep;
 		
 		return null;
 	}
-	
-	@Override
-	public String tokenToStr(JobToken token) {
-		return Long.toString(((LongToken)token).getValue());
-	}
 
 	@Override
-	public JobToken strToToken(String token) {
-		return new LongToken(Long.parseLong(token));
-	}
-
-	@Override
-	public String joinResultToStr(JoinResult joinResult) {
+	public String joinResultToStr(JoinResult<J> joinResult) {
 		try {
-			LocalJoinResult ljr = (LocalJoinResult)joinResult;
+			LocalJoinResult<J> ljr = (LocalJoinResult<J>)joinResult;
 			
 			ObjectMapper objectMapper = new ObjectMapper();
 			return objectMapper.writeValueAsString(ljr);
@@ -99,10 +89,10 @@ public class LocalWerkJob extends WerkJob {
 	}
 
 	@Override
-	public JoinResult strToJoinResult(String joinResultStr) {
+	public JoinResult<J> strToJoinResult(String joinResultStr) {
 		try {
 			ObjectMapper objectMapper = new ObjectMapper();
-			return objectMapper.readValue(joinResultStr, LocalJoinResult.class);
+			return objectMapper.readValue(joinResultStr, new TypeReference<JoinResult<J>>() {});
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -111,63 +101,61 @@ public class LocalWerkJob extends WerkJob {
 	//----------------------------------------------
 	
 	@Override
-	public JobToken fork(JobInitInfo jobInitInfo) throws Exception {
-		return jobManager.createJob(jobInitInfo, Optional.of(new LongToken(this.getJobId())));
+	public J fork(JobInitInfo jobInitInfo) throws Exception {
+		return jobManager.createJob(jobInitInfo, Optional.of(getJobId()));
 	}
 
 	@Override
-	public JobToken forkOldVersion(OldVersionJobInitInfo jobInitInfo) throws Exception {
-		return jobManager.createOldVersionJob(jobInitInfo, Optional.of(new LongToken(this.getJobId())));
+	public J forkOldVersion(OldVersionJobInitInfo jobInitInfo) throws Exception {
+		return jobManager.createOldVersionJob(jobInitInfo, Optional.of(getJobId()));
 	}
 
 	@Override
-	public void revive(JobReviveInfo jobReviveInfo) throws Exception {
+	public void revive(JobReviveInfo<J> jobReviveInfo) throws Exception {
 		jobManager.reviveJob(jobReviveInfo);
 	}
 
 	//----------------------------------------------
 
 	@Override
-	public ReadOnlyJob loadJob(JobToken token) {
-		return jobManager.getJob(((LongToken)token).getValue());
+	public ReadOnlyJob<J> loadJob(J jobId) {
+		return jobManager.getJob(jobId);
 	}
 
 	@Override
-	public List<ReadOnlyJob> loadJobs(Collection<JobToken> tokens) {
-		return jobManager.getJobs(
-				tokens.stream().map(a -> ((LongToken)a).getValue()).collect(Collectors.toList())
-			);
+	public List<ReadOnlyJob<J>> loadJobs(Collection<J> jobIds) {
+		return jobManager.getJobs(jobIds);
 	}
 
 	@Override
-	public List<ReadOnlyJob> loadAllChildJobs() {
+	public List<ReadOnlyJob<J>> loadAllChildJobs() {
 		return jobManager.getAllChildJobs(getJobId());
 	}
 
 	@Override
-	public List<ReadOnlyJob> loadChildJobsOfTypes(Set<String> jobTypes) {
+	public List<ReadOnlyJob<J>> loadChildJobsOfTypes(Set<String> jobTypes) {
 		return jobManager.getChildJobsOfTypes(getJobId(), jobTypes);
 	}
 	
 	//----
 	
 	@Override
-	public ReadOnlyJob loadJobAndHistory(JobToken token) {
-		return loadJob(token);
+	public ReadOnlyJob<J> loadJobAndHistory(J jobIds) {
+		return loadJob(jobIds);
 	}
 
 	@Override
-	public List<ReadOnlyJob> loadJobsAndHistory(Collection<JobToken> token) {
-		return loadJobs(token);
+	public List<ReadOnlyJob<J>> loadJobsAndHistory(Collection<J> jobIds) {
+		return loadJobs(jobIds);
 	}
 
 	@Override
-	public List<ReadOnlyJob> loadAllChildJobsAndHistory() {
+	public List<ReadOnlyJob<J>> loadAllChildJobsAndHistory() {
 		return loadAllChildJobs();
 	}
 
 	@Override
-	public List<ReadOnlyJob> loadChildJobsOfTypesAndHistory(Set<String> jobTypes) {
+	public List<ReadOnlyJob<J>> loadChildJobsOfTypesAndHistory(Set<String> jobTypes) {
 		return loadChildJobsOfTypes(jobTypes);
 	}
 }

@@ -4,11 +4,11 @@ import org.werk.processing.jobs.Job;
 import org.werk.processing.steps.ExecutionResult;
 import org.werk.processing.steps.Transition;
 
-public interface WerkStepSwitcher {
-	StepSwitchResult redo(Job job, ExecutionResult exec);
-	StepSwitchResult join(Job job, ExecutionResult exec);
-	StepSwitchResult stepExecError(Job job, Exception e);
+public interface WerkStepSwitcher<J> {
+	StepSwitchResult redo(Job<J> job, ExecutionResult<J> exec);
+	StepSwitchResult join(Job<J> job, ExecutionResult<J> exec);
+	StepSwitchResult stepExecError(Job<J> job, Exception e);
 	
-	StepSwitchResult transition(Job job, Transition transition);
-	StepSwitchResult stepTransitionError(Job job, Exception e);
+	StepSwitchResult transition(Job<J> job, Transition transition);
+	StepSwitchResult stepTransitionError(Job<J> job, Exception e);
 }

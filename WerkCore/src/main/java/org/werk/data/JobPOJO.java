@@ -5,12 +5,13 @@ import java.util.Optional;
 
 import org.pillar.time.interfaces.Timestamp;
 import org.werk.processing.jobs.JobStatus;
-import org.werk.processing.jobs.JobToken;
 import org.werk.processing.jobs.JoinStatusRecord;
 import org.werk.processing.parameters.Parameter;
 
-public interface JobPOJO {
-	Optional<JobToken> getParentJobToken();
+public interface JobPOJO<J> {
+	J getJobId();
+	
+	Optional<J> getParentJobId();
 	String getJobTypeName();
 	long getVersion();
 	
@@ -22,5 +23,5 @@ public interface JobPOJO {
 	
 	Timestamp getNextExecutionTime();
 	
-	Optional<JoinStatusRecord> getJoinStatusRecord();
+	Optional<JoinStatusRecord<J>> getJoinStatusRecord();
 }

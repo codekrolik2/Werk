@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.werk.data.StepPOJO;
 import org.werk.processing.jobs.Job;
 import org.werk.processing.parameters.Parameter;
 import org.werk.processing.steps.ExecutionResult;
@@ -17,15 +18,15 @@ import org.werk.processing.steps.TransitionStatus;
 
 import lombok.Getter;
 
-public class WerkStep implements Step {
+public class WerkStep<J> implements Step<J> {
 	@Getter
-	protected Job job;
+	protected Job<J> job;
 	@Getter
 	protected String stepTypeName;
 	@Getter
-	protected StepExec stepExec;
+	protected StepExec<J> stepExec;
 	@Getter
-	protected StepTransitioner stepTransitioner;
+	protected StepTransitioner<J> stepTransitioner;
 	@Getter
 	protected long stepNumber;
 	@Getter
@@ -39,9 +40,9 @@ public class WerkStep implements Step {
 	@Getter
 	protected StepContext tempContext;
 	
-	public WerkStep(Job job, String stepTypeName, long stepNumber, List<Long> rollbackStepNumbers, 
+	public WerkStep(Job<J> job, String stepTypeName, long stepNumber, List<Long> rollbackStepNumbers, 
 			long executionCount, Map<String, Parameter> stepParameters, List<String> processingLog, 
-			StepExec stepExec, StepTransitioner stepTransitioner) {
+			StepExec<J> stepExec, StepTransitioner<J> stepTransitioner) {
 		this.job = job;
 		this.stepTypeName = stepTypeName;
 		this.stepNumber = stepNumber;
@@ -183,7 +184,7 @@ public class WerkStep implements Step {
 		getCurrentContext().processingLog.add(message);
 	}
 
-	protected String stepExecutionResultToStr(ExecutionResult record) {
+	protected String stepExecutionResultToStr(ExecutionResult<J> record) {
 		if (record.getStatus() == StepExecutionStatus.FAILURE) {
 			return String.format("ExecutionStatus: %s; Exception [%s]", record.getStatus().toString(), record.getException().get().toString());
 		} else if (record.getStatus() == StepExecutionStatus.REDO) {
@@ -199,13 +200,13 @@ public class WerkStep implements Step {
 	}
 	
 	@Override
-	public ExecutionResult appendToProcessingLog(ExecutionResult record) {
+	public ExecutionResult<J> appendToProcessingLog(ExecutionResult<J> record) {
 		appendToProcessingLog(stepExecutionResultToStr(record));
 		return record;
 	}
 
 	@Override
-	public ExecutionResult appendToProcessingLog(ExecutionResult record, String message) {
+	public ExecutionResult<J> appendToProcessingLog(ExecutionResult<J> record, String message) {
 		appendToProcessingLog(String.format("%s [%s]", stepExecutionResultToStr(record), message));
 		return record;
 	}
@@ -255,12 +256,12 @@ public class WerkStep implements Step {
 	}
 
 	@Override
-	public void copyParametersTo(Step step) {
-		for (Entry<String, Parameter> ent : getStepParameters().entrySet()) {
+	public void copyParametersFrom(StepPOJO step) {
+		for (Entry<String, Parameter> ent : step.getStepParameters().entrySet()) {
 			String parameterKey = ent.getKey();
 			Parameter parameterValue = ent.getValue();
 			
-			step.putStepParameter(parameterKey, parameterValue);
+			putStepParameter(parameterKey, parameterValue);
 		}
 	}
 }

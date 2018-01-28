@@ -11,11 +11,11 @@ import org.werk.meta.StepType;
 
 import lombok.Getter;
 
-public class WerkConfigImpl implements WerkConfig {
+public class WerkConfigImpl<J> implements WerkConfig<J> {
 	@Getter
 	protected Map<String, JobTypeRegistry> jobTypes;
 	@Getter
-	protected Map<String, StepType> stepTypes;
+	protected Map<String, StepType<J>> stepTypes;
 	
 	class JobTypeRegistry {
 		@Getter
@@ -91,12 +91,12 @@ public class WerkConfigImpl implements WerkConfig {
 	//-----------------------------------------------
 	
 	@Override
-	public Map<String, StepType> getAllStepTypes() {
+	public Map<String, StepType<J>> getAllStepTypes() {
 		return Collections.unmodifiableMap(stepTypes);
 	}
 	
 	@Override
-	public StepType getStepType(String stepTypeName) {
+	public StepType<J> getStepType(String stepTypeName) {
 		return stepTypes.get(stepTypeName);
 	}
 	
@@ -114,7 +114,7 @@ public class WerkConfigImpl implements WerkConfig {
 	}
 	
 	@Override
-	public void addStepType(StepType stepType) throws WerkConfigException {
+	public void addStepType(StepType<J> stepType) throws WerkConfigException {
 		if (stepTypes.containsKey(stepType.getStepTypeName()))
 			throw new WerkConfigException(
 					String.format("Duplicate StepType [%s]", 

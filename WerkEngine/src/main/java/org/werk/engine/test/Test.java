@@ -62,7 +62,7 @@ public class Test {
 	public static void main(String[] args) {
 		Injectable i = new Injectable();
 		
-		JobContext jobContext = new JobContext(new HashMap<>());
+		JobContext<Long> jobContext = new JobContext<Long>(new HashMap<>());
 		StepContext stepContext = new StepContext(0, new HashMap<>(), new ArrayList<>());
 		
 		ContextParameterMapper.remapParameters(jobContext, stepContext, i);

@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import org.pillar.lru.LRUCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.werk.data.StepPOJO;
 import org.werk.engine.JobStepFactory;
 import org.werk.engine.WerkEngine;
 import org.werk.engine.processing.WerkStep;
@@ -26,44 +27,42 @@ import org.werk.meta.JobReviveInfo;
 import org.werk.meta.OldVersionJobInitInfo;
 import org.werk.processing.jobs.Job;
 import org.werk.processing.jobs.JobStatus;
-import org.werk.processing.jobs.JobToken;
 import org.werk.processing.jobs.JoinStatusRecord;
 import org.werk.processing.parameters.Parameter;
 import org.werk.processing.readonly.ReadOnlyJob;
-import org.werk.processing.readonly.ReadOnlyStep;
 import org.werk.processing.steps.Step;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-public class LocalJobManager {
+public class LocalJobManager<J> {
 	final Logger logger = LoggerFactory.getLogger(LocalJobManager.class);
 	
 	@AllArgsConstructor
 	class JobCluster {
 		@Getter
-		protected Set<Long> jobs;
+		protected Set<J> jobs;
 	}
 	
-	protected JobStepFactory jobStepFactory;
-	protected WerkEngine werkEngine;
+	protected JobStepFactory<J> jobStepFactory;
+	protected WerkEngine<J> werkEngine;
 	
 	protected ReentrantLock lock;
 	protected long maxJobCacheSize;
 	
-	protected Map<Long, Job> currentJobs;
-	protected Map<Long, ReadOnlyJob> finishedJobs;
+	protected Map<J, Job<J>> currentJobs;
+	protected Map<J, ReadOnlyJob<J>> finishedJobs;
 	protected LRUCache<JobCluster, JobCluster> evictionLRUCache;
 	protected AtomicLong cacheSize;
 	
 	//[ ParentJob : Set [ ChildJob ] ]
-	protected Map<Long, Set<Long>> childJobs;
-	protected Map<Long, JobCluster> jobClusters;
+	protected Map<J, Set<J>> childJobs;
+	protected Map<J, JobCluster> jobClusters;
 	
 	//[ JoinedJob Id : Set [ Awaiting Job Id ] ]
-	protected Map<Long, Set<Long>> joinedJobs;
+	protected Map<J, Set<J>> joinedJobs;
 	
-	public LocalJobManager(JobStepFactory jobStepFactory, WerkEngine werkEngine,
+	public LocalJobManager(JobStepFactory<J> jobStepFactory, WerkEngine<J> werkEngine,
 			long maxJobCacheSize) {
 		this.jobStepFactory = jobStepFactory;
 		this.werkEngine = werkEngine;
@@ -94,7 +93,7 @@ public class LocalJobManager {
 									
 									cacheSize.addAndGet(-1*jobCluster.getJobs().size());
 									
-									for (Long jobId : jobCluster.getJobs()) {
+									for (J jobId : jobCluster.getJobs()) {
 										finishedJobs.remove(jobId);
 										childJobs.remove(jobId);
 										jobClusters.remove(jobId);
@@ -116,10 +115,10 @@ public class LocalJobManager {
 	//---------------------------------------------------
 	//JOB RETRIEVAL
 	
-	public ReadOnlyJob getJob(long jobId) {
+	public ReadOnlyJob<J> getJob(J jobId) {
 		lock.lock();
 		try {
-			ReadOnlyJob readOnlyJob = currentJobs.get(jobId);
+			ReadOnlyJob<J> readOnlyJob = currentJobs.get(jobId);
 			if (readOnlyJob != null)
 				return readOnlyJob;
 			
@@ -130,14 +129,14 @@ public class LocalJobManager {
 		}
 	}
 	
-	public List<ReadOnlyJob> getJobs(Collection<Long> jobIds) {
+	public List<ReadOnlyJob<J>> getJobs(Collection<J> jobIds) {
 		lock.lock();
 		try {
-			List<ReadOnlyJob> jobs = new ArrayList<ReadOnlyJob>();
+			List<ReadOnlyJob<J>> jobs = new ArrayList<ReadOnlyJob<J>>();
 			
 			if (jobIds != null) {
-				for (Long jobId : jobIds) {
-					ReadOnlyJob job = getJob(jobId);
+				for (J jobId : jobIds) {
+					ReadOnlyJob<J> job = getJob(jobId);
 					if (job != null)
 						jobs.add(job);
 				}
@@ -149,7 +148,7 @@ public class LocalJobManager {
 		}
 	}
 	
-	public List<ReadOnlyJob> getAllChildJobs(long jobId) {
+	public List<ReadOnlyJob<J>> getAllChildJobs(J jobId) {
 		lock.lock();
 		try {
 			return getJobs(childJobs.get(jobId));
@@ -158,7 +157,7 @@ public class LocalJobManager {
 		}
 	}
 
-	public List<ReadOnlyJob> getChildJobsOfTypes(long jobId, Set<String> jobTypes) {
+	public List<ReadOnlyJob<J>> getChildJobsOfTypes(J jobId, Set<String> jobTypes) {
 		return getAllChildJobs(jobId).stream()
 				.filter(a -> jobTypes.contains(a.getJobTypeName()))
 				.collect(Collectors.toList());
@@ -167,23 +166,23 @@ public class LocalJobManager {
 	//---------------------------------------------------
 	//JOB EVENTS: JOIN
 	
-	public void join(long jobId, Collection<JobToken> join) throws Exception {
+	public void join(J jobId, Collection<J> join) throws Exception {
 		lock.lock();
 		try {
-			Job job = currentJobs.get(jobId);
+			Job<J> job = currentJobs.get(jobId);
 			if (job == null)
 				throw new WerkException(
 					String.format("Sanity check failure: Joined job not found in currentJobs: id [%d]", jobId)
 				);
 			
-			Set<Long> previousJoin = joinedJobs.get(jobId);
+			Set<J> previousJoin = joinedJobs.get(jobId);
 			if (previousJoin != null) 
 				throw new WerkException(
 					String.format("Sanity check failure: Join record already exists for a job: id [%d] join [%s]", 
 							jobId, previousJoin)
 				);
 			
-			Set<Long> newJoinSet = join.stream().map(a -> ((LongToken)a).getValue()).collect(Collectors.toSet());
+			Set<J> newJoinSet = join.stream().collect(Collectors.toSet());
 			joinedJobs.put(jobId, newJoinSet);
 			
 			//In case all joined jobs are already done
@@ -193,8 +192,8 @@ public class LocalJobManager {
 		}
 	}
 	
-	protected void checkJoinedJob(Long joinedJobId) throws WerkException {
-		Job job = currentJobs.get(joinedJobId);
+	protected void checkJoinedJob(J joinedJobId) throws WerkException {
+		Job<J> job = currentJobs.get(joinedJobId);
 		if (job == null)
 			throw new WerkException(
 				String.format("Sanity check failure: Joined job not found in currentJobs: id [%d]", joinedJobId)
@@ -212,18 +211,17 @@ public class LocalJobManager {
 							joinedJobId)
 				);
 		
-		JoinStatusRecord joinStatusRecord = job.getJoinStatusRecord().get();
-		Map<JobToken, JobStatus> jobStatuses = new HashMap<>();
+		JoinStatusRecord<J> joinStatusRecord = job.getJoinStatusRecord().get();
+		Map<J, JobStatus> jobStatuses = new HashMap<>();
 		
-		for (JobToken jobToken : joinStatusRecord.getJoinedJobs()) {
-			long jobId = ((LongToken)jobToken).getValue();
+		for (J jobId : joinStatusRecord.getJoinedJobs()) {
 			if (currentJobs.containsKey(jobId))
 				return;
-			ReadOnlyJob finishedJob = finishedJobs.get(jobId);
-			jobStatuses.put(jobToken, finishedJob != null ? finishedJob.getStatus() : JobStatus.INACTIVE); 
+			ReadOnlyJob<J> finishedJob = finishedJobs.get(jobId);
+			jobStatuses.put(jobId, finishedJob != null ? finishedJob.getStatus() : JobStatus.INACTIVE); 
 		}
 		
-		LocalJoinResult joinResult = new LocalJoinResult(jobStatuses);
+		LocalJoinResult<J> joinResult = new LocalJoinResult<J>(jobStatuses);
 		job.putStringParameter(joinStatusRecord.getJoinParameterName(), job.joinResultToStr(joinResult));
 		
 		job.setStatus(joinStatusRecord.getStatusBeforeJoin());
@@ -234,18 +232,18 @@ public class LocalJobManager {
 	//---------------------------------------------------
 	//JOB EVENTS: END OF PROCESSING
 	
-	public void jobFinished(long jobId) throws Exception {
+	public void jobFinished(J jobId) throws Exception {
 		moveJobToProcessed(jobId);
 	}
 	
-	public void jobFailed(long jobId) throws Exception {
+	public void jobFailed(J jobId) throws Exception {
 		moveJobToProcessed(jobId);
 	}
 	
-	protected void moveJobToProcessed(long jobId) throws Exception {
+	protected void moveJobToProcessed(J jobId) throws Exception {
 		lock.lock();
 		try {
-			Job job = currentJobs.remove(jobId);
+			Job<J> job = currentJobs.remove(jobId);
 			if (job == null)
 				throw new WerkException(
 					String.format("Job not found in currentJobs: id [%d]", jobId)
@@ -256,7 +254,7 @@ public class LocalJobManager {
 			//If cluster of jobs is done, move the cluster to eviction cache 
 			JobCluster cluster = jobClusters.get(jobId);
 			boolean allDone = true;
-			for (long clusterJobId : cluster.getJobs())
+			for (J clusterJobId : cluster.getJobs())
 				if (currentJobs.containsKey(clusterJobId))
 					allDone = false;
 			
@@ -266,8 +264,8 @@ public class LocalJobManager {
 			}
 			
 			//Check joined jobs
-			Set<Long> joined = joinedJobs.get(jobId);
-			for (Long joinedJobId : joined)
+			Set<J> joined = joinedJobs.get(jobId);
+			for (J joinedJobId : joined)
 				checkJoinedJob(joinedJobId);
 			joinedJobs.remove(jobId);
 		} finally {
@@ -278,19 +276,19 @@ public class LocalJobManager {
 	//---------------------------------------------------
 	//JOB REVIVAL
 	
-	public void reviveJob(JobReviveInfo init) throws Exception {
+	public void reviveJob(JobReviveInfo<J> init) throws Exception {
 		lock.lock();
 		try {
-			long jobId = ((LongToken)init.getJobToken()).getValue();
+			J jobId = init.getJobId();
 			
-			ReadOnlyJob jobToRevive = finishedJobs.remove(jobId);
+			ReadOnlyJob<J> jobToRevive = finishedJobs.remove(jobId);
 			if (jobToRevive == null)
 				throw new WerkException(
 					String.format("Job not found in finishedJobs: id [%d]", jobId)
 				);
 			
-			LocalWerkJob revivedJob = (LocalWerkJob)jobStepFactory.createJob(jobToRevive);
-			revivedJob.setStepCount(((LocalWerkJob)jobToRevive).getStepCount());
+			LocalWerkJob<J> revivedJob = (LocalWerkJob<J>)jobStepFactory.createJob(jobToRevive);
+			revivedJob.setStepCount(((LocalWerkJob<J>)jobToRevive).getStepCount());
 
 			//Update job Parameters
 			for (Entry<String, Parameter> jobPrmEntry : init.getJobParametersUpdate().entrySet()) {
@@ -304,20 +302,20 @@ public class LocalJobManager {
 				revivedJob.removeJobParameter(jobParametersToRemove);
 			
 			//Copy processing history and set current step
-			List<ReadOnlyStep> processingHistory = jobToRevive.getProcessingHistory();
-			Step currentStep;
+			List<StepPOJO> processingHistory = jobToRevive.getProcessingHistory();
+			Step<J> currentStep;
 			if (!init.getNewStepTypeName().isPresent()) {
 				//Restart current step
-				List<ReadOnlyStep> newProcessingHistory = new ArrayList<>();
+				List<StepPOJO> newProcessingHistory = new ArrayList<>();
 				
 				for (int i = 0; i < processingHistory.size()-1; i++) {
-					ReadOnlyStep readOnlyStep = processingHistory.get(i);
+					StepPOJO readOnlyStep = processingHistory.get(i);
 					newProcessingHistory.add(readOnlyStep);
 				}
 				
 				processingHistory = newProcessingHistory;
 				
-				ReadOnlyStep lastStep = processingHistory.get(processingHistory.size()-1);
+				StepPOJO lastStep = processingHistory.get(processingHistory.size()-1);
 				currentStep = jobStepFactory.createNewStep(revivedJob, lastStep.getStepNumber(), 
 						lastStep.getStepTypeName());
 			} else {
@@ -326,7 +324,7 @@ public class LocalJobManager {
 			}
 			
 			revivedJob.setProcessingHistory(processingHistory);
-			revivedJob.setCurrentStep((WerkStep)currentStep);
+			revivedJob.setCurrentStep((WerkStep<J>)currentStep);
 			
 			currentJobs.put(jobId, revivedJob);
 			
@@ -343,8 +341,8 @@ public class LocalJobManager {
 	//---------------------------------------------------
 	//JOB CREATION
 	
-	public JobToken createJob(JobInitInfo init, Optional<JobToken> parentJob) throws Exception {
-		LocalWerkJob job = (LocalWerkJob)jobStepFactory.createNewJob(init.getJobTypeName(), init.getInitParameters(),
+	public J createJob(JobInitInfo init, Optional<J> parentJob) throws Exception {
+		LocalWerkJob<J> job = (LocalWerkJob<J>)jobStepFactory.createNewJob(init.getJobTypeName(), init.getInitParameters(),
 				init.getJobName(), parentJob);
 		
 		lock.lock();
@@ -354,11 +352,11 @@ public class LocalJobManager {
 			lock.unlock();
 		}
 		
-		return new LongToken(job.getJobId());
+		return job.getJobId();
 	}
 	
-	public JobToken createOldVersionJob(OldVersionJobInitInfo init, Optional<JobToken> parentJob) throws Exception {
-		LocalWerkJob job = (LocalWerkJob)jobStepFactory.createOldVersionJob(init.getJobTypeName(), init.getOldVersion(), 
+	public J createOldVersionJob(OldVersionJobInitInfo init, Optional<J> parentJob) throws Exception {
+		LocalWerkJob<J> job = (LocalWerkJob<J>)jobStepFactory.createOldVersionJob(init.getJobTypeName(), init.getOldVersion(), 
 				init.getInitParameters(), init.getJobName(), parentJob);
 		
 		lock.lock();
@@ -368,21 +366,21 @@ public class LocalJobManager {
 			lock.unlock();
 		}
 	
-		return new LongToken(job.getJobId());
+		return job.getJobId();
 	}
 	
-	protected void addNewJob(LocalWerkJob job) throws Exception {
+	protected void addNewJob(LocalWerkJob<J> job) throws Exception {
 		JobCluster jobCluster = null;
 		try {
-			WerkStep firstStep = (WerkStep)jobStepFactory.createFirstStep(job, job.getNextStepNumber());
+			WerkStep<J> firstStep = (WerkStep<J>)jobStepFactory.createFirstStep(job, job.getNextStepNumber());
 			job.setCurrentStep(firstStep);
 			
 			currentJobs.put(job.getJobId(), job);
 			
-			if (job.getParentJobToken().isPresent()) {
-				long parentJob = ((LongToken)job.getParentJobToken().get()).getValue();
+			if (job.getParentJobId().isPresent()) {
+				J parentJob = job.getParentJobId().get();
 				
-				Set<Long> childJobSet = childJobs.get(parentJob);
+				Set<J> childJobSet = childJobs.get(parentJob);
 				if (childJobSet == null) {
 					childJobSet = new HashSet<>();
 					childJobs.put(parentJob, childJobSet);
@@ -393,7 +391,7 @@ public class LocalJobManager {
 			}
 			
 			if (jobCluster == null) {
-				Set<Long> jobs = new HashSet<Long>();
+				Set<J> jobs = new HashSet<J>();
 				jobCluster = new JobCluster(jobs);
 			}
 			jobCluster.getJobs().add(job.getJobId());
@@ -403,8 +401,8 @@ public class LocalJobManager {
 		} catch (Exception e) {
 			currentJobs.remove(job.getJobId());
 			
-			if (job.getParentJobToken().isPresent()) {
-				long parentJob = ((LongToken)job.getParentJobToken().get()).getValue();
+			if (job.getParentJobId().isPresent()) {
+				J parentJob = job.getParentJobId().get();
 				childJobs.remove(parentJob);
 			}
 			

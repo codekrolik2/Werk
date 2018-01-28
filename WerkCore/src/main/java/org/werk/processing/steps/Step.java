@@ -3,12 +3,12 @@ package org.werk.processing.steps;
 import java.util.List;
 import java.util.Map;
 
+import org.werk.data.StepPOJO;
 import org.werk.processing.jobs.Job;
 import org.werk.processing.parameters.Parameter;
-import org.werk.processing.readonly.ReadOnlyStep;
 
-public interface Step extends ReadOnlyStep {
-	Job getJob();
+public interface Step<J> extends StepPOJO {
+	Job<J> getJob();
 	//String getStepTypeName();
 	
 	//--------------------------------------------
@@ -38,14 +38,16 @@ public interface Step extends ReadOnlyStep {
 	//List<String> getProcessingLog();
 	void appendToProcessingLog(String message);
 	
-	ExecutionResult appendToProcessingLog(ExecutionResult record);
-	ExecutionResult appendToProcessingLog(ExecutionResult record, String message);
+	ExecutionResult<J> appendToProcessingLog(ExecutionResult<J> record);
+	ExecutionResult<J> appendToProcessingLog(ExecutionResult<J> record, String message);
 	
 	Transition appendToProcessingLog(Transition transition);
 	Transition appendToProcessingLog(Transition transition, String message);
 
 	//--------------------------------------------
 	
-	StepExec getStepExec();
-	StepTransitioner getStepTransitioner();
+	StepExec<J> getStepExec();
+	StepTransitioner<J> getStepTransitioner();
+
+	void copyParametersFrom(StepPOJO step);
 }

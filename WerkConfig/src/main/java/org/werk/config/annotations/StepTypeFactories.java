@@ -15,7 +15,9 @@ public @interface StepTypeFactories {
 	String processingDescription();
 	String rollbackDescription();
 	
+	@SuppressWarnings("rawtypes")
 	Class<StepExecFactory> stepExecFactoryClass();
+	@SuppressWarnings("rawtypes")
 	Class<StepTransitionerFactory> stepTransitionerFactoryClass();
 
 	String execConfig() default "";

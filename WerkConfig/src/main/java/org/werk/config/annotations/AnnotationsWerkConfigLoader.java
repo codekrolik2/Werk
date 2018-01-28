@@ -52,7 +52,7 @@ import org.werk.processing.parameters.impl.ListParameterImpl;
 import org.werk.processing.parameters.impl.LongParameterImpl;
 import org.werk.processing.parameters.impl.StringParameterImpl;
 
-public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
+public class AnnotationsWerkConfigLoader<J> implements WerkConfigLoader<J> {
 	@SuppressWarnings("deprecation")
 	static List<URL> findClassPaths() throws MalformedURLException {
 		List<URL> list = new ArrayList<>();
@@ -73,13 +73,13 @@ public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 	}
 	
 	@Override
-	public WerkConfig loadWerkConfig() throws WerkConfigException {
+	public WerkConfig<J> loadWerkConfig() throws WerkConfigException {
 		try {
 			URL[] urls = findClassPaths().toArray(new URL[] {});
 			AnnotationDB db = new AnnotationDB();
 			db.scanArchives(urls);
 			
-			WerkConfigImpl config = new WerkConfigImpl();
+			WerkConfigImpl<J> config = new WerkConfigImpl<J>();
 			
 			Set<String> jobClassesSet = db.getAnnotationIndex().get(JobType.class.getName());
 			for (String className : jobClassesSet) {
@@ -89,13 +89,13 @@ public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 			
 			Set<String> stepsClassesSet = db.getAnnotationIndex().get(StepType.class.getName());
 			for (String className : stepsClassesSet) {
-				org.werk.meta.StepType stepTypeObj = loadStepType(className);
+				org.werk.meta.StepType<J> stepTypeObj = loadStepType(className);
 				config.addStepType(stepTypeObj);
 			}
 			
 			Set<String> stepsClassesSetF = db.getAnnotationIndex().get(StepTypeFactories.class.getName());
 			for (String className : stepsClassesSetF) {
-				org.werk.meta.StepType stepTypeObj = loadStepTypeF(className);
+				org.werk.meta.StepType<J> stepTypeObj = loadStepTypeF(className);
 				config.addStepType(stepTypeObj);
 			}
 			
@@ -107,7 +107,7 @@ public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 	}
 
 	public static void main(String[] args) throws Exception {
-		new AnnotationsWerkConfigLoader().loadWerkConfig();
+		new AnnotationsWerkConfigLoader<Long>().loadWerkConfig();
 	}
 	
 	
@@ -193,7 +193,7 @@ public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 		return allowedRollbackTransitions;
 	}
 	
-	protected org.werk.meta.StepType loadStepType(String className) throws ClassNotFoundException, WerkConfigException {
+	protected org.werk.meta.StepType<J> loadStepType(String className) throws ClassNotFoundException, WerkConfigException {
 		@SuppressWarnings("rawtypes")
 		Class classObj = Class.forName(className);
 		
@@ -209,20 +209,18 @@ public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 		String execConfig = stepType.execConfig();
 		String transitionerConfig = stepType.transitionerConfig();
 
-		StepExecFactory stepExecFactory = new StepExecFactoryImpl(stepType.stepExecClass());
-		StepTransitionerFactory stepTransitionerFactory = new StepTransitionerFactoryImpl(stepType.stepTransitionerClass());
+		StepExecFactory<J> stepExecFactory = new StepExecFactoryImpl<J>(stepType.stepExecClass());
+		StepTransitionerFactory<J> stepTransitionerFactory = new StepTransitionerFactoryImpl<J>(stepType.stepTransitionerClass());
 		
-		return new StepTypeImpl(stepTypeName, allowedTransitions, allowedRollbackTransitions, 
+		return new StepTypeImpl<J>(stepTypeName, allowedTransitions, allowedRollbackTransitions, 
 				stepExecFactory, stepTransitionerFactory, processingDescription, rollbackDescription, execConfig, transitionerConfig);
 	}
 	
-	protected org.werk.meta.StepType loadStepTypeF(String className) throws ClassNotFoundException, 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	protected org.werk.meta.StepType<J> loadStepTypeF(String className) throws ClassNotFoundException, 
 			NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, 
 			IllegalArgumentException, InvocationTargetException, WerkConfigException {
-		@SuppressWarnings("rawtypes")
 		Class classObj = Class.forName(className);
-		
-		@SuppressWarnings("unchecked")
 		StepTypeFactories stepType = (StepTypeFactories)classObj.getAnnotation(StepTypeFactories.class);
 		
 		String stepTypeName = stepType.name();
@@ -236,13 +234,13 @@ public class AnnotationsWerkConfigLoader implements WerkConfigLoader {
 		
 		Class<StepExecFactory> stepExecClass = stepType.stepExecFactoryClass();
 		Constructor<StepExecFactory> stepExecConstr = stepExecClass.getConstructor();
-		StepExecFactory stepExecFactory = stepExecConstr.newInstance();
+		StepExecFactory<J> stepExecFactory = (StepExecFactory<J>)stepExecConstr.newInstance();
 		
 		Class<StepTransitionerFactory> stepTransitionerClass = stepType.stepTransitionerFactoryClass();
 		Constructor<StepTransitionerFactory> stepTransitionerConstr = stepTransitionerClass.getConstructor();
-		StepTransitionerFactory stepTransitionerFactory = stepTransitionerConstr.newInstance();
+		StepTransitionerFactory<J> stepTransitionerFactory = (StepTransitionerFactory<J>)stepTransitionerConstr.newInstance();
 		
-		return new StepTypeImpl(stepTypeName, allowedTransitions, allowedRollbackTransitions, stepExecFactory, 
+		return new StepTypeImpl<J>(stepTypeName, allowedTransitions, allowedRollbackTransitions, stepExecFactory, 
 				stepTransitionerFactory, processingDescription, rollbackDescription, execConfig, transitionerConfig);
 	}
 	
