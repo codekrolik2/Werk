@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
@@ -55,8 +56,8 @@ public class LocalJobManager {
 	protected LRUCache<JobCluster, JobCluster> evictionLRUCache;
 	protected AtomicLong cacheSize;
 	
-	//[ ParentJob : ChildJob ]
-	protected Map<Long, Long> childJobs;
+	//[ ParentJob : Set [ ChildJob ] ]
+	protected Map<Long, Set<Long>> childJobs;
 	protected Map<Long, JobCluster> jobClusters;
 	
 	//[ JoinedJob Id : Set [ Awaiting Job Id ] ]
@@ -89,7 +90,16 @@ public class LocalJobManager {
 							lock.lock();
 							try {
 								if (cacheSize.get() > maxJobCacheSize) {
-									cacheSize.addAndGet(-1*entry.getValue().getJobs().size());
+									JobCluster jobCluster = entry.getValue();
+									
+									cacheSize.addAndGet(-1*jobCluster.getJobs().size());
+									
+									for (Long jobId : jobCluster.getJobs()) {
+										finishedJobs.remove(jobId);
+										childJobs.remove(jobId);
+										jobClusters.remove(jobId);
+									}
+									
 									return true;
 								}
 							} finally {
@@ -101,6 +111,57 @@ public class LocalJobManager {
 				};
 			}
 		};
+	}
+	
+	//---------------------------------------------------
+	//JOB RETRIEVAL
+	
+	public ReadOnlyJob getJob(long jobId) {
+		lock.lock();
+		try {
+			ReadOnlyJob readOnlyJob = currentJobs.get(jobId);
+			if (readOnlyJob != null)
+				return readOnlyJob;
+			
+			readOnlyJob = finishedJobs.get(jobId);
+			return readOnlyJob;
+		} finally {
+			lock.unlock();
+		}
+	}
+	
+	public List<ReadOnlyJob> getJobs(Collection<Long> jobIds) {
+		lock.lock();
+		try {
+			List<ReadOnlyJob> jobs = new ArrayList<ReadOnlyJob>();
+			
+			if (jobIds != null) {
+				for (Long jobId : jobIds) {
+					ReadOnlyJob job = getJob(jobId);
+					if (job != null)
+						jobs.add(job);
+				}
+			}
+			
+			return jobs;
+		} finally {
+			lock.unlock();
+		}
+	}
+	
+	public List<ReadOnlyJob> getAllChildJobs(long jobId) {
+		lock.lock();
+		try {
+			return getJobs(childJobs.get(jobId));
+		} finally {
+			lock.unlock();
+		}
+	}
+
+	public List<ReadOnlyJob> getChildJobsOfTypes(long jobId, Set<String> jobTypes) {
+		return getAllChildJobs(jobId).stream()
+				.filter(a -> jobTypes.contains(a.getJobTypeName()))
+				.collect(Collectors.toList());
 	}
 	
 	//---------------------------------------------------
@@ -282,9 +343,9 @@ public class LocalJobManager {
 	//---------------------------------------------------
 	//JOB CREATION
 	
-	public void createJob(JobInitInfo init) throws Exception {
+	public JobToken createJob(JobInitInfo init, Optional<JobToken> parentJob) throws Exception {
 		LocalWerkJob job = (LocalWerkJob)jobStepFactory.createNewJob(init.getJobTypeName(), init.getInitParameters(),
-				init.getJobName(), init.getParentJob());
+				init.getJobName(), parentJob);
 		
 		lock.lock();
 		try {
@@ -292,11 +353,13 @@ public class LocalJobManager {
 		} finally {
 			lock.unlock();
 		}
+		
+		return new LongToken(job.getJobId());
 	}
 	
-	public void createOldVersionJob(OldVersionJobInitInfo init) throws Exception {
+	public JobToken createOldVersionJob(OldVersionJobInitInfo init, Optional<JobToken> parentJob) throws Exception {
 		LocalWerkJob job = (LocalWerkJob)jobStepFactory.createOldVersionJob(init.getJobTypeName(), init.getOldVersion(), 
-				init.getInitParameters(), init.getJobName(), init.getParentJob());
+				init.getInitParameters(), init.getJobName(), parentJob);
 		
 		lock.lock();
 		try {
@@ -304,6 +367,8 @@ public class LocalJobManager {
 		} finally {
 			lock.unlock();
 		}
+	
+		return new LongToken(job.getJobId());
 	}
 	
 	protected void addNewJob(LocalWerkJob job) throws Exception {
@@ -316,7 +381,13 @@ public class LocalJobManager {
 			
 			if (job.getParentJobToken().isPresent()) {
 				long parentJob = ((LongToken)job.getParentJobToken().get()).getValue();
-				childJobs.put(parentJob, job.getJobId());
+				
+				Set<Long> childJobSet = childJobs.get(parentJob);
+				if (childJobSet == null) {
+					childJobSet = new HashSet<>();
+					childJobs.put(parentJob, childJobSet);
+				}
+				childJobSet.add(job.getJobId());
 				
 				jobCluster = jobClusters.get(parentJob);
 			}

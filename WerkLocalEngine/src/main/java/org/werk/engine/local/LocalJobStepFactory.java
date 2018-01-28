@@ -40,11 +40,13 @@ public class LocalJobStepFactory implements JobStepFactory {
 	protected AtomicLong jobIdCounter;
 	protected WerkConfig werkConfig;
 	protected TimeProvider timeProvider;
+	protected LocalJobManager localJobManager;
 	
-	public LocalJobStepFactory(WerkConfig werkConfig, TimeProvider timeProvider) {
+	public LocalJobStepFactory(WerkConfig werkConfig, TimeProvider timeProvider, LocalJobManager localJobManager) {
 		jobIdCounter = new AtomicLong(0);
 		this.werkConfig = werkConfig;
 		this.timeProvider = timeProvider;
+		this.localJobManager = localJobManager;
 	}
 	
 	@Override
@@ -63,9 +65,10 @@ public class LocalJobStepFactory implements JobStepFactory {
 		Map<String, Parameter> jobParameters = new HashMap<>();
 		Timestamp nextExecutionTime = timeProvider.getCurrentTime();
 		Optional<JoinStatusRecord> joinStatusRecord = Optional.empty();
-
+		
 		return new LocalWerkJob(jobIdCounter.incrementAndGet(), jobTypeName, version, jobName, status, 
-				jobInitialParameters, jobParameters, nextExecutionTime, joinStatusRecord, parentJob);
+				jobInitialParameters, jobParameters, nextExecutionTime, joinStatusRecord, parentJob,
+				localJobManager);
 	}
 
 	@Override
@@ -84,9 +87,10 @@ public class LocalJobStepFactory implements JobStepFactory {
 		Map<String, Parameter> jobParameters = new HashMap<>();
 		Timestamp nextExecutionTime = timeProvider.getCurrentTime();
 		Optional<JoinStatusRecord> joinStatusRecord = Optional.empty();
-
+		
 		return new LocalWerkJob(jobIdCounter.incrementAndGet(), jobTypeName, version, jobName, status, 
-				jobInitialParameters, jobParameters, nextExecutionTime, joinStatusRecord, parentJob);
+				jobInitialParameters, jobParameters, nextExecutionTime, joinStatusRecord, parentJob,
+				localJobManager);
 	}
 
 	@Override
@@ -107,9 +111,10 @@ public class LocalJobStepFactory implements JobStepFactory {
 		Timestamp nextExecutionTime = job.getNextExecutionTime();
 		Optional<JoinStatusRecord> joinStatusRecord = job.getJoinStatusRecord();
 		Optional<JobToken> parentJob = job.getParentJobToken();
-
+		
 		return new LocalWerkJob(((LocalWerkJob)job).getJobId(), jobTypeName, version, jobName, status, 
-				jobInitialParameters, jobParameters, nextExecutionTime, joinStatusRecord, parentJob);
+				jobInitialParameters, jobParameters, nextExecutionTime, joinStatusRecord, parentJob,
+				localJobManager);
 	}
 
 	//---------------------------------------------

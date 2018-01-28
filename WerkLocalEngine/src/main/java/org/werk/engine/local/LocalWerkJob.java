@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -30,21 +31,25 @@ import lombok.Setter;
 
 public class LocalWerkJob extends WerkJob {
 	@Getter
-	long jobId;
+	protected long jobId;
 	@Getter @Setter
-	AtomicLong stepCount;
+	protected AtomicLong stepCount;
 	@Setter
-	List<ReadOnlyStep> processingHistory;
+	protected List<ReadOnlyStep> processingHistory;
+	
+	protected LocalJobManager jobManager;  
 	
 	public LocalWerkJob(long jobId, String jobTypeName, long version, Optional<String> jobName, JobStatus status,
 			Map<String, Parameter> jobInitialParameters, Map<String, Parameter> jobParameters,
-			Timestamp nextExecutionTime, Optional<JoinStatusRecord> joinStatusRecord, Optional<JobToken> parentJobToken) {
+			Timestamp nextExecutionTime, Optional<JoinStatusRecord> joinStatusRecord, Optional<JobToken> parentJobToken,
+			LocalJobManager jobManager) {
 		super(jobTypeName, version, jobName, status, jobInitialParameters, jobParameters, nextExecutionTime, 
 				joinStatusRecord, parentJobToken);
 		this.jobId = jobId;
 		stepCount = new AtomicLong(0);
 		processingHistory = new ArrayList<>();
 		this.parentJobToken = parentJobToken;
+		this.jobManager = jobManager;
 	}
 
 	public long getNextStepNumber() {
@@ -106,70 +111,63 @@ public class LocalWerkJob extends WerkJob {
 	//----------------------------------------------
 	
 	@Override
-	public JobToken fork(JobInitInfo jobInitInfo) {
-		// TODO Auto-generated method stub
-		return null;
+	public JobToken fork(JobInitInfo jobInitInfo) throws Exception {
+		return jobManager.createJob(jobInitInfo, Optional.of(new LongToken(this.getJobId())));
 	}
 
 	@Override
-	public JobToken forkOldVersion(OldVersionJobInitInfo jobInitInfo) {
-		// TODO Auto-generated method stub
-		return null;
+	public JobToken forkOldVersion(OldVersionJobInitInfo jobInitInfo) throws Exception {
+		return jobManager.createOldVersionJob(jobInitInfo, Optional.of(new LongToken(this.getJobId())));
 	}
 
 	@Override
-	public JobToken revive(JobReviveInfo jobReviveInfo) {
-		// TODO Auto-generated method stub
-		return null;
+	public void revive(JobReviveInfo jobReviveInfo) throws Exception {
+		jobManager.reviveJob(jobReviveInfo);
 	}
 
 	//----------------------------------------------
 
 	@Override
 	public ReadOnlyJob loadJob(JobToken token) {
-		// TODO Auto-generated method stub
-		return null;
+		return jobManager.getJob(((LongToken)token).getValue());
 	}
 
 	@Override
-	public List<ReadOnlyJob> loadJobs(Collection<JobToken> token) {
-		// TODO Auto-generated method stub
-		return null;
+	public List<ReadOnlyJob> loadJobs(Collection<JobToken> tokens) {
+		return jobManager.getJobs(
+				tokens.stream().map(a -> ((LongToken)a).getValue()).collect(Collectors.toList())
+			);
 	}
 
 	@Override
 	public List<ReadOnlyJob> loadAllChildJobs() {
-		// TODO Auto-generated method stub
-		return null;
+		return jobManager.getAllChildJobs(getJobId());
 	}
 
 	@Override
-	public List<ReadOnlyJob> loadChildJobsOfTypes(Collection<String> jobTypes) {
-		// TODO Auto-generated method stub
-		return null;
+	public List<ReadOnlyJob> loadChildJobsOfTypes(Set<String> jobTypes) {
+		return jobManager.getChildJobsOfTypes(getJobId(), jobTypes);
 	}
-
+	
+	//----
+	
 	@Override
 	public ReadOnlyJob loadJobAndHistory(JobToken token) {
-		// TODO Auto-generated method stub
-		return null;
+		return loadJob(token);
 	}
 
 	@Override
 	public List<ReadOnlyJob> loadJobsAndHistory(Collection<JobToken> token) {
-		// TODO Auto-generated method stub
-		return null;
+		return loadJobs(token);
 	}
 
 	@Override
 	public List<ReadOnlyJob> loadAllChildJobsAndHistory() {
-		// TODO Auto-generated method stub
-		return null;
+		return loadAllChildJobs();
 	}
 
 	@Override
-	public List<ReadOnlyJob> loadChildJobsOfTypesAndHistory(Collection<String> jobTypes) {
-		// TODO Auto-generated method stub
-		return null;
+	public List<ReadOnlyJob> loadChildJobsOfTypesAndHistory(Set<String> jobTypes) {
+		return loadChildJobsOfTypes(jobTypes);
 	}
 }

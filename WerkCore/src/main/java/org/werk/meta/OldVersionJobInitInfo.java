@@ -3,7 +3,6 @@ package org.werk.meta;
 import java.util.Map;
 import java.util.Optional;
 
-import org.werk.processing.jobs.JobToken;
 import org.werk.processing.parameters.Parameter;
 
 public interface OldVersionJobInitInfo {
@@ -11,5 +10,4 @@ public interface OldVersionJobInitInfo {
 	Map<String, Parameter> getInitParameters();
 	long getOldVersion();
 	Optional<String> getJobName();
-	Optional<JobToken> getParentJob();
 }

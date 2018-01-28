@@ -3,6 +3,7 @@ package org.werk.processing.jobs;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.werk.meta.JobInitInfo;
 import org.werk.meta.JobReviveInfo;
@@ -55,10 +56,10 @@ public interface Job extends ReadOnlyJob {
 	
 	//-------------------------------------------------------------------
 	
-	JobToken fork(JobInitInfo jobInitInfo);
-	JobToken forkOldVersion(OldVersionJobInitInfo jobInitInfo);
+	JobToken fork(JobInitInfo jobInitInfo) throws Exception;
+	JobToken forkOldVersion(OldVersionJobInitInfo jobInitInfo) throws Exception;
 	
-	JobToken revive(JobReviveInfo jobReviveInfo);
+	void revive(JobReviveInfo jobReviveInfo) throws Exception;
 	
 	List<JobToken> getCreatedJobs();
 	
@@ -69,12 +70,12 @@ public interface Job extends ReadOnlyJob {
 	JoinResult strToJoinResult(String joinResultStr);
 	
 	ReadOnlyJob loadJob(JobToken token);
-	List<ReadOnlyJob> loadJobs(Collection<JobToken> token);
+	List<ReadOnlyJob> loadJobs(Collection<JobToken> tokens);
 	List<ReadOnlyJob> loadAllChildJobs();
-	List<ReadOnlyJob> loadChildJobsOfTypes(Collection<String> jobTypes);
+	List<ReadOnlyJob> loadChildJobsOfTypes(Set<String> jobTypes);
 	
 	ReadOnlyJob loadJobAndHistory(JobToken token);
 	List<ReadOnlyJob> loadJobsAndHistory(Collection<JobToken> token);
 	List<ReadOnlyJob> loadAllChildJobsAndHistory();
-	List<ReadOnlyJob> loadChildJobsOfTypesAndHistory(Collection<String> jobTypes);
+	List<ReadOnlyJob> loadChildJobsOfTypesAndHistory(Set<String> jobTypes);
 }
