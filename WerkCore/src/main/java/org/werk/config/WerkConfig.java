@@ -3,6 +3,7 @@ package org.werk.config;
 import java.util.Collection;
 import java.util.Map;
 
+import org.werk.exceptions.WerkConfigException;
 import org.werk.meta.JobType;
 import org.werk.meta.StepType;
 

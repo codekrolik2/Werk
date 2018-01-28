@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.werk.exceptions.WerkConfigException;
 import org.werk.meta.JobType;
 import org.werk.meta.StepType;
 

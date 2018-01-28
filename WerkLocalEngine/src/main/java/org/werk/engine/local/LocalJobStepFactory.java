@@ -4,18 +4,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import org.pillar.time.interfaces.TimeProvider;
 import org.pillar.time.interfaces.Timestamp;
 import org.werk.config.WerkConfig;
-import org.werk.config.WerkConfigException;
 import org.werk.data.JobPOJO;
 import org.werk.data.StepPOJO;
 import org.werk.engine.JobStepFactory;
 import org.werk.engine.processing.WerkStep;
+import org.werk.exceptions.WerkConfigException;
 import org.werk.meta.JobType;
 import org.werk.meta.StepType;
 import org.werk.meta.inputparameters.DefaultValueJobInputParameter;
@@ -23,6 +24,7 @@ import org.werk.meta.inputparameters.JobInputParameter;
 import org.werk.processing.jobs.Job;
 import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.jobs.JobToken;
+import org.werk.processing.jobs.JoinStatusRecord;
 import org.werk.processing.parameters.BoolParameter;
 import org.werk.processing.parameters.DictionaryParameter;
 import org.werk.processing.parameters.DoubleParameter;
@@ -35,17 +37,19 @@ import org.werk.processing.steps.StepExec;
 import org.werk.processing.steps.StepTransitioner;
 
 public class LocalJobStepFactory implements JobStepFactory {
+	protected AtomicLong jobIdCounter;
 	protected WerkConfig werkConfig;
 	protected TimeProvider timeProvider;
 	
 	public LocalJobStepFactory(WerkConfig werkConfig, TimeProvider timeProvider) {
+		jobIdCounter = new AtomicLong(0);
 		this.werkConfig = werkConfig;
 		this.timeProvider = timeProvider;
 	}
 	
 	@Override
 	public Job createNewJob(String jobTypeName, Map<String, Parameter> jobInitialParameters, 
-			Optional<String> jobName) throws Exception {
+			Optional<String> jobName, Optional<JobToken> parentJob) throws Exception {
 		JobType jobType = werkConfig.getJobTypeLatestVersion(jobTypeName);
 		if (jobType == null)
 			throw new WerkConfigException(
@@ -58,15 +62,15 @@ public class LocalJobStepFactory implements JobStepFactory {
 		JobStatus status = JobStatus.INACTIVE;
 		Map<String, Parameter> jobParameters = new HashMap<>();
 		Timestamp nextExecutionTime = timeProvider.getCurrentTime();
-		List<JobToken> jobsToJoin = new ArrayList<>();
+		Optional<JoinStatusRecord> joinStatusRecord = Optional.empty();
 
-		return new LocalWerkJob(jobTypeName, version, jobName, status, jobInitialParameters, jobParameters, 
-				nextExecutionTime, jobsToJoin);
+		return new LocalWerkJob(jobIdCounter.incrementAndGet(), jobTypeName, version, jobName, status, 
+				jobInitialParameters, jobParameters, nextExecutionTime, joinStatusRecord, parentJob);
 	}
 
 	@Override
 	public Job createOldVersionJob(String jobTypeName, long oldVersion, Map<String, Parameter> jobInitialParameters, 
-			Optional<String> jobName) throws Exception {
+			Optional<String> jobName, Optional<JobToken> parentJob) throws Exception {
 		JobType jobType = werkConfig.getJobTypeForOldVersion(oldVersion, jobTypeName);
 		if (jobType == null)
 			throw new WerkConfigException(
@@ -79,31 +83,33 @@ public class LocalJobStepFactory implements JobStepFactory {
 		JobStatus status = JobStatus.INACTIVE;
 		Map<String, Parameter> jobParameters = new HashMap<>();
 		Timestamp nextExecutionTime = timeProvider.getCurrentTime();
-		List<JobToken> jobsToJoin = new ArrayList<>();
+		Optional<JoinStatusRecord> joinStatusRecord = Optional.empty();
 
-		return new LocalWerkJob(jobTypeName, version, jobName, status, jobInitialParameters, jobParameters, 
-				nextExecutionTime, jobsToJoin);
+		return new LocalWerkJob(jobIdCounter.incrementAndGet(), jobTypeName, version, jobName, status, 
+				jobInitialParameters, jobParameters, nextExecutionTime, joinStatusRecord, parentJob);
 	}
 
 	@Override
 	public Job createJob(JobPOJO job) throws Exception {
 		String jobTypeName = job.getJobTypeName();
-		JobType jobType = werkConfig.getJobTypeLatestVersion(jobTypeName);
+		long version = job.getVersion();
+		
+		JobType jobType = werkConfig.getJobTypeForAnyVersion(version, jobTypeName);
 		if (jobType == null)
 			throw new WerkConfigException(
 				String.format("JobType not found [%s]", jobTypeName)
 			);
 		
 		Optional<String> jobName = job.getJobName();
-		long version = job.getVersion();
 		JobStatus status = job.getStatus();
 		Map<String, Parameter> jobInitialParameters = job.getJobInitialParameters();
 		Map<String, Parameter> jobParameters = job.getJobParameters();
 		Timestamp nextExecutionTime = job.getNextExecutionTime();
-		List<JobToken> jobsToJoin = job.getJobsToJoin();
+		Optional<JoinStatusRecord> joinStatusRecord = job.getJoinStatusRecord();
+		Optional<JobToken> parentJob = job.getParentJobToken();
 
-		return new LocalWerkJob(jobTypeName, version, jobName, status, jobInitialParameters, jobParameters, 
-				nextExecutionTime, jobsToJoin);
+		return new LocalWerkJob(((LocalWerkJob)job).getJobId(), jobTypeName, version, jobName, status, 
+				jobInitialParameters, jobParameters, nextExecutionTime, joinStatusRecord, parentJob);
 	}
 
 	//---------------------------------------------
@@ -122,6 +128,19 @@ public class LocalJobStepFactory implements JobStepFactory {
 		
 		return new WerkStep(job, stepTypeName, stepNumber, rollbackStepNumber, 
 			executionCount, stepParameters, processingLog, stepExec, stepTransitioner);
+	}
+
+	@Override
+	public Step createFirstStep(Job job, long stepNumber) throws Exception {
+		JobType jobType = werkConfig.getJobTypeForAnyVersion(job.getVersion(), job.getJobTypeName());
+		if (jobType == null)
+			throw new WerkConfigException(
+				String.format("JobType not found [%s] for version [%d]", job.getJobTypeName(), job.getVersion())
+			);
+			
+		createNewStep(job, stepNumber, jobType.getFirstStepTypeName());
+		
+		return null;
 	}
 
 	@Override

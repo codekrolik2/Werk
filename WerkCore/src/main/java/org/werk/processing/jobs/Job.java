@@ -5,9 +5,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.werk.meta.JobInitInfo;
+import org.werk.meta.JobReviveInfo;
 import org.werk.meta.OldVersionJobInitInfo;
 import org.werk.processing.parameters.Parameter;
 import org.werk.processing.readonly.ReadOnlyJob;
+import org.werk.processing.steps.JoinResult;
 import org.werk.processing.steps.Step;
 
 public interface Job extends ReadOnlyJob {
@@ -27,6 +29,7 @@ public interface Job extends ReadOnlyJob {
 	Parameter getJobParameter(String parameterName);
 	Parameter removeJobParameter(String parameterName);
 	void putJobParameter(String parameterName, Parameter parameter);
+	
 	Long getLongParameter(String parameterName);
 	void putLongParameter(String parameterName, Long value);
 	Double getDoubleParameter(String parameterName);
@@ -44,7 +47,7 @@ public interface Job extends ReadOnlyJob {
 	void setStatus(JobStatus status);
 	
 	Step getCurrentStep();
-
+	
 	void openTempContext();
 	void openTempContextAndRemap(Object obj);
 	void commitTempContext();
@@ -55,10 +58,15 @@ public interface Job extends ReadOnlyJob {
 	JobToken fork(JobInitInfo jobInitInfo);
 	JobToken forkOldVersion(OldVersionJobInitInfo jobInitInfo);
 	
+	JobToken revive(JobReviveInfo jobReviveInfo);
+	
 	List<JobToken> getCreatedJobs();
 	
 	String tokenToStr(JobToken token);
 	JobToken strToToken(String token);
+	
+	String joinResultToStr(JoinResult joinResult);
+	JoinResult strToJoinResult(String joinResultStr);
 	
 	ReadOnlyJob loadJob(JobToken token);
 	List<ReadOnlyJob> loadJobs(Collection<JobToken> token);

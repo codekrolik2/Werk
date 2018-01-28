@@ -3,11 +3,11 @@ package org.werk.processing.steps;
 import java.util.List;
 import java.util.Map;
 
-import org.werk.data.StepPOJO;
 import org.werk.processing.jobs.Job;
 import org.werk.processing.parameters.Parameter;
+import org.werk.processing.readonly.ReadOnlyStep;
 
-public interface Step extends StepPOJO {
+public interface Step extends ReadOnlyStep {
 	Job getJob();
 	//String getStepTypeName();
 	

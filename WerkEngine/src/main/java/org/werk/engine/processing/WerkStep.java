@@ -3,6 +3,7 @@ package org.werk.engine.processing;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.werk.processing.jobs.Job;
 import org.werk.processing.parameters.Parameter;
@@ -251,5 +252,15 @@ public class WerkStep implements Step {
 	public Transition appendToProcessingLog(Transition transition, String message) {
 		appendToProcessingLog(String.format("%s [%s]", transitionToStr(transition), message));
 		return transition;
+	}
+
+	@Override
+	public void copyParametersTo(Step step) {
+		for (Entry<String, Parameter> ent : getStepParameters().entrySet()) {
+			String parameterKey = ent.getKey();
+			Parameter parameterValue = ent.getValue();
+			
+			step.putStepParameter(parameterKey, parameterValue);
+		}
 	}
 }

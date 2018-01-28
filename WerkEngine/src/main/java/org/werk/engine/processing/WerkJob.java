@@ -10,6 +10,7 @@ import org.pillar.time.interfaces.Timestamp;
 import org.werk.processing.jobs.Job;
 import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.jobs.JobToken;
+import org.werk.processing.jobs.JoinStatusRecord;
 import org.werk.processing.parameters.Parameter;
 
 import lombok.Getter;
@@ -18,6 +19,8 @@ import lombok.Setter;
 public abstract class WerkJob implements Job {
 	@Getter
 	protected String jobTypeName;
+	@Getter
+	protected Optional<JobToken> parentJobToken;
 	@Getter
 	protected long version;
 	@Getter
@@ -35,19 +38,20 @@ public abstract class WerkJob implements Job {
 	protected JobContext mainContext;
 	@Getter
 	protected JobContext tempContext;
-	
-	protected List<JobToken> jobsToJoin;
+	@Getter
+	protected Optional<JoinStatusRecord> joinStatusRecord;
 	
 	protected List<JobToken> createdJobs;
 	
 	public WerkJob(String jobTypeName, long version, Optional<String> jobName, JobStatus status, 
 			Map<String, Parameter> jobInitialParameters, Map<String, Parameter> jobParameters, Timestamp nextExecutionTime,
-			List<JobToken> jobsToJoin) {
+			Optional<JoinStatusRecord> joinStatusRecord, Optional<JobToken> parentJobToken) {
 		this.jobTypeName = jobTypeName;
 		this.version = version;
 		this.jobName = jobName;
 		this.status = status;
-		this.jobsToJoin = jobsToJoin;
+		this.joinStatusRecord = joinStatusRecord;
+		this.parentJobToken = parentJobToken;
 		
 		this.jobInitialParameters = jobInitialParameters;
 		mainContext = new JobContext(jobParameters);
@@ -191,11 +195,6 @@ public abstract class WerkJob implements Job {
 	}
 	
 	//------------------------------------------------
-
-	@Override
-	public List<JobToken> getJobsToJoin() {
-		return Collections.unmodifiableList(jobsToJoin);
-	}
 
 	@Override
 	public List<JobToken> getCreatedJobs() {

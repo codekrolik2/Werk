@@ -1,4 +1,4 @@
-package org.werk.config;
+package org.werk.exceptions;
 
 public class WerkConfigException extends Exception {
 	private static final long serialVersionUID = -8100988101758300479L;

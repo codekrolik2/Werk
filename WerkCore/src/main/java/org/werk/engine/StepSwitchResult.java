@@ -11,4 +11,8 @@ public class StepSwitchResult {
 	protected SwitchStatus status;
 	@Getter
 	protected Optional<Long> delayMS;
+	
+	public StepSwitchResult(SwitchStatus status) {
+		this(status, Optional.empty());
+	}
 }

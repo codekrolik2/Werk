@@ -1,5 +1,7 @@
 package org.werk.engine.local;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.werk.engine.StepSwitchResult;
 import org.werk.engine.SwitchStatus;
 import org.werk.engine.WerkStepSwitcher;
@@ -12,12 +14,14 @@ import org.werk.processing.steps.Step;
 import org.werk.processing.steps.Transition;
 import org.werk.processing.steps.TransitionStatus;
 
+import lombok.AllArgsConstructor;
+
+@AllArgsConstructor
 public class LocalStepSwitcher implements WerkStepSwitcher {
-	protected LocalJobStepFactory jobStepFactory;
+	final Logger logger = LoggerFactory.getLogger(LocalStepSwitcher.class);
 	
-	public LocalStepSwitcher(LocalJobStepFactory jobStepFactory) {
-		this.jobStepFactory = jobStepFactory;
-	}
+	protected LocalJobStepFactory jobStepFactory;
+	protected LocalJobManager jobManager;
 	
 	@Override
 	public StepSwitchResult redo(Job job, ExecutionResult exec) {
@@ -26,16 +30,13 @@ public class LocalStepSwitcher implements WerkStepSwitcher {
 
 	@Override
 	public StepSwitchResult join(Job job, ExecutionResult exec) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public StepSwitchResult stepExecError(Job job, Exception e) {
-		// TODO 
-		//1) Add record to step history 
-		//2) Fail job 
-		return null;
+		try {
+			jobManager.join(((LocalWerkJob)job).getJobId(), exec.getJobsToJoin().get());
+		} catch(Exception ex) {
+			logger.error("JobManager's \"join\" callback failed", ex);
+		}
+		
+		return new StepSwitchResult(SwitchStatus.UNLOAD);
 	}
 
 	@Override
@@ -48,9 +49,11 @@ public class LocalStepSwitcher implements WerkStepSwitcher {
 				String stepName = transition.getStepName().get();
 				Step nextStep = jobStepFactory.createNewStep(job, stepNumber, stepName);
 				
-				//TODO: JobManager - save step to R/O steps
+				currentStepDone(job);
 				
 				((WerkJob)job).setCurrentStep((WerkStep)nextStep);
+				
+				return new StepSwitchResult(SwitchStatus.PROCESS); 
 			} else if (transition.getTransitionStatus() == TransitionStatus.ROLLBACK) {
 				job.setStatus(JobStatus.ROLLING_BACK);
 				
@@ -59,28 +62,87 @@ public class LocalStepSwitcher implements WerkStepSwitcher {
 				
 				Step nextStep = jobStepFactory.createNewStep(job, stepNumber, transition.getRollbackStepNumbers(), stepName);
 				
-				//TODO: JobManager - save step to R/O steps
+				currentStepDone(job);
 				
 				((WerkJob)job).setCurrentStep((WerkStep)nextStep);
+				
+				return new StepSwitchResult(SwitchStatus.PROCESS);
 			} else if (transition.getTransitionStatus() == TransitionStatus.FINISH) {
+				currentStepDone(job);
 				job.setStatus(JobStatus.FINISHED);
-				//TODO: JobManager - save step to R/O steps, save job to R/O jobs, try to put itself and child/parent jobs to eviction list
+				
+				try {
+					jobManager.jobFinished(((LocalWerkJob)job).getJobId());
+				} catch(Exception ex) {
+					logger.error("JobManager's \"jobFailed\" callback failed", ex);
+					throw ex;
+				}
+				
+				return new StepSwitchResult(SwitchStatus.UNLOAD);
 			} else if (transition.getTransitionStatus() == TransitionStatus.FAIL) {
+				currentStepDone(job);
 				job.setStatus(JobStatus.FAILED);
-				//TODO: JobManager - save step to R/O steps, save job to R/O jobs, try to put itself and child/parent jobs to eviction list
-			}
+				
+				try {
+					jobManager.jobFailed(((LocalWerkJob)job).getJobId());
+				} catch(Exception ex) {
+					logger.error("JobManager's \"jobFailed\" callback failed", ex);
+					throw ex;
+				}
+				
+				return new StepSwitchResult(SwitchStatus.UNLOAD);
+			} else 
+				throw new Exception(
+						String.format("Unknown transition type: [%s]", transition.getTransitionStatus())
+					);
 		} catch (Exception e) {
 			//Fail job
-			stepTransitionError(job, e);
+			return stepTransitionError(job, e);
 		}
 	}
 
 	@Override
-	public StepSwitchResult stepTransitionError(Job job, Exception e) {
-		// TODO 
-		//1) Add record to step history 
-		//2) Fail job
+	public StepSwitchResult stepExecError(Job job, Exception e) {
+		job.getCurrentStep().appendToProcessingLog(
+				String.format("StepExec error [%s]", e)
+			);
+		job.setStatus(JobStatus.FAILED);
 		
-		return null;
+		currentStepDone(job);
+		
+		try {
+			jobManager.jobFailed(((LocalWerkJob)job).getJobId());
+		} catch(Exception ex) {
+			logger.error("JobManager's \"jobFailed\" callback failed", ex);
+		}
+		
+		return new StepSwitchResult(SwitchStatus.UNLOAD);
+	}
+
+	@Override
+	public StepSwitchResult stepTransitionError(Job job, Exception e) {
+		job.getCurrentStep().appendToProcessingLog(
+				String.format("Transitioner error [%s]", e)
+			);
+		job.setStatus(JobStatus.FAILED);
+		
+		currentStepDone(job);
+		
+		try {
+			jobManager.jobFailed(((LocalWerkJob)job).getJobId());
+		} catch(Exception ex) {
+			logger.error("JobManager's \"jobFailed\" callback failed", ex);
+		}
+		
+		return new StepSwitchResult(SwitchStatus.UNLOAD);
+	}
+	
+	protected void currentStepDone(Job job) {
+		LocalWerkJob lwj = (LocalWerkJob)job;
+		
+		Step currentStep = lwj.getCurrentStep();
+		lwj.setCurrentStep(null);
+		
+		lwj.processingHistory.add(currentStep);
 	}
 }
