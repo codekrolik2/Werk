@@ -11,7 +11,6 @@ public @interface DefaultDoubleParameter {
 	boolean isDefaultValueImmutable();
 	double defaultValue();
 	
-	String name() default "";
+	String name();
 	String description() default "";
-	boolean isOptional() default true;
 }

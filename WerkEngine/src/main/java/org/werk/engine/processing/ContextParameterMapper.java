@@ -70,8 +70,8 @@ public class ContextParameterMapper {
 				} else if (fieldClass.equals(boolean.class)) {
 					throw new IllegalArgumentException(
 						String.format("Class [%s] Field [%s] is annotated as @%s, " +
-								"but its type \"double\" is not allowed. " +
-								"Please use boxed type \"Double\"",
+								"but its type \"boolean\" is not allowed. " +
+								"Please use boxed type \"Boolean\"",
 								obj.getClass(), field.getName(),
 								sp == null ? "JobParameter" : "StepParameter", fieldClass.toString())
 					);

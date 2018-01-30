@@ -11,8 +11,8 @@ public @interface JobType {
 	String name();
 	String description() default "";
 	
-	String firstStepType();
-	String[] stepTypes();
+	String firstStepTypeName();
+	String[] stepTypeNames();
 
 	boolean forceAcyclic() default false;
 	long version() default 1;

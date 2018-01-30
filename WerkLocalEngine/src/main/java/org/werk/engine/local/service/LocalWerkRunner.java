@@ -11,6 +11,7 @@ import org.werk.engine.local.LocalJobManager;
 import org.werk.engine.local.LocalJobStepFactory;
 import org.werk.engine.local.LocalStepSwitcher;
 import org.werk.exceptions.WerkConfigException;
+import org.werk.meta.JobType;
 
 import lombok.Getter;
 
@@ -53,5 +54,9 @@ public class LocalWerkRunner {
 		
 		LocalWerkRunner localWerkRunner = new LocalWerkRunner(maxJobCacheSize, threadCount);
 		LocalWerkService service = localWerkRunner.getService();
+		
+		for (JobType type : service.werkConfig.getAllJobTypes()) {
+			System.out.println(type.toString());
+		}
 	}
 }

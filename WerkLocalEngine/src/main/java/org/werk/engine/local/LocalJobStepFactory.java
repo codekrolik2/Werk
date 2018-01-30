@@ -32,7 +32,7 @@ import org.werk.processing.parameters.Parameter;
 import org.werk.processing.parameters.StringParameter;
 import org.werk.processing.steps.Step;
 import org.werk.processing.steps.StepExec;
-import org.werk.processing.steps.StepTransitioner;
+import org.werk.processing.steps.Transitioner;
 
 public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 	protected WerkConfig<J> werkConfig;
@@ -120,6 +120,8 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 	@Override
 	public Step<J> createStep(Job<J> job, StepPOJO step) throws Exception {
 		String stepTypeName = step.getStepTypeName();
+		StepType<J> stepType = werkConfig.getStepType(stepTypeName);
+		
 		long stepNumber = step.getStepNumber();
 		List<Long> rollbackStepNumber = step.getRollbackStepNumbers();
 		long executionCount = step.getExecutionCount(); 
@@ -127,10 +129,10 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 		List<String> processingLog = step.getProcessingLog();
 
 		StepExec<J> stepExec = getStepExec(stepTypeName);
-		StepTransitioner<J> stepTransitioner = getStepTransitioner(stepTypeName); 
+		Transitioner<J> stepTransitioner = getStepTransitioner(stepTypeName); 
 		
-		return new WerkStep<J>(job, stepTypeName, stepNumber, rollbackStepNumber, 
-			executionCount, stepParameters, processingLog, stepExec, stepTransitioner);
+		return new WerkStep<J>(job, stepType, (job.getStatus() == JobStatus.ROLLING_BACK), stepNumber, 
+			rollbackStepNumber, executionCount, stepParameters, processingLog, stepExec, stepTransitioner);
 	}
 
 	@Override
@@ -155,15 +157,17 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 	public Step<J> createNewStep(Job<J> job, long stepNumber, List<Long> rollbackStepNumbers, 
 			String stepType) throws Exception {
 		String stepTypeName = stepType;
+		StepType<J> stepTypeObj = werkConfig.getStepType(stepTypeName);
+		
 		long executionCount = 0; 
 		Map<String, Parameter> stepParameters = new HashMap<>();
 		List<String> processingLog = new ArrayList<>();
 
 		StepExec<J> stepExec = getStepExec(stepType);
-		StepTransitioner<J> stepTransitioner = getStepTransitioner(stepType); 
+		Transitioner<J> stepTransitioner = getStepTransitioner(stepType); 
 		
-		return new WerkStep<J>(job, stepTypeName, stepNumber, rollbackStepNumbers, 
-			executionCount, stepParameters, processingLog, stepExec, stepTransitioner); 
+		return new WerkStep<J>(job, stepTypeObj, (job.getStatus() == JobStatus.ROLLING_BACK), stepNumber, 
+				rollbackStepNumbers, executionCount, stepParameters, processingLog, stepExec, stepTransitioner); 
 	}
 
 	protected StepType<J> getStepType(String stepTypeName) throws WerkConfigException {
@@ -177,9 +181,9 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 		return stepExec;
 	}
 	
-	protected StepTransitioner<J> getStepTransitioner(String stepType) throws Exception {
+	protected Transitioner<J> getStepTransitioner(String stepType) throws Exception {
 		StepType<J> stepTypeObj = getStepType(stepType);
-		StepTransitioner<J> stepTransitioner = stepTypeObj.getStepTransitionerFactory().createStepTransitioner();
+		Transitioner<J> stepTransitioner = stepTypeObj.getStepTransitionerFactory().createStepTransitioner();
 		
 		return stepTransitioner;
 	}
@@ -188,7 +192,7 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 	
 	protected void checkParameters(JobType jobType, Map<String, Parameter> parameters) throws WerkConfigException {
 		boolean match = false;
-		for (List<JobInputParameter> allowedParameters : jobType.getInitParameters()) {
+		for (List<JobInputParameter> allowedParameters : jobType.getInitParameters().values()) {
 			//Check that all required parameters exist
 			boolean allRequiredParametersExist = checkAllRequiredParametersExist(allowedParameters, parameters);
 			

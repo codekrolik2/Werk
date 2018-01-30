@@ -6,15 +6,16 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.werk.data.StepPOJO;
+import org.werk.meta.StepType;
 import org.werk.processing.jobs.Job;
 import org.werk.processing.parameters.Parameter;
 import org.werk.processing.steps.ExecutionResult;
 import org.werk.processing.steps.Step;
 import org.werk.processing.steps.StepExec;
 import org.werk.processing.steps.StepExecutionStatus;
-import org.werk.processing.steps.StepTransitioner;
 import org.werk.processing.steps.Transition;
 import org.werk.processing.steps.TransitionStatus;
+import org.werk.processing.steps.Transitioner;
 
 import lombok.Getter;
 
@@ -22,15 +23,17 @@ public class WerkStep<J> implements Step<J> {
 	@Getter
 	protected Job<J> job;
 	@Getter
-	protected String stepTypeName;
+	protected StepType<J> stepType;
 	@Getter
 	protected StepExec<J> stepExec;
 	@Getter
-	protected StepTransitioner<J> stepTransitioner;
+	protected Transitioner<J> stepTransitioner;
 	@Getter
 	protected long stepNumber;
 	@Getter
 	protected List<Long> rollbackStepNumbers;
+	@Getter
+	protected boolean isRollback;
 	
 	//------------------------------------------------
 	
@@ -40,11 +43,12 @@ public class WerkStep<J> implements Step<J> {
 	@Getter
 	protected StepContext tempContext;
 	
-	public WerkStep(Job<J> job, String stepTypeName, long stepNumber, List<Long> rollbackStepNumbers, 
+	public WerkStep(Job<J> job, StepType<J> stepType, boolean isRollback, long stepNumber, List<Long> rollbackStepNumbers, 
 			long executionCount, Map<String, Parameter> stepParameters, List<String> processingLog, 
-			StepExec<J> stepExec, StepTransitioner<J> stepTransitioner) {
+			StepExec<J> stepExec, Transitioner<J> stepTransitioner) {
 		this.job = job;
-		this.stepTypeName = stepTypeName;
+		this.stepType = stepType;
+		this.isRollback = isRollback;
 		this.stepNumber = stepNumber;
 		this.rollbackStepNumbers = rollbackStepNumbers;
 		
@@ -78,6 +82,11 @@ public class WerkStep<J> implements Step<J> {
 	}
 	
 	//------------------------------------------------
+
+	@Override
+	public String getStepTypeName() {
+		return stepType.getStepTypeName();
+	}
 	
 	@Override
 	public long getExecutionCount() {

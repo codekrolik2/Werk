@@ -1,5 +1,8 @@
 package org.werk.engine.local;
 
+import java.util.List;
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.werk.engine.StepSwitchResult;
@@ -9,6 +12,7 @@ import org.werk.engine.processing.WerkJob;
 import org.werk.engine.processing.WerkStep;
 import org.werk.processing.jobs.Job;
 import org.werk.processing.jobs.JobStatus;
+import org.werk.processing.jobs.JoinStatusRecord;
 import org.werk.processing.steps.ExecutionResult;
 import org.werk.processing.steps.Step;
 import org.werk.processing.steps.Transition;
@@ -31,6 +35,17 @@ public class LocalStepSwitcher<J> implements WerkStepSwitcher<J> {
 	@Override
 	public StepSwitchResult join(Job<J> job, ExecutionResult<J> exec) {
 		try {
+			List<J> joinedJobs = exec.getJobsToJoin().get();
+			String joinParameterName = exec.getJoinParameterName().get();
+			JobStatus statusBeforeJoin = job.getStatus();
+			Optional<Long> waitForNJobs = exec.getWaitForNJobs();
+			
+			JoinStatusRecord<J> joinStatusRecord = new LocalJoinStatusRecord<J>(joinedJobs, 
+					joinParameterName, statusBeforeJoin, waitForNJobs);
+			
+			((LocalWerkJob<J>)job).setJoinStatusRecord(Optional.of(joinStatusRecord));
+			((LocalWerkJob<J>)job).setStatus(JobStatus.JOINING);
+			
 			jobManager.join(((LocalWerkJob<J>)job).getJobId(), exec.getJobsToJoin().get());
 		} catch(Exception ex) {
 			logger.error("JobManager's \"join\" callback failed", ex);
@@ -43,7 +58,7 @@ public class LocalStepSwitcher<J> implements WerkStepSwitcher<J> {
 	public StepSwitchResult transition(Job<J> job, Transition transition) {
 		try {
 			if (transition.getTransitionStatus() == TransitionStatus.NEXT_STEP) {
-				job.setStatus(JobStatus.PROCESSING);
+				((LocalWerkJob<J>)job).setStatus(JobStatus.PROCESSING);
 				
 				long stepNumber = ((LocalWerkJob<J>)job).getNextStepNumber();
 				String stepName = transition.getStepName().get();
@@ -53,9 +68,9 @@ public class LocalStepSwitcher<J> implements WerkStepSwitcher<J> {
 				
 				((WerkJob<J>)job).setCurrentStep((WerkStep<J>)nextStep);
 				
-				return new StepSwitchResult(SwitchStatus.PROCESS); 
+				return new StepSwitchResult(SwitchStatus.PROCESS);
 			} else if (transition.getTransitionStatus() == TransitionStatus.ROLLBACK) {
-				job.setStatus(JobStatus.ROLLING_BACK);
+				((LocalWerkJob<J>)job).setStatus(JobStatus.ROLLING_BACK);
 				
 				long stepNumber = ((LocalWerkJob<J>)job).getNextStepNumber();
 				String stepName = transition.getStepName().get();
@@ -69,7 +84,19 @@ public class LocalStepSwitcher<J> implements WerkStepSwitcher<J> {
 				return new StepSwitchResult(SwitchStatus.PROCESS);
 			} else if (transition.getTransitionStatus() == TransitionStatus.FINISH) {
 				currentStepDone(job);
-				job.setStatus(JobStatus.FINISHED);
+				((LocalWerkJob<J>)job).setStatus(JobStatus.FINISHED);
+				
+				try {
+					jobManager.jobFinished(((LocalWerkJob<J>)job).getJobId());
+				} catch(Exception ex) {
+					logger.error("JobManager's \"jobFailed\" callback failed", ex);
+					throw ex;
+				}
+				
+				return new StepSwitchResult(SwitchStatus.UNLOAD);
+			} else if (transition.getTransitionStatus() == TransitionStatus.FINISH_ROLLBACK) {
+				currentStepDone(job);
+				((LocalWerkJob<J>)job).setStatus(JobStatus.ROLLED_BACK);
 				
 				try {
 					jobManager.jobFinished(((LocalWerkJob<J>)job).getJobId());
@@ -81,7 +108,7 @@ public class LocalStepSwitcher<J> implements WerkStepSwitcher<J> {
 				return new StepSwitchResult(SwitchStatus.UNLOAD);
 			} else if (transition.getTransitionStatus() == TransitionStatus.FAIL) {
 				currentStepDone(job);
-				job.setStatus(JobStatus.FAILED);
+				((LocalWerkJob<J>)job).setStatus(JobStatus.FAILED);
 				
 				try {
 					jobManager.jobFailed(((LocalWerkJob<J>)job).getJobId());
@@ -106,7 +133,7 @@ public class LocalStepSwitcher<J> implements WerkStepSwitcher<J> {
 		job.getCurrentStep().appendToProcessingLog(
 				String.format("StepExec error [%s]", e)
 			);
-		job.setStatus(JobStatus.FAILED);
+		((LocalWerkJob<J>)job).setStatus(JobStatus.FAILED);
 		
 		currentStepDone(job);
 		
@@ -124,7 +151,7 @@ public class LocalStepSwitcher<J> implements WerkStepSwitcher<J> {
 		job.getCurrentStep().appendToProcessingLog(
 				String.format("Transitioner error [%s]", e)
 			);
-		job.setStatus(JobStatus.FAILED);
+		((LocalWerkJob<J>)job).setStatus(JobStatus.FAILED);
 		
 		currentStepDone(job);
 		

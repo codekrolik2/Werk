@@ -1,7 +1,7 @@
 package org.werk.meta;
 
-import org.werk.processing.steps.StepTransitioner;
+import org.werk.processing.steps.Transitioner;
 
 public interface StepTransitionerFactory<J> {
-	StepTransitioner<J> createStepTransitioner() throws Exception;
+	Transitioner<J> createStepTransitioner() throws Exception;
 }

@@ -7,6 +7,8 @@ import org.werk.processing.parameters.Parameter;
 
 public interface StepPOJO {
 	String getStepTypeName();
+	boolean isRollback();
+	
 	long getStepNumber();
 	List<Long> getRollbackStepNumbers();
 	long getExecutionCount();

@@ -37,7 +37,7 @@ public abstract class WerkJob<J> implements Job<J> {
 	protected JobContext<J> mainContext;
 	@Getter
 	protected JobContext<J> tempContext;
-	@Getter
+	@Getter @Setter
 	protected Optional<JoinStatusRecord<J>> joinStatusRecord;
 	
 	protected List<J> createdJobs;

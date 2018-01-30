@@ -173,67 +173,83 @@ public class LocalJobManager<J> {
 	//---------------------------------------------------
 	//JOB EVENTS: JOIN
 	
-	public void join(J jobId, Collection<J> join) throws Exception {
+	public void join(J awaitingJobId, Collection<J> join) throws Exception {
 		lock.lock();
 		try {
-			Job<J> job = currentJobs.get(jobId);
+			Job<J> job = currentJobs.get(awaitingJobId);
 			if (job == null)
 				throw new WerkException(
-					String.format("Sanity check failure: Joined job not found in currentJobs: id [%d]", jobId)
+					String.format("Sanity check failure: Joined job not found in currentJobs: id [%d]", awaitingJobId)
 				);
 			
-			Set<J> previousJoin = joinedJobs.get(jobId);
-			if (previousJoin != null) 
-				throw new WerkException(
-					String.format("Sanity check failure: Join record already exists for a job: id [%d] join [%s]", 
-							jobId, previousJoin)
-				);
-			
-			Set<J> newJoinSet = join.stream().collect(Collectors.toSet());
-			joinedJobs.put(jobId, newJoinSet);
+			for (J joinedJob : join) {
+				Set<J> set = joinedJobs.get(joinedJob);
+				if (set == null) {
+					set = new HashSet<>();
+					joinedJobs.put(joinedJob, set);
+				}
+				set.add(awaitingJobId);
+			}
 			
 			//In case all joined jobs are already done
-			checkJoinedJob(jobId);
+			checkJoinedJob(awaitingJobId);
 		} finally {
 			lock.unlock();
 		}
 	}
 	
-	protected void checkJoinedJob(J joinedJobId) throws WerkException {
-		Job<J> job = currentJobs.get(joinedJobId);
+	protected void checkJoinedJob(J awaitingJobId) throws WerkException {
+		Job<J> job = currentJobs.get(awaitingJobId);
 		if (job == null)
 			throw new WerkException(
-				String.format("Sanity check failure: Joined job not found in currentJobs: id [%d]", joinedJobId)
+				String.format("Sanity check failure: Awaiting job not found in currentJobs: id [%d]", awaitingJobId)
 			);
 		
 		if (job.getStatus() != JobStatus.JOINING)
 			throw new WerkException(
-					String.format("Sanity check failure: Joined job has status different from JOINING: id [%d] [%s]", 
-							joinedJobId, job.getStatus())
+					String.format("Sanity check failure: Awaiting job has status different from JOINING: id [%d] [%s]", 
+							awaitingJobId, job.getStatus())
 				);
 		
 		if (!job.getJoinStatusRecord().isPresent())
 			throw new WerkException(
-					String.format("Sanity check failure: Joined job's JoinStatusRecord is not present: id [%d]", 
-							joinedJobId)
+					String.format("Sanity check failure: Awaiting job's JoinStatusRecord is not present: id [%d]", 
+							awaitingJobId)
 				);
 		
 		JoinStatusRecord<J> joinStatusRecord = job.getJoinStatusRecord().get();
-		Map<J, JobStatus> jobStatuses = new HashMap<>();
 		
-		for (J jobId : joinStatusRecord.getJoinedJobs()) {
-			if (currentJobs.containsKey(jobId))
-				return;
-			ReadOnlyJob<J> finishedJob = finishedJobs.get(jobId);
-			jobStatuses.put(jobId, finishedJob != null ? finishedJob.getStatus() : JobStatus.INACTIVE); 
+		int finishedJobCount = 0;
+		for (J jobId : joinStatusRecord.getJoinedJobs())
+			if (!currentJobs.containsKey(jobId))
+				finishedJobCount++;
+		
+		boolean waitDone = (joinStatusRecord.getWaitForNJobs().isPresent()) && 
+			(joinStatusRecord.getWaitForNJobs().get() <= finishedJobCount);
+		waitDone = waitDone || finishedJobCount == joinStatusRecord.getJoinedJobs().size();
+		
+		if (waitDone) {
+			Map<J, JobStatus> jobStatuses = new HashMap<>();
+			for (J jobId : joinStatusRecord.getJoinedJobs()) {
+				Set<J> awaitingJobs = joinedJobs.get(jobId);
+				awaitingJobs.remove(awaitingJobId);
+				if (awaitingJobs.isEmpty())
+					joinedJobs.remove(jobId);
+				
+				ReadOnlyJob<J> finishedJob = currentJobs.get(jobId);
+				if (finishedJob == null)
+					finishedJob = finishedJobs.get(jobId);
+				
+				jobStatuses.put(jobId, finishedJob != null ? finishedJob.getStatus() : JobStatus.INACTIVE);
+			}
+			
+			LocalJoinResult<J> joinResult = new LocalJoinResult<J>(jobStatuses);
+			job.putStringParameter(joinStatusRecord.getJoinParameterName(), job.joinResultToStr(joinResult));
+			
+			((LocalWerkJob<J>)job).setStatus(joinStatusRecord.getStatusBeforeJoin());
+			
+			werkEngine.addJob(job);
 		}
-		
-		LocalJoinResult<J> joinResult = new LocalJoinResult<J>(jobStatuses);
-		job.putStringParameter(joinStatusRecord.getJoinParameterName(), job.joinResultToStr(joinResult));
-		
-		job.setStatus(joinStatusRecord.getStatusBeforeJoin());
-		
-		werkEngine.addJob(job);
 	}
 	
 	//---------------------------------------------------
@@ -271,9 +287,9 @@ public class LocalJobManager<J> {
 			}
 			
 			//Check joined jobs
-			Set<J> joined = joinedJobs.get(jobId);
-			for (J joinedJobId : joined)
-				checkJoinedJob(joinedJobId);
+			Set<J> awaitingThisJob = joinedJobs.get(jobId);
+			for (J awaitingJobId : awaitingThisJob)
+				checkJoinedJob(awaitingJobId);
 			joinedJobs.remove(jobId);
 		} finally {
 			lock.unlock();
@@ -352,6 +368,9 @@ public class LocalJobManager<J> {
 		LocalWerkJob<J> job = (LocalWerkJob<J>)jobStepFactory.createNewJob(init.getJobTypeName(), init.getInitParameters(),
 				init.getJobName(), parentJob);
 		
+		WerkStep<J> firstStep = (WerkStep<J>)jobStepFactory.createFirstStep(job, job.getNextStepNumber());
+		job.setCurrentStep(firstStep);
+		
 		lock.lock();
 		try {
 			addNewJob(job);
@@ -365,6 +384,9 @@ public class LocalJobManager<J> {
 	public J createOldVersionJob(OldVersionJobInitInfo init, Optional<J> parentJob) throws Exception {
 		LocalWerkJob<J> job = (LocalWerkJob<J>)jobStepFactory.createOldVersionJob(init.getJobTypeName(), init.getOldVersion(), 
 				init.getInitParameters(), init.getJobName(), parentJob);
+		
+		WerkStep<J> firstStep = (WerkStep<J>)jobStepFactory.createFirstStep(job, job.getNextStepNumber());
+		job.setCurrentStep(firstStep);
 		
 		lock.lock();
 		try {

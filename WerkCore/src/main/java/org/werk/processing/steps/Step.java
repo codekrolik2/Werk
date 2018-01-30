@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.werk.data.StepPOJO;
+import org.werk.meta.StepType;
 import org.werk.processing.jobs.Job;
 import org.werk.processing.parameters.Parameter;
 
@@ -47,7 +48,9 @@ public interface Step<J> extends StepPOJO {
 	//--------------------------------------------
 	
 	StepExec<J> getStepExec();
-	StepTransitioner<J> getStepTransitioner();
+	Transitioner<J> getStepTransitioner();
+	
+	StepType<J> getStepType();
 
 	void copyParametersFrom(StepPOJO step);
 }

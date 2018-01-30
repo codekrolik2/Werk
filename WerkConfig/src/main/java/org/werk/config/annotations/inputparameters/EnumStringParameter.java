@@ -7,10 +7,11 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.PARAMETER, ElementType.TYPE_PARAMETER})
-public @interface DefaultListParameter {
-	boolean isDefaultValueImmutable();
-	String listValueGetterMethod();
+public @interface EnumStringParameter {
+	String[] values();
+	boolean prohibitValues() default false;
 	
 	String name();
 	String description() default "";
+	boolean isOptional() default true;
 }

@@ -5,22 +5,24 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import org.werk.processing.steps.StepExec;
-import org.werk.processing.steps.StepTransitioner;
+import org.werk.processing.steps.SimpleTransitioner;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface StepType {
 	String name();
 	
-	String processingDescription();
-	String rollbackDescription();
+	String processingDescription() default "";
+	String rollbackDescription() default "";
 	
 	@SuppressWarnings("rawtypes")
-	Class<StepExec> stepExecClass();
+	Class stepExecClass();
 	@SuppressWarnings("rawtypes")
-	Class<StepTransitioner> stepTransitionerClass();
+	Class stepTransitionerClass() default SimpleTransitioner.class;
 
 	String execConfig() default "";
 	String transitionerConfig() default "";
+	
+	String[] transitions();
+	String[] rollbackTransitions();
 }

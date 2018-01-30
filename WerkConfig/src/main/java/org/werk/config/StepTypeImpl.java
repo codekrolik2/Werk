@@ -1,6 +1,6 @@
 package org.werk.config;
 
-import java.util.List;
+import java.util.Set;
 
 import org.werk.meta.StepExecFactory;
 import org.werk.meta.StepTransitionerFactory;
@@ -14,9 +14,9 @@ public class StepTypeImpl<J> implements StepType<J> {
 	@Getter
 	String stepTypeName;
 	@Getter
-	List<String> allowedTransitions;
+	Set<String> allowedTransitions;
 	@Getter
-	List<String> allowedRollbackTransitions;
+	Set<String> allowedRollbackTransitions;
 	@Getter
 	StepExecFactory<J> stepExecFactory;
 	@Getter

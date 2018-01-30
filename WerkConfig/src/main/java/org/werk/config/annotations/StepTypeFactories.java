@@ -22,4 +22,7 @@ public @interface StepTypeFactories {
 
 	String execConfig() default "";
 	String transitionerConfig() default "";
+
+	String[] transitions();
+	String[] rollbackTransitions();
 }

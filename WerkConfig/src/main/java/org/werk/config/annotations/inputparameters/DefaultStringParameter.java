@@ -11,7 +11,6 @@ public @interface DefaultStringParameter {
 	boolean isDefaultValueImmutable();
 	String defaultValue();
 	
-	String name() default "";
+	String name();
 	String description() default "";
-	boolean isOptional() default true;
 }

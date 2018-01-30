@@ -11,7 +11,6 @@ public @interface DefaultDictionaryParameter {
 	boolean isDefaultValueImmutable();
 	String dictionaryValueGetterMethod();
 	
-	String name() default "";
+	String name();
 	String description() default "";
-	boolean isOptional() default true;
 }

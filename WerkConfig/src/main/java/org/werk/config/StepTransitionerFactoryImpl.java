@@ -3,7 +3,7 @@ package org.werk.config;
 import java.lang.reflect.Constructor;
 
 import org.werk.meta.StepTransitionerFactory;
-import org.werk.processing.steps.StepTransitioner;
+import org.werk.processing.steps.Transitioner;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,12 +12,12 @@ import lombok.Getter;
 public class StepTransitionerFactoryImpl<J> implements StepTransitionerFactory<J> {
 	@SuppressWarnings("rawtypes")
 	@Getter
-	protected Class<StepTransitioner> stepTransitioner;
+	protected Class<Transitioner> stepTransitioner;
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
-	public StepTransitioner<J> createStepTransitioner() throws Exception {
-		Constructor<StepTransitioner> constr = stepTransitioner.getConstructor();
-		return (StepTransitioner<J>)constr.newInstance();
+	public Transitioner<J> createStepTransitioner() throws Exception {
+		Constructor<Transitioner> constr = stepTransitioner.getConstructor();
+		return (Transitioner<J>)constr.newInstance();
 	}
 }

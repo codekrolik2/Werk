@@ -19,4 +19,17 @@ public class DefaultValueJobInputParameterImpl extends JobInputParameterImpl imp
 		this.isDefaultValueImmutable = isDefaultValueImmutable;
 		this.defaultValue = defaultValue;
 	}
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(name).append(": ").append(type.toString());
+		sb.append(" [").append("Default: ").append(getParameterValue(defaultValue));
+		if (isDefaultValueImmutable())
+			sb.append(", Immutable]");
+		else
+			sb.append(", Mutable]");
+		
+		return sb.toString();
+	}
 }

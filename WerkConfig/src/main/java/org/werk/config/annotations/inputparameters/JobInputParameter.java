@@ -5,14 +5,10 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import org.werk.processing.parameters.ParameterType;
-
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.PARAMETER, ElementType.TYPE_PARAMETER})
 public @interface JobInputParameter {
-	ParameterType type();
-	
-	String name() default "";
+	String name();
 	String description() default "";
 	boolean isOptional() default true;
 }

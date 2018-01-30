@@ -1,6 +1,7 @@
 package org.werk.engine.local;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.jobs.JoinStatusRecord;
@@ -16,4 +17,6 @@ public class LocalJoinStatusRecord<J> implements JoinStatusRecord<J> {
 	String joinParameterName;
 	@Getter
 	JobStatus statusBeforeJoin;
+	@Getter
+	Optional<Long> waitForNJobs;
 }

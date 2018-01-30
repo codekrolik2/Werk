@@ -9,7 +9,7 @@ import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.steps.StepExec;
 import org.werk.processing.steps.ExecutionResult;
 import org.werk.processing.steps.StepExecutionStatus;
-import org.werk.processing.steps.StepTransitioner;
+import org.werk.processing.steps.Transitioner;
 import org.werk.processing.steps.Transition;
 
 public class WerkRunnable<J> extends WorkThreadPoolRunnable<Job<J>> {
@@ -53,14 +53,17 @@ public class WerkRunnable<J> extends WorkThreadPoolRunnable<Job<J>> {
 			if (execException == null) {
 				try {
 					//get stepTransitioner
-					StepTransitioner<J> transitioner = job.getCurrentStep().getStepTransitioner();
+					Transitioner<J> transitioner = job.getCurrentStep().getStepTransitioner();
 					
 					//open Job/Step context and inject properties
 					job.openTempContextAndRemap(transitioner);
 					
-					//execute stepTransitioner
-					transition = transitioner.transition(
-						execResult.getStatus() == StepExecutionStatus.SUCCESS, job);
+					if (job.getStatus() == JobStatus.PROCESSING)
+						transition = transitioner.processingTransition(
+								execResult.getStatus() == StepExecutionStatus.SUCCESS, job.getCurrentStep());
+					else
+						transition = transitioner.rollbackTransition(
+								execResult.getStatus() == StepExecutionStatus.SUCCESS, job.getCurrentStep());
 					
 					//commit Job/Step context
 					job.commitTempContext();

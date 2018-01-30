@@ -11,7 +11,6 @@ public @interface DefaultBoolParameter {
 	boolean isDefaultValueImmutable();
 	boolean defaultValue();
 	
-	String name() default "";
+	String name();
 	String description() default "";
-	boolean isOptional() default true;
 }

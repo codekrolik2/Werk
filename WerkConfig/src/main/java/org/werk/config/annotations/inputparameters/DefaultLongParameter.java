@@ -11,7 +11,6 @@ public @interface DefaultLongParameter {
 	boolean isDefaultValueImmutable();
 	long defaultValue();
 	
-	String name() default "";
+	String name();
 	String description() default "";
-	boolean isOptional() default true;
 }

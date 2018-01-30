@@ -15,47 +15,47 @@ import org.werk.processing.parameters.impl.StringParameterImpl;
 
 public class Test {
 	static class Injectable {
-		@JobParameter
-		int i1;
+		@JobParameter(name="i1")
+		Integer i1;
 		
-		@JobParameter
-		long l1;
+		@JobParameter(name="l1")
+		Long l1;
 		
-		@JobParameter
-		double d1;
+		@JobParameter(name="d1")
+		Double d1;
 		
-		@JobParameter
-		boolean b1;
+		@JobParameter(name="b1")
+		Boolean b1;
 		
-		@JobParameter
+		@JobParameter(name="s1")
 		String s1;
 		
-		@JobParameter
+		@JobParameter(name="lst1")
 		List<String> lst1;
 		
-		@JobParameter
+		@JobParameter(name="")
 		Map<String, String> m1;
 
 	
-		@StepParameter
-		int i2;
+		@StepParameter(name="i2")
+		Integer i2;
 		
-		@StepParameter
-		long l2;
+		@StepParameter(name="l2")
+		Long l2;
 		
-		@StepParameter
-		double d2;
+		@StepParameter(name="d2")
+		Double d2;
 		
-		@StepParameter
-		boolean b2;
+		@StepParameter(name="b2")
+		Boolean b2;
 		
-		@StepParameter
+		@StepParameter(name="s2")
 		String s2;
 		
-		@StepParameter
+		@StepParameter(name="lst2")
 		List<String> lst2;
 		
-		@StepParameter
+		@StepParameter(name="m2")
 		Map<String, String> m2;
 	}
 	

@@ -40,16 +40,20 @@ public class Transition {
 		return new Transition(TransitionStatus.ROLLBACK, Optional.of(stepName), Optional.of(delayMS), new ArrayList<Long>());
 	}
 	
-	public static Transition rollback(List<Long> rollbackStepNumbers) {
-		return new Transition(TransitionStatus.ROLLBACK, Optional.empty(), Optional.empty(), rollbackStepNumbers);
+	public static Transition rollback(String stepName, List<Long> rollbackStepNumbers) {
+		return new Transition(TransitionStatus.ROLLBACK, Optional.of(stepName), Optional.empty(), rollbackStepNumbers);
 	}
 	
-	public static Transition rollback(List<Long> rollbackStepNumbers, long delayMS) {
-		return new Transition(TransitionStatus.ROLLBACK, Optional.empty(), Optional.of(delayMS), rollbackStepNumbers);
+	public static Transition rollback(String stepName, List<Long> rollbackStepNumbers, long delayMS) {
+		return new Transition(TransitionStatus.ROLLBACK, Optional.of(stepName), Optional.of(delayMS), rollbackStepNumbers);
 	}
 	
 	public static Transition finish() {
 		return new Transition(TransitionStatus.FINISH, Optional.empty(), Optional.empty(), new ArrayList<Long>());
+	}
+	
+	public static Transition finishRollback() {
+		return new Transition(TransitionStatus.FINISH_ROLLBACK, Optional.empty(), Optional.empty(), new ArrayList<Long>());
 	}
 	
 	public static Transition fail() {

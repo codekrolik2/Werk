@@ -45,7 +45,7 @@ public interface Job<J> extends ReadOnlyJob<J> {
 	void putListParameter(String parameterName, List<Parameter> value);
 	
 	//JobStatus getStatus();
-	void setStatus(JobStatus status);
+	//void setStatus(JobStatus status);
 	
 	Step<J> getCurrentStep();
 	

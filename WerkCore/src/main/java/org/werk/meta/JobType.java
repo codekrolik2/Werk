@@ -1,6 +1,7 @@
 package org.werk.meta;
 
 import java.util.List;
+import java.util.Map;
 
 import org.werk.meta.inputparameters.JobInputParameter;
 
@@ -8,7 +9,7 @@ public interface JobType {
 	String getJobTypeName();
 	long getVersion();
 	
-	List<List<JobInputParameter>> getInitParameters();
+	Map<String, List<JobInputParameter>> getInitParameters();
 	
 	String getFirstStepTypeName();
 	List<String> getStepTypes();
@@ -17,6 +18,6 @@ public interface JobType {
 	
 	String getDescription();
 	
-	String getCustomInfo();
+	String getJobConfig();
 	boolean isForceAcyclic();
 }
