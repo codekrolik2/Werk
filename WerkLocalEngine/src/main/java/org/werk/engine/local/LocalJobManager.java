@@ -14,9 +14,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+import org.apache.log4j.Logger;
 import org.pillar.lru.LRUCache;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.werk.data.StepPOJO;
 import org.werk.engine.JobStepFactory;
 import org.werk.engine.WerkEngine;
@@ -37,7 +36,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 public class LocalJobManager<J> {
-	final Logger logger = LoggerFactory.getLogger(LocalJobManager.class);
+	final Logger logger = Logger.getLogger(LocalJobManager.class);
 	
 	@AllArgsConstructor
 	class JobCluster {
@@ -51,7 +50,7 @@ public class LocalJobManager<J> {
 	protected WerkEngine<J> werkEngine;
 	
 	protected ReentrantLock lock;
-	protected long maxJobCacheSize;
+	protected int maxJobCacheSize;
 	
 	protected Map<J, Job<J>> currentJobs;
 	protected Map<J, ReadOnlyJob<J>> finishedJobs;
@@ -65,16 +64,17 @@ public class LocalJobManager<J> {
 	//[ JoinedJob Id : Set [ Awaiting Job Id ] ]
 	protected Map<J, Set<J>> joinedJobs;
 	
-	public LocalJobManager(long maxJobCacheSize) {
+	public LocalJobManager(int maxJobCacheSize) {
 		this(null, null, maxJobCacheSize);
 	}
 	
 	public LocalJobManager(JobStepFactory<J> jobStepFactory, WerkEngine<J> werkEngine,
-			long maxJobCacheSize) {
+			int maxJobCacheSize) {
 		this.jobStepFactory = jobStepFactory;
 		this.werkEngine = werkEngine;
 		
 		this.maxJobCacheSize = maxJobCacheSize;
+		cacheSize = new AtomicLong(0);
 		
 		lock = new ReentrantLock();
 		
@@ -117,6 +117,8 @@ public class LocalJobManager<J> {
 				};
 			}
 		};
+		
+		evictionLRUCache.init(maxJobCacheSize);
 	}
 	
 	//---------------------------------------------------
@@ -288,8 +290,9 @@ public class LocalJobManager<J> {
 			
 			//Check joined jobs
 			Set<J> awaitingThisJob = joinedJobs.get(jobId);
-			for (J awaitingJobId : awaitingThisJob)
-				checkJoinedJob(awaitingJobId);
+			if (awaitingThisJob != null)
+				for (J awaitingJobId : awaitingThisJob)
+					checkJoinedJob(awaitingJobId);
 			joinedJobs.remove(jobId);
 		} finally {
 			lock.unlock();
@@ -368,9 +371,6 @@ public class LocalJobManager<J> {
 		LocalWerkJob<J> job = (LocalWerkJob<J>)jobStepFactory.createNewJob(init.getJobTypeName(), init.getInitParameters(),
 				init.getJobName(), parentJob);
 		
-		WerkStep<J> firstStep = (WerkStep<J>)jobStepFactory.createFirstStep(job, job.getNextStepNumber());
-		job.setCurrentStep(firstStep);
-		
 		lock.lock();
 		try {
 			addNewJob(job);
@@ -384,9 +384,6 @@ public class LocalJobManager<J> {
 	public J createOldVersionJob(OldVersionJobInitInfo init, Optional<J> parentJob) throws Exception {
 		LocalWerkJob<J> job = (LocalWerkJob<J>)jobStepFactory.createOldVersionJob(init.getJobTypeName(), init.getOldVersion(), 
 				init.getInitParameters(), init.getJobName(), parentJob);
-		
-		WerkStep<J> firstStep = (WerkStep<J>)jobStepFactory.createFirstStep(job, job.getNextStepNumber());
-		job.setCurrentStep(firstStep);
 		
 		lock.lock();
 		try {
@@ -426,6 +423,8 @@ public class LocalJobManager<J> {
 			jobCluster.getJobs().add(job.getJobId());
 			
 			jobClusters.put(job.getJobId(), jobCluster);
+			job.setStatus(JobStatus.PROCESSING);
+			
 			werkEngine.addJob(job);
 		} catch (Exception e) {
 			currentJobs.remove(job.getJobId());

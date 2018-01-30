@@ -9,8 +9,9 @@ public class WerkPool<J> extends WorkThreadPool<Job<J>> {
 	protected WerkStepSwitcher<J> stepSwitcher;
 	
 	public WerkPool(int threadCount, TimeProvider timeProvider, WerkStepSwitcher<J> stepSwitcher) {
-		super(threadCount, timeProvider);
+		super(timeProvider);
 		this.stepSwitcher = stepSwitcher;
+		adjustSize(threadCount);
 	}
 	
 	@Override

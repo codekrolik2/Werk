@@ -3,8 +3,7 @@ package org.werk.engine.local;
 import java.util.List;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 import org.werk.engine.StepSwitchResult;
 import org.werk.engine.SwitchStatus;
 import org.werk.engine.WerkStepSwitcher;
@@ -22,7 +21,7 @@ import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class LocalStepSwitcher<J> implements WerkStepSwitcher<J> {
-	final Logger logger = LoggerFactory.getLogger(LocalStepSwitcher.class);
+	final Logger logger = Logger.getLogger(LocalStepSwitcher.class);
 	
 	protected LocalJobStepFactory<J> jobStepFactory;
 	protected LocalJobManager<J> jobManager;

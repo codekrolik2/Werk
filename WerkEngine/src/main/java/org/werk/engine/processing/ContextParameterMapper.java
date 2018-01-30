@@ -87,13 +87,19 @@ public class ContextParameterMapper {
 					if ((name == null) || (name.equals("")))
 						name = field.getName();
 					
+					Parameter oldPrm = stepContext.getParameter(name);
 					stepContext.putParameter(name, prm);
+					if (oldPrm != null)
+						stepContext.putParameter(name, oldPrm);
 				} else {
 					String name = jp.name() == null ? null : jp.name().trim();
 					if ((name == null) || (name.equals("")))
 						name = field.getName();
 					
+					Parameter oldPrm = jobContext.getParameter(name);
 					jobContext.putParameter(name, prm);
+					if (oldPrm != null)
+						jobContext.putParameter(name, oldPrm);
 				}
 			}
 		}

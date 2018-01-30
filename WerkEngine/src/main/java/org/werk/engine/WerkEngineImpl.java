@@ -6,9 +6,8 @@ import org.werk.engine.processing.WerkJob;
 import org.werk.processing.jobs.Job;
 
 public class WerkEngineImpl<J> implements WerkEngine<J> {
-	protected WerkPool<J> werkPool;
-	protected WerkStepSwitcher<J> stepSwitcher;
 	protected TimeProvider timeProvider;
+	protected WerkPool<J> werkPool;
 	
 	public WerkEngineImpl(int threadCount, WerkStepSwitcher<J> stepSwitcher) {
 		timeProvider = new LongTimeProvider();

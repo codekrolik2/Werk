@@ -1,19 +1,22 @@
 package org.werk.engine;
 
+import org.apache.log4j.Logger;
 import org.pillar.exec.work.WorkThreadPool;
 import org.pillar.exec.work.WorkThreadPoolRunnable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.werk.engine.processing.ContextParameterMapper;
+import org.werk.engine.processing.JobContext;
+import org.werk.engine.processing.StepContext;
+import org.werk.engine.processing.WerkJob;
 import org.werk.processing.jobs.Job;
 import org.werk.processing.jobs.JobStatus;
-import org.werk.processing.steps.StepExec;
 import org.werk.processing.steps.ExecutionResult;
+import org.werk.processing.steps.StepExec;
 import org.werk.processing.steps.StepExecutionStatus;
-import org.werk.processing.steps.Transitioner;
 import org.werk.processing.steps.Transition;
+import org.werk.processing.steps.Transitioner;
 
 public class WerkRunnable<J> extends WorkThreadPoolRunnable<Job<J>> {
-	final Logger logger = LoggerFactory.getLogger(WerkRunnable.class);
+	final Logger logger = Logger.getLogger(WerkRunnable.class);
 	
 	protected WerkStepSwitcher<J> stepSwitcher;
 	
@@ -95,7 +98,11 @@ public class WerkRunnable<J> extends WorkThreadPoolRunnable<Job<J>> {
 			
 			pool.addUnitOfWork(job, delayMS);
 		} else
-			logger.info("Unloading job: [%s / %s / %s]", job.getJobTypeName(), job.getJobName(), 
-					job.getStatus());
+			logger.info(
+					String.format("Unloading job: [%s / %s / %s]", 
+							job.getJobTypeName(), 
+							job.getJobName().isPresent() ? job.getJobName().get() : "No name", 
+							job.getStatus())
+				);
 	}
 }

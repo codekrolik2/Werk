@@ -77,7 +77,7 @@ public class WerkStep<J> implements Step<J> {
 		tempContext = null;
 	}
 	
-	protected StepContext getCurrentContext() {
+	public StepContext getCurrentContext() {
 		return tempContext == null ? mainContext : tempContext;
 	}
 	

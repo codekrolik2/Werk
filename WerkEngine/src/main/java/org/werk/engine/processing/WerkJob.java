@@ -93,7 +93,7 @@ public abstract class WerkJob<J> implements Job<J> {
 		tempContext = null;
 	}
 	
-	protected JobContext<J> getCurrentContext() {
+	public JobContext<J> getCurrentContext() {
 		return tempContext == null ? mainContext : tempContext;
 	}
 	

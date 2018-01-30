@@ -38,9 +38,9 @@ public class SimpleTransitioner<J> implements Transitioner<J> {
 				nextStep = step.getStepType().getTransitionerConfig();
 			
 			if ((nextStep == null) || (nextStep.trim().isEmpty()))
-				return Transition.nextStep(nextStep);
-			else
 				return Transition.finish();
+			else
+				return Transition.nextStep(nextStep);
 		} else {
 			List<Long> rollbackStepNumbers = new ArrayList<Long>();
 			rollbackStepNumbers.add(step.getStepNumber());

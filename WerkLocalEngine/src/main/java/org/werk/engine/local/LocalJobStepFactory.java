@@ -47,6 +47,17 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 	
 	protected abstract J getNextJobId();
 	
+	protected void fillParameters(List<JobInputParameter> parameterSet, Map<String, Parameter> jobInitialParameters) {
+		for (JobInputParameter parameter : parameterSet) {
+			if (!jobInitialParameters.containsKey(parameter.getName())) {
+				if (parameter instanceof DefaultValueJobInputParameter) {
+					Parameter defaultValue = ((DefaultValueJobInputParameter)parameter).getDefaultValue();
+					jobInitialParameters.put(parameter.getName(), defaultValue);
+				}
+			}
+		}
+	}
+	
 	@Override
 	public Job<J> createNewJob(String jobTypeName, Map<String, Parameter> jobInitialParameters, 
 			Optional<String> jobName, Optional<J> parentJob) throws Exception {
@@ -56,11 +67,12 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 				String.format("JobType not found [%s]", jobTypeName)
 			);
 		
-		checkParameters(jobType, jobInitialParameters);
+		List<JobInputParameter> parameterSet = checkParameters(jobType, jobInitialParameters);
+		fillParameters(parameterSet, jobInitialParameters);
 		
 		long version = jobType.getVersion();
 		JobStatus status = JobStatus.INACTIVE;
-		Map<String, Parameter> jobParameters = new HashMap<>();
+		Map<String, Parameter> jobParameters = new HashMap<>(jobInitialParameters);
 		Timestamp nextExecutionTime = timeProvider.getCurrentTime();
 		Optional<JoinStatusRecord<J>> joinStatusRecord = Optional.empty();
 		
@@ -82,7 +94,7 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 		
 		long version = jobType.getVersion();
 		JobStatus status = JobStatus.INACTIVE;
-		Map<String, Parameter> jobParameters = new HashMap<>();
+		Map<String, Parameter> jobParameters = new HashMap<>(jobInitialParameters);
 		Timestamp nextExecutionTime = timeProvider.getCurrentTime();
 		Optional<JoinStatusRecord<J>> joinStatusRecord = Optional.empty();
 		
@@ -143,9 +155,7 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 				String.format("JobType not found [%s] for version [%d]", job.getJobTypeName(), job.getVersion())
 			);
 			
-		createNewStep(job, stepNumber, jobType.getFirstStepTypeName());
-		
-		return null;
+		return createNewStep(job, stepNumber, jobType.getFirstStepTypeName());
 	}
 
 	@Override
@@ -190,7 +200,7 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 	
 	//-------------------------------------------------------
 	
-	protected void checkParameters(JobType jobType, Map<String, Parameter> parameters) throws WerkConfigException {
+	protected List<JobInputParameter> checkParameters(JobType jobType, Map<String, Parameter> parameters) throws WerkConfigException {
 		boolean match = false;
 		for (List<JobInputParameter> allowedParameters : jobType.getInitParameters().values()) {
 			//Check that all required parameters exist
@@ -205,14 +215,13 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 			}
 			
 			if (match)
-				break;
+				return allowedParameters;
 		}
 		
-		if (!match)
-			throw new WerkConfigException(
-					String.format("Can't create JobType [%s] - match for input parameter set not found", 
-						jobType.getJobTypeName())
-				);
+		throw new WerkConfigException(
+				String.format("Can't create JobType [%s] - match for input parameter set not found", 
+					jobType.getJobTypeName())
+			);
 	}
 	
 	protected boolean isParameterRequired(JobInputParameter ip) {

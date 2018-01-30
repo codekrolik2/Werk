@@ -90,7 +90,8 @@ public class ParameterContext {
 	//--------------------------------
 	
 	public Long getLongParameter(String parameterName) {
-		return ((LongParameter)getParameter(parameterName)).getValue();
+		Parameter prm = getParameter(parameterName);
+		return prm == null ? null : ((LongParameter)prm).getValue();
 	}
 
 	public void putLongParameter(String parameterName, Long value) {
@@ -98,7 +99,8 @@ public class ParameterContext {
 	}
 	
 	public Double getDoubleParameter(String parameterName) {
-		return ((DoubleParameter)getParameter(parameterName)).getValue();
+		Parameter prm = getParameter(parameterName);
+		return prm == null ? null : ((DoubleParameter)prm).getValue();
 	}
 
 	public void putDoubleParameter(String parameterName, Double value) {
@@ -106,7 +108,8 @@ public class ParameterContext {
 	}
 	
 	public Boolean getBoolParameter(String parameterName) {
-		return ((BoolParameter)getParameter(parameterName)).getValue();
+		Parameter prm = getParameter(parameterName);
+		return prm == null ? null : ((BoolParameter)prm).getValue();
 	}
 
 	public void putBoolParameter(String parameterName, Boolean value) {
@@ -114,7 +117,8 @@ public class ParameterContext {
 	}
 	
 	public String getStringParameter(String parameterName) {
-		return ((StringParameter)getParameter(parameterName)).getValue();
+		Parameter prm = getParameter(parameterName);
+		return prm == null ? null : ((StringParameter)prm).getValue();
 	}
 
 	public void putStringParameter(String parameterName, String value) {
@@ -122,7 +126,8 @@ public class ParameterContext {
 	}
 	
 	public Map<String, Parameter> getDictionaryParameter(String parameterName) {
-		return ((DictionaryParameter)getParameter(parameterName)).getValue();
+		Parameter prm = getParameter(parameterName);
+		return prm == null ? null : ((DictionaryParameter)prm).getValue();
 	}
 
 	public void putDictionaryParameter(String parameterName, Map<String, Parameter> value) {
@@ -130,7 +135,8 @@ public class ParameterContext {
 	}
 	
 	public List<Parameter> getListParameter(String parameterName) {
-		return ((ListParameter)getParameter(parameterName)).getValue();
+		Parameter prm = getParameter(parameterName);
+		return prm == null ? null : ((ListParameter)prm).getValue();
 	}
 
 	public void putListParameter(String parameterName, List<Parameter> value) {
