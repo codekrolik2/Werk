@@ -22,14 +22,9 @@ public class DefaultValueJobInputParameterImpl extends JobInputParameterImpl imp
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append(name).append(": ").append(type.toString());
-		sb.append(" [").append("Default: ").append(getParameterValue(defaultValue));
-		if (isDefaultValueImmutable())
-			sb.append(", Immutable]");
-		else
-			sb.append(", Mutable]");
-		
-		return sb.toString();
+		return String.format(
+				"%s: %s [Default: %s%s", name, type.toString(), getParameterValue(defaultValue), 
+					isDefaultValueImmutable() ? ", Immutable]" : ", Mutable]" 
+			);
 	}
 }

@@ -4,7 +4,9 @@ import org.werk.processing.parameters.DoubleParameter;
 import org.werk.processing.parameters.ParameterType;
 
 import lombok.Getter;
+import lombok.ToString;
 
+@ToString
 public class DoubleParameterImpl implements DoubleParameter {
 	@Getter
 	protected Double value;

@@ -27,4 +27,15 @@ public class RangeJobInputParameterImpl extends JobInputParameterImpl implements
 		this.endInclusive = endInclusive;
 		this.prohibitRange = prohibitRange;
 	}
+
+	@Override
+	public String toString() {
+		return String.format(
+				"%s: %s [Range: %s %s - %s %s] [Prohibit: %s]", 
+					name, type.toString(),
+					getParameterValue(start), startInclusive ? "IN" : "EX",
+					getParameterValue(end), endInclusive ? "IN" : "EX", 
+					prohibitRange
+			);
+	}
 }

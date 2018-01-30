@@ -4,7 +4,9 @@ import org.werk.processing.parameters.LongParameter;
 import org.werk.processing.parameters.ParameterType;
 
 import lombok.Getter;
+import lombok.ToString;
 
+@ToString
 public class LongParameterImpl implements LongParameter {
 	@Getter
 	protected Long value;

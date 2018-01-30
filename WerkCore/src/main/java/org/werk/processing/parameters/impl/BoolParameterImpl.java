@@ -4,7 +4,9 @@ import org.werk.processing.parameters.BoolParameter;
 import org.werk.processing.parameters.ParameterType;
 
 import lombok.Getter;
+import lombok.ToString;
 
+@ToString
 public class BoolParameterImpl implements BoolParameter {
 	@Getter
 	protected Boolean value;

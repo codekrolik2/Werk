@@ -20,4 +20,24 @@ public class EnumJobInputParameterImpl extends JobInputParameterImpl implements 
 		this.values = values;
 		this.prohibitValues = prohibitValues;
 	}
+
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(name).append(": ").append(type.toString());
+		if (isOptional())
+			sb.append(" [Optional]");
+		sb.append(" [Values: ");
+		
+		for (int i = 0; i < values.size(); i++) {
+			Parameter prm = values.get(i);
+			if (i > 0) sb.append(", ");
+			sb.append(getParameterValue(prm));
+		}
+		sb.append("] [Prohibit: ");
+		sb.append(prohibitValues);
+		sb.append("]");
+		
+		return sb.toString();
+	}
 }

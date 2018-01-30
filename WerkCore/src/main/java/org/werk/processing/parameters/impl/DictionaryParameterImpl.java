@@ -8,7 +8,9 @@ import org.werk.processing.parameters.Parameter;
 import org.werk.processing.parameters.ParameterType;
 
 import lombok.Getter;
+import lombok.ToString;
 
+@ToString
 public class DictionaryParameterImpl implements DictionaryParameter {
 	@Getter
 	protected Map<String, Parameter> value;

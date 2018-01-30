@@ -4,7 +4,9 @@ import org.werk.processing.parameters.ParameterType;
 import org.werk.processing.parameters.StringParameter;
 
 import lombok.Getter;
+import lombok.ToString;
 
+@ToString
 public class StringParameterImpl implements StringParameter {
 	@Getter
 	protected String value;

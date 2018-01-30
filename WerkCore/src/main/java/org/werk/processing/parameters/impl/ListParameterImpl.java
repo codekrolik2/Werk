@@ -8,7 +8,9 @@ import org.werk.processing.parameters.Parameter;
 import org.werk.processing.parameters.ParameterType;
 
 import lombok.Getter;
+import lombok.ToString;
 
+@ToString
 public class ListParameterImpl implements ListParameter {
 	@Getter
 	protected List<Parameter> value;

@@ -42,11 +42,8 @@ public class JobInputParameterImpl implements JobInputParameter {
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append(name).append(": ").append(type.toString());
-		if (isOptional())
-			sb.append(" ").append("[Optional]");
-		
-		return sb.toString();
+		return String.format(
+			"%s: %s %s", name, type.toString(), isOptional() ? "[Optional]" : "" 
+		);
 	}
 }

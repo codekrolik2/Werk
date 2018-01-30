@@ -80,7 +80,7 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 	protected void checkRangeAndEnumParameters(List<JobInputParameter> parameterSet, 
 			Map<String, Parameter> jobInitialParameters) throws WerkException {
 		for (JobInputParameter parameter : parameterSet) {
-			if (!jobInitialParameters.containsKey(parameter.getName())) {
+			if (jobInitialParameters.containsKey(parameter.getName())) {
 				Parameter jobPrm = jobInitialParameters.get(parameter.getName());
 				
 				if (parameter instanceof EnumJobInputParameter) {
@@ -95,14 +95,14 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 					if (((EnumJobInputParameter)parameter).isProhibitValues()) {
 						if (match)
 							throw new WerkException(
-								String.format("Enum value is prohibited for parameter [%s], value [%s]", 
-										parameter.getName(), getParameterValue(jobPrm))
+								String.format("Enum value is prohibited for value [%s], param [%s] ", 
+										getParameterValue(jobPrm), parameter)
 							);
 					} else {
 						if (!match)
 							throw new WerkException(
-								String.format("Enum match not found for parameter [%s], value [%s]", 
-										parameter.getName(), getParameterValue(jobPrm))
+								String.format("Enum match not found for value [%s], param [%s]", 
+										getParameterValue(jobPrm), parameter)
 							);
 					}
 				} else if (parameter instanceof RangeJobInputParameter) {
@@ -117,15 +117,15 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 					
 					boolean startConstraint;
 					if (((RangeJobInputParameter)parameter).isStartInclusive())
-						startConstraint = (parametersCompare(start, jobPrm) >= 0);
+						startConstraint = (parametersCompare(start, jobPrm) <= 0);
 					else
-						startConstraint = (parametersCompare(start, jobPrm) > 0);
+						startConstraint = (parametersCompare(start, jobPrm) < 0);
 					
 					boolean endConstraint;
 					if (((RangeJobInputParameter)parameter).isEndInclusive())
-						endConstraint = (parametersCompare(jobPrm, end) >= 0);
+						endConstraint = (parametersCompare(jobPrm, end) <= 0);
 					else
-						endConstraint = (parametersCompare(jobPrm, end) > 0);
+						endConstraint = (parametersCompare(jobPrm, end) < 0);
 					
 					if (startConstraint && endConstraint) {
 						if (((RangeJobInputParameter)parameter).isProhibitRange())

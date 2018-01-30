@@ -17,6 +17,7 @@ import org.werk.exceptions.WerkConfigException;
 import org.werk.meta.JobInitInfo;
 import org.werk.meta.JobType;
 import org.werk.processing.parameters.Parameter;
+import org.werk.processing.parameters.impl.DoubleParameterImpl;
 import org.werk.processing.parameters.impl.LongParameterImpl;
 import org.werk.processing.parameters.impl.StringParameterImpl;
 
@@ -67,12 +68,19 @@ public class LocalWerkRunner {
 		for (JobType type : service.werkConfig.getAllJobTypes())
 			System.out.println(type.toString());
 		
-		String jobTypeName = "Job1";
-		Map<String, Parameter> initParameters = new HashMap<>();
-		initParameters.put("text3", new StringParameterImpl("hello"));
-		initParameters.put("l2", new LongParameterImpl(123L));
-		
-		JobInitInfo init = new JobInitInfoImpl(jobTypeName, initParameters);
-		service.createJob(init);
+		int i = 0;
+		//for (int i = 0; i < 1000; i++) {
+			String jobTypeName = "Job1";
+			Map<String, Parameter> initParameters = new HashMap<>();
+			initParameters.put("text3", new StringParameterImpl("hello"));
+			initParameters.put("l1", new LongParameterImpl(123L));
+			initParameters.put("l2", new LongParameterImpl(1236L));
+			initParameters.put("text", new StringParameterImpl("hello " + i));
+			initParameters.put("d1", new DoubleParameterImpl(5.8));
+			initParameters.put("text2", new StringParameterImpl("c"));
+			
+			JobInitInfo init = new JobInitInfoImpl(jobTypeName, "job" + i, initParameters);
+			service.createJob(init);
+		//}
 	}
 }
