@@ -398,11 +398,13 @@ public class LocalJobManager<J> {
 	protected void addNewJob(LocalWerkJob<J> job) throws Exception {
 		JobCluster jobCluster = null;
 		try {
+			//Init first step
 			WerkStep<J> firstStep = (WerkStep<J>)jobStepFactory.createFirstStep(job, job.getNextStepNumber());
 			job.setCurrentStep(firstStep);
 			
 			currentJobs.put(job.getJobId(), job);
 			
+			//Child jobs
 			if (job.getParentJobId().isPresent()) {
 				J parentJob = job.getParentJobId().get();
 				
@@ -416,13 +418,15 @@ public class LocalJobManager<J> {
 				jobCluster = jobClusters.get(parentJob);
 			}
 			
+			//Create or add job cluster
 			if (jobCluster == null) {
 				Set<J> jobs = new HashSet<J>();
 				jobCluster = new JobCluster(jobs);
 			}
 			jobCluster.getJobs().add(job.getJobId());
-			
 			jobClusters.put(job.getJobId(), jobCluster);
+
+			//Set job status to PROCESSING
 			job.setStatus(JobStatus.PROCESSING);
 			
 			werkEngine.addJob(job);

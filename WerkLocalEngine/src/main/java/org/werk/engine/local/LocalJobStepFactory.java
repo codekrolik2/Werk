@@ -16,10 +16,13 @@ import org.werk.data.StepPOJO;
 import org.werk.engine.JobStepFactory;
 import org.werk.engine.processing.WerkStep;
 import org.werk.exceptions.WerkConfigException;
+import org.werk.exceptions.WerkException;
 import org.werk.meta.JobType;
 import org.werk.meta.StepType;
 import org.werk.meta.inputparameters.DefaultValueJobInputParameter;
+import org.werk.meta.inputparameters.EnumJobInputParameter;
 import org.werk.meta.inputparameters.JobInputParameter;
+import org.werk.meta.inputparameters.RangeJobInputParameter;
 import org.werk.processing.jobs.Job;
 import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.jobs.JoinStatusRecord;
@@ -58,6 +61,92 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 		}
 	}
 	
+	protected boolean parametersEqual(Parameter p1, Parameter p2) {
+		if (p1.getType() != p2.getType())
+			return false;
+		return getParameterValue(p1).equals( getParameterValue(p2) );
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	protected int parametersCompare(Parameter p1, Parameter p2) throws WerkException {
+		if (p1.getType() != p2.getType())
+			throw new WerkException(
+				String.format("Can't compare parameters of different types [%s] [%s]", p1.getType(), p2.getType())
+			);
+		
+		return ((Comparable)getParameterValue(p1)).compareTo( getParameterValue(p2) );
+	}
+	
+	protected void checkRangeAndEnumParameters(List<JobInputParameter> parameterSet, 
+			Map<String, Parameter> jobInitialParameters) throws WerkException {
+		for (JobInputParameter parameter : parameterSet) {
+			if (!jobInitialParameters.containsKey(parameter.getName())) {
+				Parameter jobPrm = jobInitialParameters.get(parameter.getName());
+				
+				if (parameter instanceof EnumJobInputParameter) {
+					boolean match = false;
+					for (Parameter p : ((EnumJobInputParameter)parameter).getValues()) {
+						if (parametersEqual(p, jobPrm)) { 
+							match = true;
+							break;
+						}
+					}
+					
+					if (((EnumJobInputParameter)parameter).isProhibitValues()) {
+						if (match)
+							throw new WerkException(
+								String.format("Enum value is prohibited for parameter [%s], value [%s]", 
+										parameter.getName(), getParameterValue(jobPrm))
+							);
+					} else {
+						if (!match)
+							throw new WerkException(
+								String.format("Enum match not found for parameter [%s], value [%s]", 
+										parameter.getName(), getParameterValue(jobPrm))
+							);
+					}
+				} else if (parameter instanceof RangeJobInputParameter) {
+					Parameter start = ((RangeJobInputParameter)parameter).getStart();
+					Parameter end = ((RangeJobInputParameter)parameter).getEnd();
+					
+					if (parametersCompare(start, end) > 0) {
+						Parameter tmp = start;
+						start = end;
+						end = tmp;
+					}
+					
+					boolean startConstraint;
+					if (((RangeJobInputParameter)parameter).isStartInclusive())
+						startConstraint = (parametersCompare(start, jobPrm) >= 0);
+					else
+						startConstraint = (parametersCompare(start, jobPrm) > 0);
+					
+					boolean endConstraint;
+					if (((RangeJobInputParameter)parameter).isEndInclusive())
+						endConstraint = (parametersCompare(jobPrm, end) >= 0);
+					else
+						endConstraint = (parametersCompare(jobPrm, end) > 0);
+					
+					if (startConstraint && endConstraint) {
+						if (((RangeJobInputParameter)parameter).isProhibitRange())
+							throw new WerkException(
+								String.format("Parameter value in prohibited range [%s - %s]; name [%s], value [%s]", 
+										getParameterValue(start), getParameterValue(end), 
+										parameter.getName(), getParameterValue(jobPrm))
+							);
+					} else {
+						if (!((RangeJobInputParameter)parameter).isProhibitRange())
+							throw new WerkException(
+								String.format("Parameter value outside of allowed range [%s - %s]; name [%s], value [%s]", 
+										getParameterValue(start), getParameterValue(end), 
+										parameter.getName(), getParameterValue(jobPrm))
+							);
+					}
+				}
+			}
+		}
+	}
+	
 	@Override
 	public Job<J> createNewJob(String jobTypeName, Map<String, Parameter> jobInitialParameters, 
 			Optional<String> jobName, Optional<J> parentJob) throws Exception {
@@ -67,7 +156,13 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 				String.format("JobType not found [%s]", jobTypeName)
 			);
 		
-		List<JobInputParameter> parameterSet = checkParameters(jobType, jobInitialParameters);
+		//Check initial parameters
+		List<JobInputParameter> parameterSet = findMatchingParameterSet(jobType, jobInitialParameters);
+		
+		//Check enum and range parameters
+		checkRangeAndEnumParameters(parameterSet, jobInitialParameters);
+		
+		//Fill default parameters
 		fillParameters(parameterSet, jobInitialParameters);
 		
 		long version = jobType.getVersion();
@@ -90,7 +185,14 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 				String.format("JobType not found [%s] for version [%d]", jobTypeName, oldVersion)
 			);
 		
-		checkParameters(jobType, jobInitialParameters);
+		//Check initial parameters
+		List<JobInputParameter> parameterSet = findMatchingParameterSet(jobType, jobInitialParameters);
+
+		//Check enum and range parameters
+		checkRangeAndEnumParameters(parameterSet, jobInitialParameters);
+		
+		//Fill default parameters
+		fillParameters(parameterSet, jobInitialParameters);
 		
 		long version = jobType.getVersion();
 		JobStatus status = JobStatus.INACTIVE;
@@ -200,7 +302,7 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 	
 	//-------------------------------------------------------
 	
-	protected List<JobInputParameter> checkParameters(JobType jobType, Map<String, Parameter> parameters) throws WerkConfigException {
+	protected List<JobInputParameter> findMatchingParameterSet(JobType jobType, Map<String, Parameter> parameters) throws WerkConfigException {
 		boolean match = false;
 		for (List<JobInputParameter> allowedParameters : jobType.getInitParameters().values()) {
 			//Check that all required parameters exist
@@ -253,7 +355,7 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 		
 		if (ip instanceof DefaultValueJobInputParameter)
 			if (((DefaultValueJobInputParameter)ip).isDefaultValueImmutable())
-				if (!((DefaultValueJobInputParameter)ip).getDefaultValue().equals( getParameterValue(ip) ))
+				if (!getParameterValue(((DefaultValueJobInputParameter)ip).getDefaultValue()).equals( getParameterValue(ip) ))
 					return false;
 		
 		return true;
