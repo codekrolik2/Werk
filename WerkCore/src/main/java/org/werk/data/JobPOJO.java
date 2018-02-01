@@ -17,7 +17,6 @@ public interface JobPOJO<J> {
 	Optional<J> getParentJobId();
 	Map<String, Parameter> getJobInitialParameters();
 	
-	
 	JobStatus getStatus();
 	Timestamp getNextExecutionTime();
 	Map<String, Parameter> getJobParameters();

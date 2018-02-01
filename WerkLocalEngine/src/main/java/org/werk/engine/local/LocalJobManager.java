@@ -19,6 +19,7 @@ import org.pillar.lru.LRUCache;
 import org.werk.data.StepPOJO;
 import org.werk.engine.JobStepFactory;
 import org.werk.engine.WerkEngine;
+import org.werk.engine.json.JoinResultImpl;
 import org.werk.engine.processing.WerkStep;
 import org.werk.exceptions.WerkException;
 import org.werk.meta.JobInitInfo;
@@ -29,6 +30,7 @@ import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.jobs.JoinStatusRecord;
 import org.werk.processing.parameters.Parameter;
 import org.werk.processing.readonly.ReadOnlyJob;
+import org.werk.processing.steps.JoinResult;
 import org.werk.processing.steps.Step;
 
 import lombok.AllArgsConstructor;
@@ -245,7 +247,7 @@ public class LocalJobManager<J> {
 				jobStatuses.put(jobId, finishedJob != null ? finishedJob.getStatus() : JobStatus.INACTIVE);
 			}
 			
-			LocalJoinResult<J> joinResult = new LocalJoinResult<J>(jobStatuses);
+			JoinResult<J> joinResult = new JoinResultImpl<J>(jobStatuses);
 			job.putStringParameter(joinStatusRecord.getJoinParameterName(), job.joinResultToStr(joinResult));
 			
 			((LocalWerkJob<J>)job).setStatus(joinStatusRecord.getStatusBeforeJoin());

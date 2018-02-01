@@ -18,4 +18,7 @@ public interface StepType<J> {
 
 	String getExecConfig();
 	String getTransitionerConfig();
+
+	long getLogLimit();
+	OverflowAction getLogOverflowAction();
 }

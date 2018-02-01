@@ -1,6 +1,5 @@
 package org.werk.engine.local;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -10,21 +9,20 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
+import org.json.JSONObject;
 import org.pillar.time.interfaces.Timestamp;
 import org.werk.data.StepPOJO;
+import org.werk.engine.json.JoinResultSerializer;
 import org.werk.engine.processing.WerkJob;
 import org.werk.meta.JobInitInfo;
 import org.werk.meta.JobReviveInfo;
+import org.werk.meta.JobType;
 import org.werk.meta.OldVersionJobInitInfo;
 import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.jobs.JoinStatusRecord;
 import org.werk.processing.parameters.Parameter;
 import org.werk.processing.readonly.ReadOnlyJob;
 import org.werk.processing.steps.JoinResult;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -37,19 +35,22 @@ public class LocalWerkJob<J> extends WerkJob<J> {
 	@Setter
 	protected List<StepPOJO> processingHistory;
 	
-	protected LocalJobManager<J> jobManager;  
+	protected LocalJobManager<J> jobManager;
 	
-	public LocalWerkJob(J jobId, String jobTypeName, long version, Optional<String> jobName, JobStatus status,
+	protected JoinResultSerializer<J> joinResultSerializer;
+	
+	public LocalWerkJob(J jobId, JobType jobType, long version, Optional<String> jobName, JobStatus status,
 			Map<String, Parameter> jobInitialParameters, Map<String, Parameter> jobParameters,
 			Timestamp nextExecutionTime, Optional<JoinStatusRecord<J>> joinStatusRecord, Optional<J> parentJobId,
-			LocalJobManager<J> jobManager) {
-		super(jobTypeName, version, jobName, status, jobInitialParameters, jobParameters, nextExecutionTime, 
+			LocalJobManager<J> jobManager, JoinResultSerializer<J> joinResultSerializer) {
+		super(jobType, version, jobName, status, jobInitialParameters, jobParameters, nextExecutionTime, 
 				joinStatusRecord, parentJobId);
 		this.jobId = jobId;
 		stepCount = new AtomicLong(0);
 		processingHistory = new ArrayList<>();
 		this.parentJobId = parentJobId;
 		this.jobManager = jobManager;
+		this.joinResultSerializer = joinResultSerializer;
 	}
 
 	public long getNextStepNumber() {
@@ -78,24 +79,12 @@ public class LocalWerkJob<J> extends WerkJob<J> {
 
 	@Override
 	public String joinResultToStr(JoinResult<J> joinResult) {
-		try {
-			LocalJoinResult<J> ljr = (LocalJoinResult<J>)joinResult;
-			
-			ObjectMapper objectMapper = new ObjectMapper();
-			return objectMapper.writeValueAsString(ljr);
-		} catch (JsonProcessingException e) {
-			throw new RuntimeException(e);
-		}
+		return joinResultSerializer.serializeJoinResult(joinResult).toString();
 	}
 
 	@Override
 	public JoinResult<J> strToJoinResult(String joinResultStr) {
-		try {
-			ObjectMapper objectMapper = new ObjectMapper();
-			return objectMapper.readValue(joinResultStr, new TypeReference<JoinResult<J>>() {});
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+		return joinResultSerializer.deserializeJoinResult(new JSONObject(joinResultStr));
 	}
 	
 	//----------------------------------------------

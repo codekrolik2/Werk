@@ -5,6 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.werk.meta.OverflowAction;
+
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface JobType {
@@ -18,4 +20,7 @@ public @interface JobType {
 	long version() default 1;
 
 	String jobConfig() default "";
+	
+	long historyLimit() default 50;
+	OverflowAction historyOverflowAction() default OverflowAction.FAIL;
 }

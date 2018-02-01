@@ -4,14 +4,24 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import org.pillar.time.LongTimeProvider;
+import org.pillar.time.interfaces.TimeProvider;
+import org.werk.config.StepTypeImpl;
 import org.werk.config.annotations.inject.JobParameter;
 import org.werk.config.annotations.inject.StepParameter;
 import org.werk.engine.processing.ContextParameterMapper;
 import org.werk.engine.processing.JobContext;
 import org.werk.engine.processing.StepContext;
+import org.werk.meta.OverflowAction;
+import org.werk.meta.StepExecFactory;
+import org.werk.meta.StepTransitionerFactory;
+import org.werk.meta.StepType;
 import org.werk.processing.parameters.StringParameter;
 import org.werk.processing.parameters.impl.StringParameterImpl;
+
+import lombok.Getter;
 
 public class Test {
 	static class Injectable {
@@ -61,9 +71,13 @@ public class Test {
 	
 	public static void main(String[] args) {
 		Injectable i = new Injectable();
+		TimeProvider tp = new LongTimeProvider();
 		
-		JobContext<Long> jobContext = new JobContext<Long>(new HashMap<>());
-		StepContext stepContext = new StepContext(0, new HashMap<>(), new ArrayList<>());
+		JobContext<Long> jobContext = new JobContext<>(new HashMap<>());
+		
+		StepType<Long> st = new StepTypeImpl<>(null, null, null, null, null, null, null, null, 
+				null, 50, OverflowAction.DELETE_FIRST);
+		StepContext<Long> stepContext = new StepContext<>(st, tp, 0, new HashMap<>(), new ArrayList<>());
 		
 		ContextParameterMapper.remapParameters(jobContext, stepContext, i);
 		

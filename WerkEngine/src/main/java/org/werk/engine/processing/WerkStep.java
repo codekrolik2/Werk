@@ -5,7 +5,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.pillar.time.interfaces.TimeProvider;
 import org.werk.data.StepPOJO;
+import org.werk.exceptions.StepLogLimitExceededException;
 import org.werk.meta.StepType;
 import org.werk.processing.jobs.Job;
 import org.werk.processing.parameters.Parameter;
@@ -13,6 +15,7 @@ import org.werk.processing.steps.ExecutionResult;
 import org.werk.processing.steps.Step;
 import org.werk.processing.steps.StepExec;
 import org.werk.processing.steps.StepExecutionStatus;
+import org.werk.processing.steps.StepProcessingLogRecord;
 import org.werk.processing.steps.Transition;
 import org.werk.processing.steps.TransitionStatus;
 import org.werk.processing.steps.Transitioner;
@@ -38,24 +41,28 @@ public class WerkStep<J> implements Step<J> {
 	//------------------------------------------------
 	
 	@Getter
-	protected StepContext mainContext;
+	protected StepContext<J> mainContext;
 	
 	@Getter
-	protected StepContext tempContext;
+	protected StepContext<J> tempContext;
+	
+	protected TimeProvider timeProvider;
 	
 	public WerkStep(Job<J> job, StepType<J> stepType, boolean isRollback, long stepNumber, List<Long> rollbackStepNumbers, 
-			long executionCount, Map<String, Parameter> stepParameters, List<String> processingLog, 
-			StepExec<J> stepExec, Transitioner<J> stepTransitioner) {
+			long executionCount, Map<String, Parameter> stepParameters, List<StepProcessingLogRecord> processingLog, 
+			StepExec<J> stepExec, Transitioner<J> stepTransitioner, TimeProvider timeProvider) {
 		this.job = job;
 		this.stepType = stepType;
 		this.isRollback = isRollback;
 		this.stepNumber = stepNumber;
 		this.rollbackStepNumbers = rollbackStepNumbers;
 		
-		mainContext = new StepContext(executionCount, stepParameters, processingLog);
+		mainContext = new StepContext<J>(this.getStepType(), timeProvider, executionCount, stepParameters, processingLog);
 		
 		this.stepExec = stepExec;
 		this.stepTransitioner = stepTransitioner;
+		
+		this.timeProvider = timeProvider;
 	}
 	
 	public void openTempContext() {
@@ -77,7 +84,7 @@ public class WerkStep<J> implements Step<J> {
 		tempContext = null;
 	}
 	
-	public StepContext getCurrentContext() {
+	public StepContext<J> getCurrentContext() {
 		return tempContext == null ? mainContext : tempContext;
 	}
 	
@@ -184,13 +191,13 @@ public class WerkStep<J> implements Step<J> {
 	//------------------------------------------------
 	
 	@Override
-	public List<String> getProcessingLog() {
+	public List<StepProcessingLogRecord> getProcessingLog() {
 		return Collections.unmodifiableList(getCurrentContext().processingLog);
 	}
 
 	@Override
-	public void appendToProcessingLog(String message) {
-		getCurrentContext().processingLog.add(message);
+	public void appendToProcessingLog(String message) throws StepLogLimitExceededException {
+		getCurrentContext().appendToProcessingLog(message);
 	}
 
 	protected String stepExecutionResultToStr(ExecutionResult<J> record) {
@@ -209,13 +216,13 @@ public class WerkStep<J> implements Step<J> {
 	}
 	
 	@Override
-	public ExecutionResult<J> appendToProcessingLog(ExecutionResult<J> record) {
+	public ExecutionResult<J> appendToProcessingLog(ExecutionResult<J> record) throws StepLogLimitExceededException {
 		appendToProcessingLog(stepExecutionResultToStr(record));
 		return record;
 	}
 
 	@Override
-	public ExecutionResult<J> appendToProcessingLog(ExecutionResult<J> record, String message) {
+	public ExecutionResult<J> appendToProcessingLog(ExecutionResult<J> record, String message) throws StepLogLimitExceededException {
 		appendToProcessingLog(String.format("%s [%s]", stepExecutionResultToStr(record), message));
 		return record;
 	}
@@ -253,13 +260,13 @@ public class WerkStep<J> implements Step<J> {
 	}
 	
 	@Override
-	public Transition appendToProcessingLog(Transition transition) {
+	public Transition appendToProcessingLog(Transition transition) throws StepLogLimitExceededException {
 		appendToProcessingLog(transitionToStr(transition));
 		return transition;
 	}
 
 	@Override
-	public Transition appendToProcessingLog(Transition transition, String message) {
+	public Transition appendToProcessingLog(Transition transition, String message) throws StepLogLimitExceededException {
 		appendToProcessingLog(String.format("%s [%s]", transitionToStr(transition), message));
 		return transition;
 	}

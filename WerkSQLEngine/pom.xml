@@ -6,4 +6,24 @@
     <version>0.0.1-SNAPSHOT</version>
   </parent>
   <artifactId>WerkSQLEngine</artifactId>
+  <dependencies>
+    <dependency>
+      <groupId>org.werk</groupId>
+      <artifactId>WerkEngine</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
+    </dependency>
+  	<dependency>
+  		<groupId>org.projectlombok</groupId>
+  		<artifactId>lombok</artifactId>
+  		<scope>provided</scope>
+  	</dependency>
+  </dependencies>
 </project>

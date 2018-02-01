@@ -1,4 +1,4 @@
-package org.werk.engine.local;
+package org.werk.engine.json;
 
 import java.util.Map;
 
@@ -10,7 +10,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @AllArgsConstructor
-public class LocalJoinResult<J> implements JoinResult<J> {
+public class JoinResultImpl<J> implements JoinResult<J> {
 	@Getter @Setter
 	Map<J, JobStatus> joinedJobs;
 }

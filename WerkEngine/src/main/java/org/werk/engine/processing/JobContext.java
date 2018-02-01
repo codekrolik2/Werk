@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.werk.engine.json.ParameterUtils;
 import org.werk.processing.parameters.Parameter;
 
 public class JobContext<J> extends ParameterContext {
@@ -23,7 +24,7 @@ public class JobContext<J> extends ParameterContext {
 	public JobContext<J> cloneContext() {
 		Map<String, Parameter> stepParameters0 = new HashMap<>();
 		for (Map.Entry<String, Parameter> stepParameter : parameters.entrySet())
-			stepParameters0.put(stepParameter.getKey(), cloneParameter(stepParameter.getValue()));
+			stepParameters0.put(stepParameter.getKey(), ParameterUtils.cloneParameter(stepParameter.getValue()));
 		List<J> createdJobs = new ArrayList<>(this.createdJobs);
 		
 		return new JobContext<J>(stepParameters0, createdJobs);

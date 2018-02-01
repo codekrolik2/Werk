@@ -1,4 +1,4 @@
-package org.werk.engine.local.service;
+package org.werk.engine.local;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -9,7 +9,6 @@ import java.util.Set;
 
 import org.werk.config.WerkConfig;
 import org.werk.data.JobPOJO;
-import org.werk.engine.local.LocalJobManager;
 import org.werk.meta.JobInitInfo;
 import org.werk.meta.JobReviveInfo;
 import org.werk.meta.JobType;
@@ -17,6 +16,8 @@ import org.werk.meta.OldVersionJobInitInfo;
 import org.werk.meta.StepType;
 import org.werk.processing.readonly.ReadOnlyJob;
 import org.werk.service.WerkService;
+
+import lombok.Getter;
 
 public class LocalWerkService implements WerkService<Long> {
 	protected LocalJobManager<Long> localJobManager;

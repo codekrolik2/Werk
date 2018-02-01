@@ -5,6 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.werk.meta.OverflowAction;
 import org.werk.meta.StepExecFactory;
 import org.werk.meta.StepTransitionerFactory;
 
@@ -25,4 +26,7 @@ public @interface StepTypeFactories {
 
 	String[] transitions();
 	String[] rollbackTransitions();
+
+	long logLimit() default 50;
+	OverflowAction logOverflowAction() default OverflowAction.FAIL;
 }

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.werk.processing.parameters.Parameter;
+import org.werk.processing.steps.StepProcessingLogRecord;
 
 public interface StepPOJO {
 	String getStepTypeName();
@@ -14,5 +15,5 @@ public interface StepPOJO {
 	long getExecutionCount();
 	
 	Map<String, Parameter> getStepParameters();
-	List<String> getProcessingLog();
+	List<StepProcessingLogRecord> getProcessingLog();
 }

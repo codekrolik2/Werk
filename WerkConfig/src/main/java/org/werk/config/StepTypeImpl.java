@@ -2,6 +2,7 @@ package org.werk.config;
 
 import java.util.Set;
 
+import org.werk.meta.OverflowAction;
 import org.werk.meta.StepExecFactory;
 import org.werk.meta.StepTransitionerFactory;
 import org.werk.meta.StepType;
@@ -29,4 +30,8 @@ public class StepTypeImpl<J> implements StepType<J> {
 	String execConfig;
 	@Getter
 	String transitionerConfig;
+	@Getter
+	long logLimit;
+	@Getter
+	OverflowAction logOverflowAction;
 }

@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.werk.engine.json.ParameterUtils;
 import org.werk.engine.processing.mapped.MappedParameter;
 import org.werk.processing.parameters.BoolParameter;
 import org.werk.processing.parameters.DictionaryParameter;
@@ -24,29 +25,10 @@ public class ParameterContext {
 	protected Map<String, Parameter> parameters;
 	protected Map<String, MappedParameter> removedMappedParameters;
 	
-	protected Parameter cloneParameter(Parameter parameter) {
-		if (parameter instanceof LongParameter) {
-			return new LongParameterImpl(((LongParameter)parameter).getValue());
-		} else if (parameter instanceof DoubleParameter) {
-			return new DoubleParameterImpl(((DoubleParameter)parameter).getValue());
-		} else if (parameter instanceof BoolParameter) {
-			return new BoolParameterImpl(((BoolParameter)parameter).getValue());
-		} else if (parameter instanceof StringParameter) {
-			return new StringParameterImpl(((StringParameter)parameter).getValue());
-		} else if (parameter instanceof ListParameter) {
-			return new ListParameterImpl(((ListParameter)parameter).getValue());
-		} else if (parameter instanceof DictionaryParameter) {
-			return new DictionaryParameterImpl(((DictionaryParameter)parameter).getValue());
-		} else
-			throw new IllegalArgumentException(
-				String.format("Unknown parameter type [%s]", parameter.getClass())
-			);
-	}
-	
 	public ParameterContext cloneContext() {
 		Map<String, Parameter> jobParameters0 = new HashMap<String, Parameter>();
 		for (Map.Entry<String, Parameter> jobParameter : parameters.entrySet())
-			jobParameters0.put(jobParameter.getKey(), cloneParameter(jobParameter.getValue()));
+			jobParameters0.put(jobParameter.getKey(), ParameterUtils.cloneParameter(jobParameter.getValue()));
 		
 		return new ParameterContext(jobParameters0);
 	}

@@ -20,4 +20,7 @@ public interface JobType {
 	
 	String getJobConfig();
 	boolean isForceAcyclic();
+
+	long getHistoryLimit();
+	OverflowAction getHistoryOverflowAction();
 }

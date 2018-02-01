@@ -14,6 +14,8 @@ import org.werk.config.WerkConfig;
 import org.werk.data.JobPOJO;
 import org.werk.data.StepPOJO;
 import org.werk.engine.JobStepFactory;
+import org.werk.engine.json.JoinResultSerializer;
+import org.werk.engine.json.ParameterUtils;
 import org.werk.engine.processing.WerkStep;
 import org.werk.exceptions.WerkConfigException;
 import org.werk.exceptions.WerkException;
@@ -26,26 +28,24 @@ import org.werk.meta.inputparameters.RangeJobInputParameter;
 import org.werk.processing.jobs.Job;
 import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.jobs.JoinStatusRecord;
-import org.werk.processing.parameters.BoolParameter;
-import org.werk.processing.parameters.DictionaryParameter;
-import org.werk.processing.parameters.DoubleParameter;
-import org.werk.processing.parameters.ListParameter;
-import org.werk.processing.parameters.LongParameter;
 import org.werk.processing.parameters.Parameter;
-import org.werk.processing.parameters.StringParameter;
 import org.werk.processing.steps.Step;
 import org.werk.processing.steps.StepExec;
+import org.werk.processing.steps.StepProcessingLogRecord;
 import org.werk.processing.steps.Transitioner;
 
 public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 	protected WerkConfig<J> werkConfig;
 	protected TimeProvider timeProvider;
 	protected LocalJobManager<J> localJobManager;
+	protected JoinResultSerializer<J> joinResultSerializer;
 	
-	public LocalJobStepFactory(WerkConfig<J> werkConfig, TimeProvider timeProvider, LocalJobManager<J> localJobManager) {
+	public LocalJobStepFactory(WerkConfig<J> werkConfig, TimeProvider timeProvider, LocalJobManager<J> localJobManager,
+			JoinResultSerializer<J> joinResultSerializer) {
 		this.werkConfig = werkConfig;
 		this.timeProvider = timeProvider;
 		this.localJobManager = localJobManager;
+		this.joinResultSerializer = joinResultSerializer;
 	}
 	
 	protected abstract J getNextJobId();
@@ -64,7 +64,7 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 	protected boolean parametersEqual(Parameter p1, Parameter p2) {
 		if (p1.getType() != p2.getType())
 			return false;
-		return getParameterValue(p1).equals( getParameterValue(p2) );
+		return ParameterUtils.getParameterValue(p1).equals( ParameterUtils.getParameterValue(p2) );
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -74,7 +74,7 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 				String.format("Can't compare parameters of different types [%s] [%s]", p1.getType(), p2.getType())
 			);
 		
-		return ((Comparable)getParameterValue(p1)).compareTo( getParameterValue(p2) );
+		return ((Comparable)ParameterUtils.getParameterValue(p1)).compareTo( ParameterUtils.getParameterValue(p2) );
 	}
 	
 	protected void checkRangeAndEnumParameters(List<JobInputParameter> parameterSet, 
@@ -96,13 +96,13 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 						if (match)
 							throw new WerkException(
 								String.format("Enum value is prohibited for value [%s], param [%s] ", 
-										getParameterValue(jobPrm), parameter)
+										ParameterUtils.getParameterValue(jobPrm), parameter)
 							);
 					} else {
 						if (!match)
 							throw new WerkException(
 								String.format("Enum match not found for value [%s], param [%s]", 
-										getParameterValue(jobPrm), parameter)
+										ParameterUtils.getParameterValue(jobPrm), parameter)
 							);
 					}
 				} else if (parameter instanceof RangeJobInputParameter) {
@@ -131,15 +131,15 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 						if (((RangeJobInputParameter)parameter).isProhibitRange())
 							throw new WerkException(
 								String.format("Parameter value in prohibited range [%s - %s]; name [%s], value [%s]", 
-										getParameterValue(start), getParameterValue(end), 
-										parameter.getName(), getParameterValue(jobPrm))
+										ParameterUtils.getParameterValue(start), ParameterUtils.getParameterValue(end), 
+										parameter.getName(), ParameterUtils.getParameterValue(jobPrm))
 							);
 					} else {
 						if (!((RangeJobInputParameter)parameter).isProhibitRange())
 							throw new WerkException(
 								String.format("Parameter value outside of allowed range [%s - %s]; name [%s], value [%s]", 
-										getParameterValue(start), getParameterValue(end), 
-										parameter.getName(), getParameterValue(jobPrm))
+										ParameterUtils.getParameterValue(start), ParameterUtils.getParameterValue(end), 
+										parameter.getName(), ParameterUtils.getParameterValue(jobPrm))
 							);
 					}
 				}
@@ -171,9 +171,9 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 		Timestamp nextExecutionTime = timeProvider.getCurrentTime();
 		Optional<JoinStatusRecord<J>> joinStatusRecord = Optional.empty();
 		
-		return new LocalWerkJob<J>(getNextJobId(), jobTypeName, version, jobName, status, 
+		return new LocalWerkJob<J>(getNextJobId(), jobType, version, jobName, status, 
 				jobInitialParameters, jobParameters, nextExecutionTime, joinStatusRecord, parentJob,
-				localJobManager);
+				localJobManager, joinResultSerializer);
 	}
 
 	@Override
@@ -200,9 +200,9 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 		Timestamp nextExecutionTime = timeProvider.getCurrentTime();
 		Optional<JoinStatusRecord<J>> joinStatusRecord = Optional.empty();
 		
-		return new LocalWerkJob<J>(getNextJobId(), jobTypeName, version, jobName, status, 
+		return new LocalWerkJob<J>(getNextJobId(), jobType, version, jobName, status, 
 				jobInitialParameters, jobParameters, nextExecutionTime, joinStatusRecord, parentJob,
-				localJobManager);
+				localJobManager, joinResultSerializer);
 	}
 
 	@Override
@@ -224,9 +224,9 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 		Optional<JoinStatusRecord<J>> joinStatusRecord = job.getJoinStatusRecord();
 		Optional<J> parentJob = job.getParentJobId();
 		
-		return new LocalWerkJob<J>(((LocalWerkJob<J>)job).getJobId(), jobTypeName, version, jobName, status, 
+		return new LocalWerkJob<J>(((LocalWerkJob<J>)job).getJobId(), jobType, version, jobName, status, 
 				jobInitialParameters, jobParameters, nextExecutionTime, joinStatusRecord, parentJob,
-				localJobManager);
+				localJobManager, joinResultSerializer);
 	}
 
 	//---------------------------------------------
@@ -240,13 +240,13 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 		List<Long> rollbackStepNumber = step.getRollbackStepNumbers();
 		long executionCount = step.getExecutionCount(); 
 		Map<String, Parameter> stepParameters = step.getStepParameters();
-		List<String> processingLog = step.getProcessingLog();
+		List<StepProcessingLogRecord> processingLog = step.getProcessingLog();
 
 		StepExec<J> stepExec = getStepExec(stepTypeName);
 		Transitioner<J> stepTransitioner = getStepTransitioner(stepTypeName); 
 		
-		return new WerkStep<J>(job, stepType, (job.getStatus() == JobStatus.ROLLING_BACK), stepNumber, 
-			rollbackStepNumber, executionCount, stepParameters, processingLog, stepExec, stepTransitioner);
+		return new WerkStep<J>(job, stepType, (job.getStatus() == JobStatus.ROLLING_BACK), stepNumber, rollbackStepNumber, 
+				executionCount, stepParameters, processingLog, stepExec, stepTransitioner, timeProvider);
 	}
 
 	@Override
@@ -273,13 +273,13 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 		
 		long executionCount = 0; 
 		Map<String, Parameter> stepParameters = new HashMap<>();
-		List<String> processingLog = new ArrayList<>();
+		List<StepProcessingLogRecord> processingLog = new ArrayList<>();
 
 		StepExec<J> stepExec = getStepExec(stepType);
 		Transitioner<J> stepTransitioner = getStepTransitioner(stepType); 
 		
-		return new WerkStep<J>(job, stepTypeObj, (job.getStatus() == JobStatus.ROLLING_BACK), stepNumber, 
-				rollbackStepNumbers, executionCount, stepParameters, processingLog, stepExec, stepTransitioner); 
+		return new WerkStep<J>(job, stepTypeObj, (job.getStatus() == JobStatus.ROLLING_BACK), stepNumber, rollbackStepNumbers,
+				executionCount, stepParameters, processingLog, stepExec, stepTransitioner, timeProvider); 
 	}
 
 	protected StepType<J> getStepType(String stepTypeName) throws WerkConfigException {
@@ -333,29 +333,14 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 		return !(ip instanceof DefaultValueJobInputParameter);
 	}
 	
-	protected Object getParameterValue(Parameter ip) {
-		switch (ip.getType()) {
-			case LONG: return ((LongParameter)ip).getValue();
-			case DOUBLE: return ((DoubleParameter)ip).getValue();
-			case BOOL: return ((BoolParameter)ip).getValue();
-			case STRING: return ((StringParameter)ip).getValue();
-			
-			case LIST: return ((ListParameter)ip).getValue();
-			case DICTIONARY: return ((DictionaryParameter)ip).getValue();
-		}
-		
-		throw new IllegalArgumentException(
-			String.format("Unknown parameter type [%s]", ip.getType())
-		);
-	}
-	
 	protected boolean compareParameters(JobInputParameter parameterType, Parameter ip) {
 		if (!ip.getType().equals(parameterType.getType()))
 			return false;
 		
 		if (ip instanceof DefaultValueJobInputParameter)
 			if (((DefaultValueJobInputParameter)ip).isDefaultValueImmutable())
-				if (!getParameterValue(((DefaultValueJobInputParameter)ip).getDefaultValue()).equals( getParameterValue(ip) ))
+				if (!ParameterUtils.getParameterValue(((DefaultValueJobInputParameter)ip).getDefaultValue()
+						).equals( ParameterUtils.getParameterValue(ip) ))
 					return false;
 		
 		return true;

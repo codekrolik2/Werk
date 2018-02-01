@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.pillar.time.interfaces.Timestamp;
+import org.werk.meta.JobType;
 import org.werk.processing.jobs.Job;
 import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.jobs.JoinStatusRecord;
@@ -17,7 +18,7 @@ import lombok.Setter;
 
 public abstract class WerkJob<J> implements Job<J> {
 	@Getter
-	protected String jobTypeName;
+	protected JobType jobType;
 	@Getter
 	protected Optional<J> parentJobId;
 	@Getter
@@ -42,10 +43,10 @@ public abstract class WerkJob<J> implements Job<J> {
 	
 	protected List<J> createdJobs;
 	
-	public WerkJob(String jobTypeName, long version, Optional<String> jobName, JobStatus status, 
+	public WerkJob(JobType jobType, long version, Optional<String> jobName, JobStatus status, 
 			Map<String, Parameter> jobInitialParameters, Map<String, Parameter> jobParameters, Timestamp nextExecutionTime,
 			Optional<JoinStatusRecord<J>> joinStatusRecord, Optional<J> parentJobId) {
-		this.jobTypeName = jobTypeName;
+		this.jobType = jobType;
 		this.version = version;
 		this.jobName = jobName;
 		this.status = status;
@@ -60,6 +61,11 @@ public abstract class WerkJob<J> implements Job<J> {
 	}
 	
 	//------------------------------------------------
+	
+	@Override
+	public String getJobTypeName() {
+		return jobType.getJobTypeName();
+	}
 	
 	@Override
 	public void openTempContext() {

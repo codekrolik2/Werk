@@ -9,6 +9,9 @@ import org.werk.engine.SwitchStatus;
 import org.werk.engine.WerkStepSwitcher;
 import org.werk.engine.processing.WerkJob;
 import org.werk.engine.processing.WerkStep;
+import org.werk.exceptions.StepLogLimitExceededException;
+import org.werk.exceptions.WerkException;
+import org.werk.meta.OverflowAction;
 import org.werk.processing.jobs.Job;
 import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.jobs.JoinStatusRecord;
@@ -56,6 +59,21 @@ public class LocalStepSwitcher<J> implements WerkStepSwitcher<J> {
 	@Override
 	public StepSwitchResult transition(Job<J> job, Transition transition) {
 		try {
+			if ((transition.getTransitionStatus() == TransitionStatus.NEXT_STEP) ||
+				(transition.getTransitionStatus() == TransitionStatus.ROLLBACK)) {
+				long historyLimit = ((WerkJob<J>)job).getJobType().getHistoryLimit();
+				if (job.getCurrentStep().getStepNumber() >= historyLimit) {
+					if (((WerkJob<J>)job).getJobType().getHistoryOverflowAction() == OverflowAction.FAIL) {
+						return stepTransitionError(job, 
+							new WerkException(
+									String.format("Job History Limit reached [%d]", ((WerkJob<J>)job).getJobType().getHistoryLimit())
+								));
+					} else {
+						((LocalWerkJob<J>)job).getProcessingHistory().remove(0);
+					}
+				}
+			}
+			
 			if (transition.getTransitionStatus() == TransitionStatus.NEXT_STEP) {
 				((LocalWerkJob<J>)job).setStatus(JobStatus.PROCESSING);
 				
@@ -129,9 +147,17 @@ public class LocalStepSwitcher<J> implements WerkStepSwitcher<J> {
 
 	@Override
 	public StepSwitchResult stepExecError(Job<J> job, Exception e) {
-		job.getCurrentStep().appendToProcessingLog(
-				String.format("StepExec error [%s]", e)
+		try {
+			job.getCurrentStep().appendToProcessingLog(
+					String.format("StepExec error [%s]", e)
+				);
+		} catch (StepLogLimitExceededException e1) {
+			logger.error(
+				String.format("Failed to append exec error message to step log: log limit exceeded. Message: [%s]",
+					String.format("StepExec error [%s]", e)
+				), e
 			);
+		}
 		((LocalWerkJob<J>)job).setStatus(JobStatus.FAILED);
 		
 		currentStepDone(job);
@@ -147,9 +173,17 @@ public class LocalStepSwitcher<J> implements WerkStepSwitcher<J> {
 
 	@Override
 	public StepSwitchResult stepTransitionError(Job<J> job, Exception e) {
-		job.getCurrentStep().appendToProcessingLog(
-				String.format("Transitioner error [%s]", e)
+		try {
+			job.getCurrentStep().appendToProcessingLog(
+					String.format("Transitioner error [%s]", e)
+				);
+		} catch (StepLogLimitExceededException e1) {
+			logger.error(
+				String.format("Failed to append transitioner error message to step log: log limit exceeded. Message: [%s]",
+					String.format("Transitioner error [%s]", e)
+				), e
 			);
+		}
 		((LocalWerkJob<J>)job).setStatus(JobStatus.FAILED);
 		
 		currentStepDone(job);

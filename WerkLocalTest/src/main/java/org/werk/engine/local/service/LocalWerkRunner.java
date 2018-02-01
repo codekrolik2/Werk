@@ -10,12 +10,16 @@ import org.werk.config.WerkConfig;
 import org.werk.config.annotations.AnnotationsWerkConfigLoader;
 import org.werk.engine.WerkEngine;
 import org.werk.engine.WerkEngineImpl;
+import org.werk.engine.json.JoinResultSerializer;
+import org.werk.engine.json.LongJobIdSerializer;
 import org.werk.engine.local.LocalJobManager;
 import org.werk.engine.local.LocalJobStepFactory;
 import org.werk.engine.local.LocalStepSwitcher;
+import org.werk.engine.local.LocalWerkService;
 import org.werk.exceptions.WerkConfigException;
 import org.werk.meta.JobInitInfo;
 import org.werk.meta.JobType;
+import org.werk.meta.impl.JobInitInfoImpl;
 import org.werk.processing.parameters.Parameter;
 import org.werk.processing.parameters.impl.DoubleParameterImpl;
 import org.werk.processing.parameters.impl.LongParameterImpl;
@@ -29,17 +33,19 @@ public class LocalWerkRunner {
 	protected LocalStepSwitcher<Long> switcher;
 	
 	protected WerkEngine<Long> werkEngine;
+	protected WerkConfig<Long> werkConfig;
 	protected long maxJobCacheSize;
 	@Getter
 	protected LocalWerkService service;
 	
 	public LocalWerkRunner(int maxJobCacheSize, int threadCount) throws WerkConfigException {
 		AnnotationsWerkConfigLoader<Long> loader = new AnnotationsWerkConfigLoader<>();
-		WerkConfig<Long> werkConfig = loader.loadWerkConfig();
+		werkConfig = loader.loadWerkConfig();
 		
 		localJobManager = new LocalJobManager<Long>(maxJobCacheSize);
 		
-		jobStepFactory = new LocalJobStepFactory<Long>(werkConfig, new LongTimeProvider(), localJobManager) {
+		jobStepFactory = new LocalJobStepFactory<Long>(werkConfig, new LongTimeProvider(), localJobManager,
+				new JoinResultSerializer<Long>(new LongJobIdSerializer())) {
 			AtomicLong jobIdCounter = new AtomicLong(0L);
 			@Override
 			protected Long getNextJobId() {
@@ -59,13 +65,22 @@ public class LocalWerkRunner {
 	public static void main(String[] args) throws Exception {
 		Log4JUtils.debugInitLog4j();
 		
+		Double d = (double)2;
+		Long l = 12L;
+		
+		System.out.println(d);
+		System.out.println(l);
+
+		Double d1 = Double.parseDouble(l.toString());
+		Long l1 = Long.parseLong(d.toString());
+		
 		int maxJobCacheSize = 50000;
 		int threadCount = 4;
 		
 		LocalWerkRunner localWerkRunner = new LocalWerkRunner(maxJobCacheSize, threadCount);
 		LocalWerkService service = localWerkRunner.getService();
 		
-		for (JobType type : service.werkConfig.getAllJobTypes())
+		for (JobType type : localWerkRunner.werkConfig.getAllJobTypes())
 			System.out.println(type.toString());
 		
 		int i = 0;

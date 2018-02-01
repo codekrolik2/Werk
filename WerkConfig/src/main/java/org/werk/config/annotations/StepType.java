@@ -5,6 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.werk.meta.OverflowAction;
 import org.werk.processing.steps.SimpleTransitioner;
 
 @Retention(RetentionPolicy.RUNTIME)
@@ -25,4 +26,7 @@ public @interface StepType {
 	
 	String[] transitions();
 	String[] rollbackTransitions();
+	
+	long logLimit() default 50;
+	OverflowAction logOverflowAction() default OverflowAction.FAIL;
 }

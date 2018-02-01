@@ -29,6 +29,7 @@ import org.werk.config.WerkConfigLoader;
 import org.werk.config.annotations.inject.RollbackTransition;
 import org.werk.config.annotations.inject.Transition;
 import org.werk.exceptions.WerkConfigException;
+import org.werk.meta.OverflowAction;
 import org.werk.meta.StepExecFactory;
 import org.werk.meta.StepTransitionerFactory;
 
@@ -119,6 +120,8 @@ public class AnnotationsWerkConfigLoader<J> implements WerkConfigLoader<J> {
 		String jobConfig = jobType.jobConfig();
 		boolean forceAcyclic = jobType.forceAcyclic();
 		long version = jobType.version();
+		long historyLimit = jobType.historyLimit();
+		OverflowAction historyOverflowAction = jobType.historyOverflowAction();
 		
 		Map<String, List<org.werk.meta.inputparameters.JobInputParameter>> initInfo = new HashMap<>();
 		Method[] methods = classObj.getDeclaredMethods();
@@ -136,7 +139,8 @@ public class AnnotationsWerkConfigLoader<J> implements WerkConfigLoader<J> {
 			}
 		}
 		
-		return new JobTypeImpl(jobTypeName, stepTypes, initInfo, firstStepTypeName, description, jobConfig, forceAcyclic, version);
+		return new JobTypeImpl(jobTypeName, stepTypes, initInfo, firstStepTypeName, description, jobConfig, 
+				forceAcyclic, version, historyLimit, historyOverflowAction);
 	}
 	
 	protected void checkAllowedTransitions(Set<String> allowedTransitions, @SuppressWarnings("rawtypes") Class classObj) throws WerkConfigException {
@@ -217,8 +221,12 @@ public class AnnotationsWerkConfigLoader<J> implements WerkConfigLoader<J> {
 		@SuppressWarnings("unchecked")
 		StepTransitionerFactory<J> stepTransitionerFactory = new StepTransitionerFactoryImpl<J>(stepType.stepTransitionerClass());
 		
-		return new StepTypeImpl<J>(stepTypeName, allowedTransitions, allowedRollbackTransitions, 
-				stepExecFactory, stepTransitionerFactory, processingDescription, rollbackDescription, execConfig, transitionerConfig);
+		long logLimit = stepType.logLimit();
+		OverflowAction logOverflowAction = stepType.logOverflowAction();
+		
+		return new StepTypeImpl<J>(stepTypeName, allowedTransitions, allowedRollbackTransitions, stepExecFactory, 
+				stepTransitionerFactory, processingDescription, rollbackDescription, execConfig, transitionerConfig,
+				logLimit, logOverflowAction);
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -252,8 +260,11 @@ public class AnnotationsWerkConfigLoader<J> implements WerkConfigLoader<J> {
 		Constructor<StepTransitionerFactory> stepTransitionerConstr = stepTransitionerClass.getConstructor();
 		StepTransitionerFactory<J> stepTransitionerFactory = (StepTransitionerFactory<J>)stepTransitionerConstr.newInstance();
 		
+		long logLimit = stepType.logLimit();
+		OverflowAction logOverflowAction = stepType.logOverflowAction();
+		
 		return new StepTypeImpl<J>(stepTypeName, allowedTransitions, allowedRollbackTransitions, stepExecFactory, 
-				stepTransitionerFactory, processingDescription, rollbackDescription, execConfig, transitionerConfig);
+				stepTransitionerFactory, processingDescription, rollbackDescription, execConfig, transitionerConfig,
+				logLimit, logOverflowAction);
 	}
-	
 }

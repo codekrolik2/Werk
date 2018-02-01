@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.werk.meta.JobType;
+import org.werk.meta.OverflowAction;
 import org.werk.meta.inputparameters.JobInputParameter;
 
 import lombok.AllArgsConstructor;
@@ -28,6 +29,10 @@ public class JobTypeImpl implements JobType {
 	protected boolean forceAcyclic;
 	@Getter
 	protected long version;
+	@Getter
+	long historyLimit;
+	@Getter
+	OverflowAction historyOverflowAction;
 	
 	@Override
 	public String toString() {

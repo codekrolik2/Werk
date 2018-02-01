@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.werk.data.StepPOJO;
+import org.werk.exceptions.StepLogLimitExceededException;
 import org.werk.meta.StepType;
 import org.werk.processing.jobs.Job;
 import org.werk.processing.parameters.Parameter;
@@ -37,20 +38,20 @@ public interface Step<J> extends StepPOJO {
 	//--------------------------------------------
 	
 	//List<String> getProcessingLog();
-	void appendToProcessingLog(String message);
+	void appendToProcessingLog(String message) throws StepLogLimitExceededException;
 	
-	ExecutionResult<J> appendToProcessingLog(ExecutionResult<J> record);
-	ExecutionResult<J> appendToProcessingLog(ExecutionResult<J> record, String message);
+	ExecutionResult<J> appendToProcessingLog(ExecutionResult<J> record) throws StepLogLimitExceededException;
+	ExecutionResult<J> appendToProcessingLog(ExecutionResult<J> record, String message) throws StepLogLimitExceededException;
 	
-	Transition appendToProcessingLog(Transition transition);
-	Transition appendToProcessingLog(Transition transition, String message);
-
+	Transition appendToProcessingLog(Transition transition) throws StepLogLimitExceededException;
+	Transition appendToProcessingLog(Transition transition, String message) throws StepLogLimitExceededException;
+	
 	//--------------------------------------------
 	
 	StepExec<J> getStepExec();
 	Transitioner<J> getStepTransitioner();
 	
 	StepType<J> getStepType();
-
+	
 	void copyParametersFrom(StepPOJO step);
 }

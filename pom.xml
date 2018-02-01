@@ -10,6 +10,7 @@
   	<module>WerkEngine</module>
   	<module>WerkLocalEngine</module>
   	<module>WerkSQLEngine</module>
+  	<module>WerkLocalTest</module>
   </modules>
   
   <properties>
@@ -38,6 +39,11 @@
       <dependency>
         <groupId>org.werk</groupId>
         <artifactId>WerkEngine</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.werk</groupId>
+        <artifactId>WerkLocalEngine</artifactId>
         <version>${project.version}</version>
       </dependency>
     
@@ -79,6 +85,11 @@
         <version>4.0</version>
       </dependency>
       
+      <dependency>
+        <groupId>org.json</groupId>
+        <artifactId>json</artifactId>
+        <version>20140107</version>
+      </dependency>
       <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>

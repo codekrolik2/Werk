@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.werk.meta.JobInitInfo;
 import org.werk.meta.JobReviveInfo;
+import org.werk.meta.JobType;
 import org.werk.meta.OldVersionJobInitInfo;
 import org.werk.processing.parameters.Parameter;
 import org.werk.processing.readonly.ReadOnlyJob;
@@ -75,4 +76,8 @@ public interface Job<J> extends ReadOnlyJob<J> {
 	List<ReadOnlyJob<J>> loadJobsAndHistory(Collection<J> jobIds);
 	List<ReadOnlyJob<J>> loadAllChildJobsAndHistory();
 	List<ReadOnlyJob<J>> loadChildJobsOfTypesAndHistory(Set<String> jobTypes);
+	
+	//-------------------------------------------------------------------
+	
+	JobType getJobType();
 }
