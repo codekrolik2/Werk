@@ -15,7 +15,7 @@ import org.werk.engine.processing.mapped.MappedStringParameter;
 import org.werk.processing.parameters.Parameter;
 
 public class ContextParameterMapper {
-	public static <J> void remapParameters(JobContext<J> jobContext, StepContext stepContext, Object obj) {
+	public static <J> void remapParameters(JobContext<J> jobContext, StepContext<J> stepContext, Object obj) {
 		for (Field field : obj.getClass().getDeclaredFields()) {
 			JobParameter jp = null;
 			try {

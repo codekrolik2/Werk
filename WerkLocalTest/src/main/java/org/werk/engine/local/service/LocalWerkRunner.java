@@ -65,15 +65,6 @@ public class LocalWerkRunner {
 	public static void main(String[] args) throws Exception {
 		Log4JUtils.debugInitLog4j();
 		
-		Double d = (double)2;
-		Long l = 12L;
-		
-		System.out.println(d);
-		System.out.println(l);
-
-		Double d1 = Double.parseDouble(l.toString());
-		Long l1 = Long.parseLong(d.toString());
-		
 		int maxJobCacheSize = 50000;
 		int threadCount = 4;
 		

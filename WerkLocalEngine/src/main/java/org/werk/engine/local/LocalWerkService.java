@@ -17,8 +17,6 @@ import org.werk.meta.StepType;
 import org.werk.processing.readonly.ReadOnlyJob;
 import org.werk.service.WerkService;
 
-import lombok.Getter;
-
 public class LocalWerkService implements WerkService<Long> {
 	protected LocalJobManager<Long> localJobManager;
 	protected WerkConfig<Long> werkConfig;
