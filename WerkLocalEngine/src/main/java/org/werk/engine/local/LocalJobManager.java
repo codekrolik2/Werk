@@ -244,7 +244,7 @@ public class LocalJobManager<J> {
 				if (finishedJob == null)
 					finishedJob = finishedJobs.get(jobId);
 				
-				jobStatuses.put(jobId, finishedJob != null ? finishedJob.getStatus() : JobStatus.INACTIVE);
+				jobStatuses.put(jobId, finishedJob != null ? finishedJob.getStatus() : JobStatus.UNDEFINED);
 			}
 			
 			JoinResult<J> joinResult = new JoinResultImpl<J>(jobStatuses);

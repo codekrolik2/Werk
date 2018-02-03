@@ -4,26 +4,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-public class Transition {
+@AllArgsConstructor(access=AccessLevel.PRIVATE)
+public final class Transition {
 	@Getter
-	TransitionStatus transitionStatus;
+	protected final TransitionStatus transitionStatus;
 	@Getter
-	Optional<String> stepName;
+	protected final Optional<String> stepName;
 	@Getter
-	Optional<Long> delayMS;
+	protected final Optional<Long> delayMS;
 	@Getter
-	List<Long> rollbackStepNumbers;
+	protected final List<Long> rollbackStepNumbers;
 	
-	protected Transition(TransitionStatus transitionStatus, Optional<String> stepName, 
-			Optional<Long> delayMS, List<Long> rollbackStepNumbers) {
-		this.transitionStatus = transitionStatus;
-		this.stepName = stepName; 
-		this.delayMS = delayMS;
-		this.rollbackStepNumbers = rollbackStepNumbers;
-	}
-
 	public static Transition nextStep(String stepName) {
 		return new Transition(TransitionStatus.NEXT_STEP, Optional.of(stepName), Optional.empty(), new ArrayList<Long>());
 	}

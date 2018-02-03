@@ -7,15 +7,18 @@ import org.werk.processing.jobs.Job;
 
 public class WerkPool<J> extends WorkThreadPool<Job<J>> {
 	protected WerkStepSwitcher<J> stepSwitcher;
+	protected WerkCallbackRunnable<J> callbackRunnable;
 	
-	public WerkPool(int threadCount, TimeProvider timeProvider, WerkStepSwitcher<J> stepSwitcher) {
+	public WerkPool(int threadCount, TimeProvider timeProvider, WerkCallbackRunnable<J> callbackRunnable,
+			WerkStepSwitcher<J> stepSwitcher) {
 		super(timeProvider);
+		this.callbackRunnable = callbackRunnable;
 		this.stepSwitcher = stepSwitcher;
 		adjustSize(threadCount);
 	}
 	
 	@Override
 	protected WorkThreadPoolRunnable<Job<J>> createRunnable() {
-		return new WerkRunnable<J>(this, stepSwitcher);
+		return new WerkPoolRunnable<J>(this, callbackRunnable, stepSwitcher);
 	}
 }

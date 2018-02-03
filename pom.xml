@@ -46,6 +46,11 @@
         <artifactId>WerkLocalEngine</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>org.werk</groupId>
+        <artifactId>WerkSQLEngine</artifactId>
+        <version>${project.version}</version>
+      </dependency>
     
       <dependency>
         <groupId>org.pillar</groupId>
@@ -62,7 +67,17 @@
         <artifactId>CommandLine</artifactId>
         <version>${pillar.version}</version>
       </dependency>
+      <dependency>
+        <groupId>org.pillar</groupId>
+        <artifactId>Pulse</artifactId>
+        <version>${pillar.version}</version>
+      </dependency>
       
+      <dependency>
+        <groupId>mysql</groupId>
+        <artifactId>mysql-connector-java</artifactId>
+        <version>5.1.25</version>
+      </dependency>
       <dependency>
         <groupId>log4j</groupId>
         <artifactId>log4j</artifactId>

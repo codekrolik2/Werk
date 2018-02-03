@@ -6,6 +6,7 @@ import org.werk.processing.steps.Transition;
 
 public interface WerkStepSwitcher<J> {
 	StepSwitchResult redo(Job<J> job, ExecutionResult<J> exec);
+	StepSwitchResult callback(Job<J> job, ExecutionResult<J> exec);
 	StepSwitchResult join(Job<J> job, ExecutionResult<J> exec);
 	StepSwitchResult stepExecError(Job<J> job, Exception e);
 	

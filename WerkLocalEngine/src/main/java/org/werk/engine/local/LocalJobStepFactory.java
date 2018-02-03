@@ -166,7 +166,7 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 		fillParameters(parameterSet, jobInitialParameters);
 		
 		long version = jobType.getVersion();
-		JobStatus status = JobStatus.INACTIVE;
+		JobStatus status = JobStatus.UNDEFINED;
 		Map<String, Parameter> jobParameters = new HashMap<>(jobInitialParameters);
 		Timestamp nextExecutionTime = timeProvider.getCurrentTime();
 		Optional<JoinStatusRecord<J>> joinStatusRecord = Optional.empty();
@@ -195,7 +195,7 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 		fillParameters(parameterSet, jobInitialParameters);
 		
 		long version = jobType.getVersion();
-		JobStatus status = JobStatus.INACTIVE;
+		JobStatus status = JobStatus.UNDEFINED;
 		Map<String, Parameter> jobParameters = new HashMap<>(jobInitialParameters);
 		Timestamp nextExecutionTime = timeProvider.getCurrentTime();
 		Optional<JoinStatusRecord<J>> joinStatusRecord = Optional.empty();

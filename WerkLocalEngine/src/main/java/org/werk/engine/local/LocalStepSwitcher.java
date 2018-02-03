@@ -5,7 +5,6 @@ import java.util.Optional;
 
 import org.apache.log4j.Logger;
 import org.werk.engine.StepSwitchResult;
-import org.werk.engine.SwitchStatus;
 import org.werk.engine.WerkStepSwitcher;
 import org.werk.engine.processing.WerkJob;
 import org.werk.engine.processing.WerkStep;
@@ -31,14 +30,19 @@ public class LocalStepSwitcher<J> implements WerkStepSwitcher<J> {
 	
 	@Override
 	public StepSwitchResult redo(Job<J> job, ExecutionResult<J> exec) {
-		return new StepSwitchResult(SwitchStatus.PROCESS, exec.getDelayMS());
+		return StepSwitchResult.process(exec.getDelayMS());
 	}
 
+	@Override
+	public StepSwitchResult callback(Job<J> job, ExecutionResult<J> exec) {
+		return StepSwitchResult.callback(exec.getCallback().get(), exec.getDelayMS(), exec.getParameterName().get());
+	}
+	
 	@Override
 	public StepSwitchResult join(Job<J> job, ExecutionResult<J> exec) {
 		try {
 			List<J> joinedJobs = exec.getJobsToJoin().get();
-			String joinParameterName = exec.getJoinParameterName().get();
+			String joinParameterName = exec.getParameterName().get();
 			JobStatus statusBeforeJoin = job.getStatus();
 			Optional<Long> waitForNJobs = exec.getWaitForNJobs();
 			
@@ -53,7 +57,7 @@ public class LocalStepSwitcher<J> implements WerkStepSwitcher<J> {
 			logger.error("JobManager's \"join\" callback failed", ex);
 		}
 		
-		return new StepSwitchResult(SwitchStatus.UNLOAD);
+		return StepSwitchResult.unload();
 	}
 
 	@Override
@@ -85,7 +89,7 @@ public class LocalStepSwitcher<J> implements WerkStepSwitcher<J> {
 				
 				((WerkJob<J>)job).setCurrentStep((WerkStep<J>)nextStep);
 				
-				return new StepSwitchResult(SwitchStatus.PROCESS);
+				return StepSwitchResult.process();
 			} else if (transition.getTransitionStatus() == TransitionStatus.ROLLBACK) {
 				((LocalWerkJob<J>)job).setStatus(JobStatus.ROLLING_BACK);
 				
@@ -98,7 +102,7 @@ public class LocalStepSwitcher<J> implements WerkStepSwitcher<J> {
 				
 				((WerkJob<J>)job).setCurrentStep((WerkStep<J>)nextStep);
 				
-				return new StepSwitchResult(SwitchStatus.PROCESS);
+				return StepSwitchResult.process();
 			} else if (transition.getTransitionStatus() == TransitionStatus.FINISH) {
 				currentStepDone(job);
 				((LocalWerkJob<J>)job).setStatus(JobStatus.FINISHED);
@@ -110,7 +114,7 @@ public class LocalStepSwitcher<J> implements WerkStepSwitcher<J> {
 					throw ex;
 				}
 				
-				return new StepSwitchResult(SwitchStatus.UNLOAD);
+				return StepSwitchResult.unload();
 			} else if (transition.getTransitionStatus() == TransitionStatus.FINISH_ROLLBACK) {
 				currentStepDone(job);
 				((LocalWerkJob<J>)job).setStatus(JobStatus.ROLLED_BACK);
@@ -122,7 +126,7 @@ public class LocalStepSwitcher<J> implements WerkStepSwitcher<J> {
 					throw ex;
 				}
 				
-				return new StepSwitchResult(SwitchStatus.UNLOAD);
+				return StepSwitchResult.unload();
 			} else if (transition.getTransitionStatus() == TransitionStatus.FAIL) {
 				currentStepDone(job);
 				((LocalWerkJob<J>)job).setStatus(JobStatus.FAILED);
@@ -134,7 +138,7 @@ public class LocalStepSwitcher<J> implements WerkStepSwitcher<J> {
 					throw ex;
 				}
 				
-				return new StepSwitchResult(SwitchStatus.UNLOAD);
+				return StepSwitchResult.unload();
 			} else 
 				throw new Exception(
 						String.format("Unknown transition type: [%s]", transition.getTransitionStatus())
@@ -168,7 +172,7 @@ public class LocalStepSwitcher<J> implements WerkStepSwitcher<J> {
 			logger.error("JobManager's \"jobFailed\" callback failed", ex);
 		}
 		
-		return new StepSwitchResult(SwitchStatus.UNLOAD);
+		return StepSwitchResult.unload();
 	}
 
 	@Override
@@ -194,7 +198,7 @@ public class LocalStepSwitcher<J> implements WerkStepSwitcher<J> {
 			logger.error("JobManager's \"jobFailed\" callback failed", ex);
 		}
 		
-		return new StepSwitchResult(SwitchStatus.UNLOAD);
+		return StepSwitchResult.unload();
 	}
 	
 	protected void currentStepDone(Job<J> job) {

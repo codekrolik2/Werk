@@ -8,10 +8,22 @@
   <artifactId>WerkSQLEngine</artifactId>
   <dependencies>
     <dependency>
+      <groupId>org.pillar</groupId>
+      <artifactId>CommonDB</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.pillar</groupId>
+      <artifactId>Pulse</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.werk</groupId>
       <artifactId>WerkEngine</artifactId>
     </dependency>
     
+    <dependency>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+    </dependency>
     <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
@@ -21,9 +33,9 @@
       <artifactId>json</artifactId>
     </dependency>
   	<dependency>
-  		<groupId>org.projectlombok</groupId>
-  		<artifactId>lombok</artifactId>
-  		<scope>provided</scope>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <scope>provided</scope>
   	</dependency>
   </dependencies>
 </project>

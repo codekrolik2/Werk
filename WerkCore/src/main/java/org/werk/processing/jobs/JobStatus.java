@@ -1,7 +1,8 @@
 package org.werk.processing.jobs;
 
 public enum JobStatus {
-	INACTIVE,
+	UNDEFINED,
+	
 	PROCESSING,
 	ROLLING_BACK,
 	

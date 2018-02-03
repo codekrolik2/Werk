@@ -11,13 +11,16 @@ import org.werk.processing.steps.StepExecutionStatus;
 import org.werk.processing.steps.Transition;
 import org.werk.processing.steps.Transitioner;
 
-public class WerkRunnable<J> extends WorkThreadPoolRunnable<Job<J>> {
-	final Logger logger = Logger.getLogger(WerkRunnable.class);
+public class WerkPoolRunnable<J> extends WorkThreadPoolRunnable<Job<J>> {
+	final Logger logger = Logger.getLogger(WerkPoolRunnable.class);
 	
 	protected WerkStepSwitcher<J> stepSwitcher;
+	protected WerkCallbackRunnable<J> callbackRunnable;
 	
-	public WerkRunnable(WorkThreadPool<Job<J>> pool, WerkStepSwitcher<J> stepSwitcher) {
+	public WerkPoolRunnable(WorkThreadPool<Job<J>> pool, WerkCallbackRunnable<J> callbackRunnable, 
+			WerkStepSwitcher<J> stepSwitcher) {
 		super(pool);
+		this.callbackRunnable = callbackRunnable;
 		this.stepSwitcher = stepSwitcher;
 	}
 	
@@ -84,6 +87,8 @@ public class WerkRunnable<J> extends WorkThreadPoolRunnable<Job<J>> {
 			switchResult = stepSwitcher.redo(job, execResult);
 		else if (execResult.getStatus() == StepExecutionStatus.JOIN)
 			switchResult = stepSwitcher.join(job, execResult);
+		else if (execResult.getStatus() == StepExecutionStatus.CALLBACK)
+			switchResult = stepSwitcher.callback(job, execResult);
 		else
 			switchResult = stepSwitcher.transition(job, transition);
 		
@@ -93,11 +98,22 @@ public class WerkRunnable<J> extends WorkThreadPoolRunnable<Job<J>> {
 				delayMS = execResult.getDelayMS().get();
 			
 			pool.addUnitOfWork(job, delayMS);
-		} else
+		} else if (switchResult.getStatus() == SwitchStatus.CALLBACK) {
+			callbackRunnable.addCallback(switchResult.getCallback().get(), job, switchResult.getDelayMS(), 
+					switchResult.getParameterName().get());
+		} else if (switchResult.getStatus() == SwitchStatus.UNLOAD) {
 			logger.info(
-					String.format("Unloading job: [%s / %s / %s]", 
-							job.getJobTypeName(), 
-							job.getJobName().isPresent() ? job.getJobName().get() : "No name", 
+					String.format("Unloading job: [%s / %s / %s]",
+							job.getJobTypeName(),
+							job.getJobName().isPresent() ? job.getJobName().get() : "No name",
+							job.getStatus())
+				);
+		} else 
+			logger.error(
+					String.format("Error - Unknown SwitchStatus: [%s]. Unloading job: [%s / %s / %s]",
+							switchResult.getStatus(),
+							job.getJobTypeName(),
+							job.getJobName().isPresent() ? job.getJobName().get() : "No name",
 							job.getStatus())
 				);
 	}

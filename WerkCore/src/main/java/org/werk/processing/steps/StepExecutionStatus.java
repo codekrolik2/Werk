@@ -4,5 +4,7 @@ public enum StepExecutionStatus {
 	SUCCESS,
 	FAILURE,
 	REDO,
-	JOIN
+	JOIN,
+	
+	CALLBACK
 }
