@@ -95,6 +95,8 @@ public class WerkCallbackRunnable<J> implements Runnable, WerkCallbackListener<S
 	public void addCallback(WerkCallback<String> callback, Job<J> job, Optional<Long> timeout, String parameterName) {
 		lock.lock();
 		try {
+			callback.addListener(this);
+			
 			long timeoutL = timeout.isPresent() ? timeout.get() : 0;
 			Timestamp registrationTime = timeProvider.getCurrentTime();
 			
