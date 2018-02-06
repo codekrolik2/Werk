@@ -29,6 +29,8 @@ public class WerkPoolRunnable<J> extends WorkThreadPoolRunnable<Job<J>> {
 		Exception execException = null;
 		ExecutionResult<J> execResult = null;
 		try {
+			job.getCurrentStep().incrementExecutionCount();
+			
 			//get stepExec
 			StepExec<J> stepExec = job.getCurrentStep().getStepExec();
 			

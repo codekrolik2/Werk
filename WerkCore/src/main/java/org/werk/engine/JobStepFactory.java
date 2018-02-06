@@ -16,10 +16,10 @@ public interface JobStepFactory<J> {
 	public Job<J> createOldVersionJob(String jobTypeName, long oldVersion, Map<String, Parameter> jobInitialParameters,
 			Optional<String> jobName, Optional<J> parentJob) throws Exception;
 	
-	public Step<J> createFirstStep(Job<J> job, long stepNumber) throws Exception;
+	public Step<J> createFirstStep(Job<J> job, int stepNumber) throws Exception;
 	
-	public Step<J> createNewStep(Job<J> job, long stepNumber, String stepType) throws Exception;
-	public Step<J> createNewStep(Job<J> job, long stepNumber, List<Long> rollbackStepNumbers, String stepType) throws Exception;
+	public Step<J> createNewStep(Job<J> job, int stepNumber, String stepType) throws Exception;
+	public Step<J> createNewStep(Job<J> job, int stepNumber, List<Integer> rollbackStepNumbers, String stepType) throws Exception;
 	
 	public Job<J> createJob(JobPOJO<J> job) throws Exception;
 	public Step<J> createStep(Job<J> job, StepPOJO step) throws Exception;

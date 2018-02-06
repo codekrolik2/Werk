@@ -330,20 +330,19 @@ public class LocalJobManager<J> {
 				revivedJob.removeJobParameter(jobParametersToRemove);
 			
 			//Copy processing history and set current step
-			List<StepPOJO> processingHistory = jobToRevive.getProcessingHistory();
+			Collection<StepPOJO> processingHistory = jobToRevive.getProcessingHistory();
 			Step<J> currentStep;
 			if (!init.getNewStepTypeName().isPresent()) {
 				//Restart current step
 				List<StepPOJO> newProcessingHistory = new ArrayList<>();
 				
-				for (int i = 0; i < processingHistory.size()-1; i++) {
-					StepPOJO readOnlyStep = processingHistory.get(i);
+				StepPOJO lastStep = null;
+				for (StepPOJO readOnlyStep : processingHistory) {
+					lastStep = readOnlyStep;
 					newProcessingHistory.add(readOnlyStep);
 				}
 				
 				processingHistory = newProcessingHistory;
-				
-				StepPOJO lastStep = processingHistory.get(processingHistory.size()-1);
 				currentStep = jobStepFactory.createNewStep(revivedJob, lastStep.getStepNumber(), 
 						lastStep.getStepTypeName());
 			} else {

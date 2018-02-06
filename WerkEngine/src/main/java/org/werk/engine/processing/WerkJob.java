@@ -5,13 +5,17 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import org.json.JSONObject;
 import org.pillar.time.interfaces.Timestamp;
+import org.werk.engine.json.JoinResultSerializer;
 import org.werk.meta.JobType;
 import org.werk.processing.jobs.Job;
 import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.jobs.JoinStatusRecord;
 import org.werk.processing.parameters.Parameter;
+import org.werk.processing.steps.JoinResult;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -29,8 +33,10 @@ public abstract class WerkJob<J> implements Job<J> {
 	protected JobStatus status;
 	@Getter @Setter
 	protected WerkStep<J> currentStep;
-	@Getter
+	@Getter @Setter
 	protected Timestamp nextExecutionTime;
+	
+	protected AtomicInteger stepCount;
 	
 	protected Map<String, Parameter> jobInitialParameters;
 	
@@ -43,24 +49,53 @@ public abstract class WerkJob<J> implements Job<J> {
 	
 	protected List<J> createdJobs;
 	
+	protected JoinResultSerializer<J> joinResultSerializer;
+	
 	public WerkJob(JobType jobType, long version, Optional<String> jobName, JobStatus status, 
 			Map<String, Parameter> jobInitialParameters, Map<String, Parameter> jobParameters, Timestamp nextExecutionTime,
-			Optional<JoinStatusRecord<J>> joinStatusRecord, Optional<J> parentJobId) {
+			Optional<JoinStatusRecord<J>> joinStatusRecord, Optional<J> parentJobId, int stepCount,
+			JoinResultSerializer<J> joinResultSerializer) {
 		this.jobType = jobType;
 		this.version = version;
 		this.jobName = jobName;
 		this.status = status;
 		this.joinStatusRecord = joinStatusRecord;
 		this.parentJobId = parentJobId;
+		this.stepCount = new AtomicInteger(stepCount);
 		
 		this.jobInitialParameters = jobInitialParameters;
 		mainContext = new JobContext<J>(jobParameters);
 		this.nextExecutionTime = nextExecutionTime;
 		
+		this.joinResultSerializer = joinResultSerializer;
+		
 		createdJobs = new ArrayList<>();
+	}
+
+	public int getNextStepNumber() {
+		return stepCount.getAndIncrement();
+	}
+
+	@Override
+	public int getStepCount() {
+		return stepCount.get();
+	}
+	
+	public void setStepCount(int stepCount) {
+		this.stepCount.set(stepCount);
 	}
 	
 	//------------------------------------------------
+
+	@Override
+	public String joinResultToStr(JoinResult<J> joinResult) {
+		return joinResultSerializer.serializeJoinResult(joinResult).toString();
+	}
+
+	@Override
+	public JoinResult<J> strToJoinResult(String joinResultStr) {
+		return joinResultSerializer.deserializeJoinResult(new JSONObject(joinResultStr));
+	}
 	
 	@Override
 	public String getJobTypeName() {
@@ -205,6 +240,4 @@ public abstract class WerkJob<J> implements Job<J> {
 	public List<J> getCreatedJobs() {
 		return Collections.unmodifiableList(createdJobs);
 	}
-	
-	//------------------------------------------------
 }

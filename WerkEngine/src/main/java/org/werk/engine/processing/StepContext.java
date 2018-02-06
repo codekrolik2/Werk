@@ -17,12 +17,12 @@ import org.werk.processing.steps.StepProcessingLogRecord;
 
 public class StepContext<J> extends ParameterContext {
 	protected StepType<J> stepType;
-	protected long executionCount;
+	protected int executionCount;
 	protected List<StepProcessingLogRecord> processingLog;
 	protected TimeProvider timeProvider;
 
 	public StepContext<J> cloneContext() {
-		long executionCount0 = executionCount;
+		int executionCount0 = executionCount;
 		
 		Map<String, Parameter> stepParameters0 = new HashMap<>();
 		for (Map.Entry<String, Parameter> stepParameter : parameters.entrySet())
@@ -32,7 +32,7 @@ public class StepContext<J> extends ParameterContext {
 		return new StepContext<J>(stepType, timeProvider, executionCount0, stepParameters0, processingLog0);
 	}
 	
-	public StepContext(StepType<J> stepType, TimeProvider timeProvider, long executionCount, Map<String, Parameter> stepParameters, 
+	public StepContext(StepType<J> stepType, TimeProvider timeProvider, int executionCount, Map<String, Parameter> stepParameters, 
 			List<StepProcessingLogRecord> processingLog) {
 		super(stepParameters);
 		this.executionCount = executionCount;

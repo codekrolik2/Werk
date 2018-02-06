@@ -2,8 +2,10 @@ package org.werk.engine.local;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
+import org.werk.data.StepPOJO;
 import org.werk.engine.StepSwitchResult;
 import org.werk.engine.WerkStepSwitcher;
 import org.werk.engine.processing.WerkJob;
@@ -14,6 +16,7 @@ import org.werk.meta.OverflowAction;
 import org.werk.processing.jobs.Job;
 import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.jobs.JoinStatusRecord;
+import org.werk.processing.jobs.JoinStatusRecordImpl;
 import org.werk.processing.steps.ExecutionResult;
 import org.werk.processing.steps.Step;
 import org.werk.processing.steps.Transition;
@@ -46,7 +49,7 @@ public class LocalStepSwitcher<J> implements WerkStepSwitcher<J> {
 			JobStatus statusBeforeJoin = job.getStatus();
 			Optional<Long> waitForNJobs = exec.getWaitForNJobs();
 			
-			JoinStatusRecord<J> joinStatusRecord = new LocalJoinStatusRecord<J>(joinedJobs, 
+			JoinStatusRecord<J> joinStatusRecord = new JoinStatusRecordImpl<J>(joinedJobs, 
 					joinParameterName, statusBeforeJoin, waitForNJobs);
 			
 			((LocalWerkJob<J>)job).setJoinStatusRecord(Optional.of(joinStatusRecord));
@@ -68,12 +71,13 @@ public class LocalStepSwitcher<J> implements WerkStepSwitcher<J> {
 				long historyLimit = ((WerkJob<J>)job).getJobType().getHistoryLimit();
 				if (job.getCurrentStep().getStepNumber() >= historyLimit) {
 					if (((WerkJob<J>)job).getJobType().getHistoryOverflowAction() == OverflowAction.FAIL) {
-						return stepTransitionError(job, 
+						return stepTransitionError(job,
 							new WerkException(
 									String.format("Job History Limit reached [%d]", ((WerkJob<J>)job).getJobType().getHistoryLimit())
 								));
 					} else {
-						((LocalWerkJob<J>)job).getProcessingHistory().remove(0);
+						List<StepPOJO> history = job.getProcessingHistory().stream().skip(1).collect(Collectors.toList());
+						((LocalWerkJob<J>)job).setProcessingHistory(history);
 					}
 				}
 			}
@@ -81,9 +85,9 @@ public class LocalStepSwitcher<J> implements WerkStepSwitcher<J> {
 			if (transition.getTransitionStatus() == TransitionStatus.NEXT_STEP) {
 				((LocalWerkJob<J>)job).setStatus(JobStatus.PROCESSING);
 				
-				long stepNumber = ((LocalWerkJob<J>)job).getNextStepNumber();
-				String stepName = transition.getStepName().get();
-				Step<J> nextStep = jobStepFactory.createNewStep(job, stepNumber, stepName);
+				int stepNumber = ((LocalWerkJob<J>)job).getNextStepNumber();
+				String stepTypeName = transition.getStepTypeName().get();
+				Step<J> nextStep = jobStepFactory.createNewStep(job, stepNumber, stepTypeName);
 				
 				currentStepDone(job);
 				
@@ -93,10 +97,10 @@ public class LocalStepSwitcher<J> implements WerkStepSwitcher<J> {
 			} else if (transition.getTransitionStatus() == TransitionStatus.ROLLBACK) {
 				((LocalWerkJob<J>)job).setStatus(JobStatus.ROLLING_BACK);
 				
-				long stepNumber = ((LocalWerkJob<J>)job).getNextStepNumber();
-				String stepName = transition.getStepName().get();
+				int stepNumber = ((LocalWerkJob<J>)job).getNextStepNumber();
+				String stepTypeName = transition.getStepTypeName().get();
 				
-				Step<J> nextStep = jobStepFactory.createNewStep(job, stepNumber, transition.getRollbackStepNumbers(), stepName);
+				Step<J> nextStep = jobStepFactory.createNewStep(job, stepNumber, transition.getRollbackStepNumbers(), stepTypeName);
 				
 				currentStepDone(job);
 				

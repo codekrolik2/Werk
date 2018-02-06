@@ -67,15 +67,10 @@ public interface Job<J> extends ReadOnlyJob<J> {
 	String joinResultToStr(JoinResult<J> joinResult);
 	JoinResult<J> strToJoinResult(String joinResultStr);
 	
-	ReadOnlyJob<J> loadJob(J jobId);
-	List<ReadOnlyJob<J>> loadJobs(Collection<J> jobIds);
-	List<ReadOnlyJob<J>> loadAllChildJobs();
-	List<ReadOnlyJob<J>> loadChildJobsOfTypes(Set<String> jobTypes);
-	
-	ReadOnlyJob<J> loadJobAndHistory(J jobId);
-	List<ReadOnlyJob<J>> loadJobsAndHistory(Collection<J> jobIds);
-	List<ReadOnlyJob<J>> loadAllChildJobsAndHistory();
-	List<ReadOnlyJob<J>> loadChildJobsOfTypesAndHistory(Set<String> jobTypes);
+	ReadOnlyJob<J> loadJob(J jobId) throws Exception;
+	List<ReadOnlyJob<J>> loadJobs(Collection<J> jobIds) throws Exception;
+	List<ReadOnlyJob<J>> loadAllChildJobs() throws Exception;
+	List<ReadOnlyJob<J>> loadChildJobsOfTypes(Set<String> jobTypes) throws Exception;
 	
 	//-------------------------------------------------------------------
 	

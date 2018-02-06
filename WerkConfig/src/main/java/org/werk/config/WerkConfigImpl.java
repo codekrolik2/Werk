@@ -9,6 +9,8 @@ import java.util.stream.Collectors;
 import org.werk.exceptions.WerkConfigException;
 import org.werk.meta.JobType;
 import org.werk.meta.StepType;
+import org.werk.processing.steps.StepExec;
+import org.werk.processing.steps.Transitioner;
 
 import lombok.Getter;
 
@@ -130,5 +132,23 @@ public class WerkConfigImpl<J> implements WerkConfig<J> {
 							stepType.getStepTypeName())
 				);
 		stepTypes.put(stepType.getStepTypeName(), stepType);
+	}
+
+	//-----------------------------------------------
+	
+	@Override
+	public StepExec<J> getStepExec(String stepType) throws Exception {
+		StepType<J> stepTypeObj = getStepType(stepType);
+		StepExec<J> stepExec = stepTypeObj.getStepExecFactory().createStepExec();
+		
+		return stepExec;
+	}
+	
+	@Override
+	public Transitioner<J> getStepTransitioner(String stepType) throws Exception {
+		StepType<J> stepTypeObj = getStepType(stepType);
+		Transitioner<J> stepTransitioner = stepTypeObj.getStepTransitionerFactory().createStepTransitioner();
+		
+		return stepTransitioner;
 	}
 }

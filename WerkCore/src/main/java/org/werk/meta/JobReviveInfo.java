@@ -8,7 +8,6 @@ import org.werk.processing.parameters.Parameter;
 
 public interface JobReviveInfo<J> {
 	J getJobId();
-	boolean isRollback();
 	
 	Map<String, Parameter> getJobParametersUpdate();
 	List<String> getJobParametersToRemove();
@@ -17,4 +16,6 @@ public interface JobReviveInfo<J> {
 	List<String> getStepParametersToRemove();
 	
 	Optional<String> getNewStepTypeName();
+	Optional<Boolean> isNewStepRollback();
+	List<Integer> getStepsToRollback();
 }

@@ -32,9 +32,9 @@ public class WerkStep<J> implements Step<J> {
 	@Getter
 	protected Transitioner<J> stepTransitioner;
 	@Getter
-	protected long stepNumber;
+	protected int stepNumber;
 	@Getter
-	protected List<Long> rollbackStepNumbers;
+	protected List<Integer> rollbackStepNumbers;
 	@Getter
 	protected boolean isRollback;
 	
@@ -48,8 +48,8 @@ public class WerkStep<J> implements Step<J> {
 	
 	protected TimeProvider timeProvider;
 	
-	public WerkStep(Job<J> job, StepType<J> stepType, boolean isRollback, long stepNumber, List<Long> rollbackStepNumbers, 
-			long executionCount, Map<String, Parameter> stepParameters, List<StepProcessingLogRecord> processingLog, 
+	public WerkStep(Job<J> job, StepType<J> stepType, boolean isRollback, int stepNumber, List<Integer> rollbackStepNumbers, 
+			int executionCount, Map<String, Parameter> stepParameters, List<StepProcessingLogRecord> processingLog, 
 			StepExec<J> stepExec, Transitioner<J> stepTransitioner, TimeProvider timeProvider) {
 		this.job = job;
 		this.stepType = stepType;
@@ -96,7 +96,7 @@ public class WerkStep<J> implements Step<J> {
 	}
 	
 	@Override
-	public long getExecutionCount() {
+	public int getExecutionCount() {
 		return getCurrentContext().executionCount;
 	}
 
@@ -230,20 +230,20 @@ public class WerkStep<J> implements Step<J> {
 	protected String transitionToStr(Transition record) {
 		if (record.getTransitionStatus() == TransitionStatus.NEXT_STEP) {
 			if (record.getDelayMS().isPresent()) {
-				return String.format("Transition: %s; Next step name [%s]; Delay [%d]", 
-						record.getTransitionStatus().toString(), record.getStepName().get(), record.getDelayMS().get());
+				return String.format("Transition: %s; Next step type name [%s]; Delay [%d]", 
+						record.getTransitionStatus().toString(), record.getStepTypeName().get(), record.getDelayMS().get());
 			} else {
-				return String.format("Transition: %s; Next step name [%s]; No delay", 
-						record.getTransitionStatus().toString(), record.getStepName().get());
+				return String.format("Transition: %s; Next step type name [%s]; No delay", 
+						record.getTransitionStatus().toString(), record.getStepTypeName().get());
 			}
 		} else if (record.getTransitionStatus() == TransitionStatus.ROLLBACK) {
-			if (record.getStepName().isPresent()) {
+			if (record.getStepTypeName().isPresent()) {
 				if (record.getDelayMS().isPresent()) {
-					return String.format("Transition: %s; Rollback step name [%s]; Delay [%d]", 
-						record.getTransitionStatus().toString(), record.getStepName().get(), record.getDelayMS().get());
+					return String.format("Transition: %s; Rollback step type name [%s]; Delay [%d]", 
+						record.getTransitionStatus().toString(), record.getStepTypeName().get(), record.getDelayMS().get());
 				} else {
-					return String.format("Transition: %s; Rollback step name [%s]; No delay", 
-						record.getTransitionStatus().toString(), record.getStepName().get());
+					return String.format("Transition: %s; Rollback step type name [%s]; No delay", 
+						record.getTransitionStatus().toString(), record.getStepTypeName().get());
 				}
 			} else {
 				if (record.getDelayMS().isPresent()) {

@@ -1,8 +1,12 @@
 package org.werk.processing.steps;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+
+import org.werk.processing.parameters.Parameter;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -13,45 +17,68 @@ public final class Transition {
 	@Getter
 	protected final TransitionStatus transitionStatus;
 	@Getter
-	protected final Optional<String> stepName;
+	protected final Optional<String> stepTypeName;
 	@Getter
 	protected final Optional<Long> delayMS;
 	@Getter
-	protected final List<Long> rollbackStepNumbers;
+	protected final List<Integer> rollbackStepNumbers;
+	@Getter
+	protected final Map<String, Parameter> rollbackStepParameters;
 	
-	public static Transition nextStep(String stepName) {
-		return new Transition(TransitionStatus.NEXT_STEP, Optional.of(stepName), Optional.empty(), new ArrayList<Long>());
+	public static Transition nextStep(String stepTypeName) {
+		return new Transition(TransitionStatus.NEXT_STEP, Optional.of(stepTypeName), Optional.empty(), 
+				new ArrayList<>(), new HashMap<>());
 	}
 	
-	public static Transition nextStep(String stepName, long delayMS) {
-		return new Transition(TransitionStatus.NEXT_STEP, Optional.of(stepName), Optional.of(delayMS), new ArrayList<Long>());
+	public static Transition nextStep(String stepTypeName, long delayMS) {
+		return new Transition(TransitionStatus.NEXT_STEP, Optional.of(stepTypeName), Optional.of(delayMS), 
+				new ArrayList<Integer>(), new HashMap<>());
 	}
 	
-	public static Transition rollback(String stepName) {
-		return new Transition(TransitionStatus.ROLLBACK, Optional.of(stepName), Optional.empty(), new ArrayList<Long>());
+	public static Transition rollback(String stepTypeName) {
+		return new Transition(TransitionStatus.ROLLBACK, Optional.of(stepTypeName), Optional.empty(), 
+				new ArrayList<Integer>(), new HashMap<>());
 	}
 	
-	public static Transition rollback(String stepName, long delayMS) {
-		return new Transition(TransitionStatus.ROLLBACK, Optional.of(stepName), Optional.of(delayMS), new ArrayList<Long>());
+	public static Transition rollback(String stepTypeName, long delayMS) {
+		return new Transition(TransitionStatus.ROLLBACK, Optional.of(stepTypeName), Optional.of(delayMS), 
+				new ArrayList<Integer>(), new HashMap<>());
 	}
 	
-	public static Transition rollback(String stepName, List<Long> rollbackStepNumbers) {
-		return new Transition(TransitionStatus.ROLLBACK, Optional.of(stepName), Optional.empty(), rollbackStepNumbers);
+	public static Transition rollback(String stepTypeName, List<Integer> rollbackStepNumbers) {
+		return new Transition(TransitionStatus.ROLLBACK, Optional.of(stepTypeName), Optional.empty(), 
+				rollbackStepNumbers, new HashMap<>());
 	}
 	
-	public static Transition rollback(String stepName, List<Long> rollbackStepNumbers, long delayMS) {
-		return new Transition(TransitionStatus.ROLLBACK, Optional.of(stepName), Optional.of(delayMS), rollbackStepNumbers);
+	public static Transition rollback(String stepTypeName, List<Integer> rollbackStepNumbers, long delayMS) {
+		return new Transition(TransitionStatus.ROLLBACK, Optional.of(stepTypeName), Optional.of(delayMS), 
+				rollbackStepNumbers, new HashMap<>());
+	}
+	
+	public static Transition rollback(String stepTypeName, List<Integer> rollbackStepNumbers, 
+			Map<String, Parameter> rollbackStepParameters) {
+		return new Transition(TransitionStatus.ROLLBACK, Optional.of(stepTypeName), Optional.empty(), 
+				rollbackStepNumbers, rollbackStepParameters);
+	}
+	
+	public static Transition rollback(String stepTypeName, List<Integer> rollbackStepNumbers, 
+			Map<String, Parameter> rollbackStepParameters, long delayMS) {
+		return new Transition(TransitionStatus.ROLLBACK, Optional.of(stepTypeName), Optional.of(delayMS), 
+				rollbackStepNumbers, rollbackStepParameters);
 	}
 	
 	public static Transition finish() {
-		return new Transition(TransitionStatus.FINISH, Optional.empty(), Optional.empty(), new ArrayList<Long>());
+		return new Transition(TransitionStatus.FINISH, Optional.empty(), Optional.empty(), 
+				new ArrayList<Integer>(), new HashMap<>());
 	}
 	
 	public static Transition finishRollback() {
-		return new Transition(TransitionStatus.FINISH_ROLLBACK, Optional.empty(), Optional.empty(), new ArrayList<Long>());
+		return new Transition(TransitionStatus.FINISH_ROLLBACK, Optional.empty(), Optional.empty(), 
+				new ArrayList<Integer>(), new HashMap<>());
 	}
 	
 	public static Transition fail() {
-		return new Transition(TransitionStatus.FAIL, Optional.empty(), Optional.empty(), new ArrayList<Long>());
+		return new Transition(TransitionStatus.FAIL, Optional.empty(), Optional.empty(), 
+				new ArrayList<Integer>(), new HashMap<>());
 	}
 }

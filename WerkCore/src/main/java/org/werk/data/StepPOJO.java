@@ -10,9 +10,9 @@ public interface StepPOJO {
 	String getStepTypeName();
 	boolean isRollback();
 	
-	long getStepNumber();
-	List<Long> getRollbackStepNumbers();
-	long getExecutionCount();
+	int getStepNumber();
+	List<Integer> getRollbackStepNumbers();
+	int getExecutionCount();
 	
 	Map<String, Parameter> getStepParameters();
 	List<StepProcessingLogRecord> getProcessingLog();

@@ -16,7 +16,7 @@ public class StepProcessingHistorySerializer {
 		this.timeProvider = timeProvider;
 	}
 	
-	public JSONArray serializeLog(List<StepProcessingLogRecord> lst) {
+	public JSONArray serializeLogToArray(List<StepProcessingLogRecord> lst) {
 		JSONArray arr = new JSONArray();
 		for (StepProcessingLogRecord rec : lst) {
 			JSONObject obj = new JSONObject();
@@ -40,5 +40,18 @@ public class StepProcessingHistorySerializer {
 		}
 		
 		return lst;
+	}
+	
+	public JSONObject serializeLog(List<StepProcessingLogRecord> lst) {
+		JSONArray arr = serializeLogToArray(lst);
+		
+		JSONObject obj = new JSONObject();
+		obj.put("log", arr);
+		return obj;
+	}
+	
+	public List<StepProcessingLogRecord> deserializeLog(JSONObject logObj) {
+		JSONArray arr = logObj.getJSONArray("log");
+		return deserializeLog(arr);		
 	}
 }

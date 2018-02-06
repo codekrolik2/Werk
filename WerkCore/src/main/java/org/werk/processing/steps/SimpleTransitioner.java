@@ -1,6 +1,7 @@
 package org.werk.processing.steps;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -42,7 +43,7 @@ public class SimpleTransitioner<J> implements Transitioner<J> {
 			else
 				return Transition.nextStep(nextStep);
 		} else {
-			List<Long> rollbackStepNumbers = new ArrayList<Long>();
+			List<Integer> rollbackStepNumbers = new ArrayList<Integer>();
 			rollbackStepNumbers.add(step.getStepNumber());
 			return Transition.rollback(step.getStepTypeName(), rollbackStepNumbers);
 		}
@@ -52,7 +53,14 @@ public class SimpleTransitioner<J> implements Transitioner<J> {
 	public Transition rollbackTransition(boolean isSuccess, Step<J> step) {
 		//ROLLBACK
 		if (isSuccess)
-			return commonRollback(step);
+			try {
+				return commonRollback(step);
+			} catch (Exception e) {
+				if (e instanceof RuntimeException)
+					throw (RuntimeException)e;
+				else
+					throw new RuntimeException(e);
+			}
 		else
 			return Transition.fail(); 
 	}
@@ -64,19 +72,19 @@ public class SimpleTransitioner<J> implements Transitioner<J> {
 	 * 
 	 * @param step Current step
 	 * @return Transition to rollback next step or finish rollback.
+	 * @throws Exception 
 	 */
-	public static <J> Transition commonRollback(Step<J> step) {
-		List<StepPOJO> history = step.getJob().getProcessingHistory();
+	public static <J> Transition commonRollback(Step<J> step) throws Exception {
+		Collection<StepPOJO> history = step.getJob().getProcessingHistory();
 		
-		Set<Long> stepNumbers = new HashSet<>();
-		for (int i = history.size()-1; i >= 0; i--) {
-			StepPOJO pojo = history.get(i);
+		Set<Integer> stepNumbers = new HashSet<>();
+		for (StepPOJO pojo : history) {
 			if (pojo.isRollback()) {
 				if (pojo.getRollbackStepNumbers() != null)
 					stepNumbers.addAll(pojo.getRollbackStepNumbers());
 			} else {
 				if (!stepNumbers.contains(pojo.getStepNumber())) {
-					List<Long> rollbackStepNumbers = new ArrayList<Long>();
+					List<Integer> rollbackStepNumbers = new ArrayList<Integer>();
 					rollbackStepNumbers.add(step.getStepNumber());
 					return Transition.rollback(step.getStepTypeName(), rollbackStepNumbers);
 				}
