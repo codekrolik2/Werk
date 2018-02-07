@@ -19,7 +19,7 @@ public interface JobStepFactory<J> {
 	public Step<J> createFirstStep(Job<J> job, int stepNumber) throws Exception;
 	
 	public Step<J> createNewStep(Job<J> job, int stepNumber, String stepType) throws Exception;
-	public Step<J> createNewStep(Job<J> job, int stepNumber, List<Integer> rollbackStepNumbers, String stepType) throws Exception;
+	public Step<J> createNewStep(Job<J> job, int stepNumber, Optional<List<Integer>> rollbackStepNumbers, String stepType) throws Exception;
 	
 	public Job<J> createJob(JobPOJO<J> job) throws Exception;
 	public Step<J> createStep(Job<J> job, StepPOJO step) throws Exception;

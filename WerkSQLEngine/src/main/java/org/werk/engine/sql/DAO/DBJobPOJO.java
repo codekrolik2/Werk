@@ -40,5 +40,5 @@ public class DBJobPOJO implements JobPOJO<Long>{
 	@Getter @Setter
 	protected Optional<JoinStatusRecord<Long>> joinStatusRecord;
 	@Getter
-	protected long idLocker;
+	protected Optional<Long> idLocker;
 }

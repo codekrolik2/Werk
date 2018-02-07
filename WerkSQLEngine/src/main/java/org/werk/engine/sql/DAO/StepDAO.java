@@ -175,7 +175,7 @@ public class StepDAO {
 	}
 	
 	public long createStep(TransactionContext tc, long jobId, String stepType, boolean isRollback,
-			int stepNumber, int executionCount, Map<String, Parameter> stepParameters,
+			int stepNumber, int executionCount, Optional<Map<String, Parameter>> stepParameters,
 			List<StepProcessingLogRecord> processingLog) throws SQLException {
 		Connection connection = ((JDBCTransactionContext)tc).getConnection();
 		PreparedStatement pst = null;
@@ -190,7 +190,9 @@ public class StepDAO {
 			pst.setBoolean(3, isRollback);
 			pst.setInt(4, stepNumber);
 			pst.setInt(5, executionCount);
-			pst.setString(6, parameterContextSerializer.serializeParameters(stepParameters).toString());
+			pst.setString(6, stepParameters.isPresent() 
+					? parameterContextSerializer.serializeParameters(stepParameters.get()).toString() 
+					: new JSONObject().toString());
 			pst.setString(7, stepProcessingHistorySerializer.serializeLog(processingLog).toString());
 			
 			pst.executeUpdate();
@@ -203,19 +205,20 @@ public class StepDAO {
 	}
 	
 	public long createProcessingStep(TransactionContext tc, long jobId, String stepType, int stepNumber) throws SQLException {
-		return createStep(tc, jobId, stepType, true, stepNumber, 0, new HashMap<>(), new ArrayList<>());
+		return createStep(tc, jobId, stepType, true, stepNumber, 0, Optional.empty(), new ArrayList<>());
 	}
 	
 	public long createProcessingStep(TransactionContext tc, long jobId, String stepType, int stepNumber,
-			Map<String, Parameter> stepParameters) throws SQLException {
+			Optional<Map<String, Parameter>> stepParameters) throws SQLException {
 		return createStep(tc, jobId, stepType, true, stepNumber, 0, stepParameters, new ArrayList<>());
 	}
 	
 	public long createRollbackStep(TransactionContext tc, long jobId, String stepType, int stepNumber,
-			Map<String, Parameter> stepParameters, List<Integer> stepsToRollback) throws SQLException {
+			Optional<Map<String, Parameter>> stepParameters, Optional<List<Integer>> stepsToRollback) throws SQLException {
 		long stepId = createStep(tc, jobId, stepType, true, stepNumber, 0, stepParameters, new ArrayList<>());
 		
-		for (Integer stepToRollback : stepsToRollback)
+		if (stepsToRollback.isPresent())
+		for (Integer stepToRollback : stepsToRollback.get())
 			createRollbackStepRecord(tc, jobId, stepId, stepToRollback);
 		
 		return stepId;

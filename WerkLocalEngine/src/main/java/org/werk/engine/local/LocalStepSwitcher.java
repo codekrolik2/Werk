@@ -1,5 +1,6 @@
 package org.werk.engine.local;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -16,7 +17,6 @@ import org.werk.meta.OverflowAction;
 import org.werk.processing.jobs.Job;
 import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.jobs.JoinStatusRecord;
-import org.werk.processing.jobs.JoinStatusRecordImpl;
 import org.werk.processing.steps.ExecutionResult;
 import org.werk.processing.steps.Step;
 import org.werk.processing.steps.Transition;
@@ -47,10 +47,10 @@ public class LocalStepSwitcher<J> implements WerkStepSwitcher<J> {
 			List<J> joinedJobs = exec.getJobsToJoin().get();
 			String joinParameterName = exec.getParameterName().get();
 			JobStatus statusBeforeJoin = job.getStatus();
-			Optional<Long> waitForNJobs = exec.getWaitForNJobs();
+			int waitForNJobs = exec.getWaitForNJobs().get();
 			
-			JoinStatusRecord<J> joinStatusRecord = new JoinStatusRecordImpl<J>(joinedJobs, 
-					joinParameterName, statusBeforeJoin, waitForNJobs);
+			JoinStatusRecord<J> joinStatusRecord = new LocalJoinStatusRecord<J>(new HashSet<>(joinedJobs), 
+					joinParameterName, statusBeforeJoin, waitForNJobs, jobManager);
 			
 			((LocalWerkJob<J>)job).setJoinStatusRecord(Optional.of(joinStatusRecord));
 			((LocalWerkJob<J>)job).setStatus(JobStatus.JOINING);

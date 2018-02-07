@@ -30,11 +30,11 @@ import org.werk.exceptions.WerkConfigException;
 import org.werk.meta.JobInitInfo;
 import org.werk.meta.JobReviveInfo;
 import org.werk.meta.JobType;
+import org.werk.meta.NewStepReviveInfo;
 import org.werk.meta.OldVersionJobInitInfo;
 import org.werk.meta.inputparameters.JobInputParameter;
 import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.jobs.JoinStatusRecord;
-import org.werk.processing.jobs.JoinStatusRecordImpl;
 import org.werk.processing.parameters.Parameter;
 
 public class JobDAO {
@@ -212,10 +212,7 @@ public class JobDAO {
 			pst.setInt(5, stepCount);
 			
 			if (joinStatusRecord.isPresent()) {
-				if (joinStatusRecord.get().getWaitForNJobs().isPresent())
-					pst.setLong(6, joinStatusRecord.get().getWaitForNJobs().get());
-				else
-					pst.setNull(6, java.sql.Types.BIGINT);
+				pst.setLong(6, joinStatusRecord.get().getWaitForNJobs());
 				
 				pst.setInt(7, joinStatusRecord.get().getStatusBeforeJoin().getCode());
 				pst.setString(8, joinStatusRecord.get().getJoinParameterName());
@@ -224,7 +221,7 @@ public class JobDAO {
 			int recordsUpdated = pst.executeUpdate();
 			
 			if (joinStatusRecord.isPresent())
-				for (Long joinedJobId : joinStatusRecord.get().getJoinedJobs())
+				for (Long joinedJobId : joinStatusRecord.get().getJoinedJobIds())
 					recordsUpdated += createJoinRecordJob(tc, jobId, joinedJobId);
 			
 			return recordsUpdated;
@@ -283,8 +280,9 @@ public class JobDAO {
 			long newStepId = job.getCurrentStepId();
 			
 			//3. Create new step or update existing step
-			if (init.getNewStepTypeName().isPresent()) {
+			if (init.getNewStepInfo().isPresent()) {
 				//3.1 Create new step
+				NewStepReviveInfo newStepInfo = init.getNewStepInfo().get();
 
 				//Init step parameters
 				Map<String, Parameter> stepParameters = init.getStepParametersUpdate();
@@ -292,14 +290,14 @@ public class JobDAO {
 					stepParameters.remove(stepParameterToRemove);
 				
 				//Create step
-				if (init.isNewStepRollback().get()) {
+				if (newStepInfo.isNewStepRollback()) {
 					jobStatus = JobStatus.ROLLING_BACK;
-					newStepId = stepDAO.createRollbackStep(tc, jobId, init.getNewStepTypeName().get(), job.stepCount++, 
-						init.getStepParametersUpdate(), init.getStepsToRollback());
+					newStepId = stepDAO.createRollbackStep(tc, jobId, newStepInfo.getNewStepTypeName(), job.stepCount++,
+						Optional.of(stepParameters), newStepInfo.getStepsToRollback());
 				} else {
 					jobStatus = JobStatus.PROCESSING;
-					newStepId = stepDAO.createProcessingStep(tc, jobId, init.getNewStepTypeName().get(), job.stepCount++, 
-						init.getStepParametersUpdate());
+					newStepId = stepDAO.createProcessingStep(tc, jobId, newStepInfo.getNewStepTypeName(), job.stepCount++,
+						Optional.of(stepParameters));
 				}
 			} else {
 				//3.2 Load and update existing step
@@ -338,24 +336,28 @@ public class JobDAO {
 		return null;
 	}
 	
-	public Collection<DBJobPOJO> loadJobs(TransactionContext tc, Optional<Timestamp> from, Optional<Timestamp> to, 
+	public Collection<DBJobPOJO> loadJobs(TransactionContext tc, Optional<Timestamp> from, Optional<Timestamp> to,
 			Optional<Collection<Long>> jobIds, Optional<Long> parentJobId, Optional<Set<String>> jobTypes) throws SQLException {
 		Connection connection = ((JDBCTransactionContext)tc).getConnection();
 		PreparedStatement pst = null;
 		
 		try {
-			StringBuilder sb = new StringBuilder("SELECT j.id_job, j.job_type, j.version, j.job_name, j.parent_job_id, " + 
-					"j.current_step_id, j.status, j.next_execution_time, j.job_parameter_state, j.job_initial_parameter_state, " + 
-					"j.id_locker, j.step_count, j.wait_for_N_jobs, j.status_before_join, j.join_parameter_name, r.id_job " + 
-					"FROM jobs j LEFT JOIN join_record_jobs r ON j.id_job = r.id_awaiting_job");
+			StringBuilder sb = new StringBuilder("SELECT j.id_job, j.job_type, j.version, j.job_name, j.parent_job_id, " +
+					"j.current_step_id, j.status, j.next_execution_time, j.job_parameter_state, j.job_initial_parameter_state, " +
+					"j.id_locker, j.step_count, j.wait_for_N_jobs, j.status_before_join, j.join_parameter_name, r.id_job, j2.status " +
+					"FROM jobs j " +
+					"	LEFT JOIN join_record_jobs r " +
+					"		LEFT JOIN jobs j2 " +
+					"		ON j2.id_job = r.id_job " +
+					"	ON j.id_job = r.id_awaiting_job");
 			
 			if (from.isPresent() || to.isPresent() || (jobIds.isPresent() && !jobIds.get().isEmpty()) ||
 					parentJobId.isPresent() || jobTypes.isPresent())
-				sb.append("WHERE ");
+				sb.append(" WHERE ");
 			
 			int count = 0;
 			if (from.isPresent()) {
-				if (count++ > 0) sb.append(" AND");
+				count++;
 				sb.append(" next_execution_time >= ? ");
 			}
 			if (to.isPresent()) {
@@ -454,7 +456,8 @@ public class JobDAO {
 			Map<String, Parameter> jobInitialParameters = 
 					parameterContextSerializer.deserializeParameters(new JSONObject(jobInitialParametersStr));
 			
-			long idLocker = rs.getLong(11);
+			long idLockerL = rs.getLong(11);
+			Optional<Long> idLocker = rs.wasNull() ? Optional.empty() : Optional.of(idLockerL);
 			
 			int stepCount = rs.getInt(12);
 
@@ -463,21 +466,18 @@ public class JobDAO {
 			if (rs.wasNull()) {
 				joinStatusRecord = Optional.empty();
 			} else {
-				long waitForNJobsLong = rs.getLong(13);
-				Optional<Long> waitForNJobs;
-				if (rs.wasNull())
-					waitForNJobs = Optional.empty();
-				else
-					waitForNJobs = Optional.of(waitForNJobsLong);
+				int waitForNJobs = rs.getInt(13);
 				
 				JobStatus statusBeforeJoin = JobStatus.fromCode(rs.getInt(14));
 				
 				long joinedJobId = rs.getLong(16);
-				List<Long> joinedJobs = new ArrayList<Long>();
-				joinedJobs.add(joinedJobId);
+				JobStatus joinedJobStatus = JobStatus.fromCode(rs.getInt(17));
 				
-				JoinStatusRecord<Long> jsr = new JoinStatusRecordImpl<>(joinedJobs, joinParameterName, statusBeforeJoin, 
-						waitForNJobs);
+				Map<Long, JobStatus> joinedJobs = new HashMap<>();
+				joinedJobs.put(joinedJobId, joinedJobStatus);
+				
+				JoinStatusRecord<Long> jsr = new SQLJoinStatusRecord<Long>(joinedJobs, joinParameterName, 
+						statusBeforeJoin, waitForNJobs);
 				joinStatusRecord = Optional.of(jsr);
 			}
 			
@@ -487,11 +487,12 @@ public class JobDAO {
 			jobs.put(jobId, dbJobPOJO);
 		} else {
 			dbJobPOJO = (DBJobPOJO)jobs.get(jobId);
-			JoinStatusRecord<Long> jsr = dbJobPOJO.joinStatusRecord.get();
+			SQLJoinStatusRecord<Long> jsr = (SQLJoinStatusRecord<Long>)dbJobPOJO.joinStatusRecord.get();
 			
 			long joinedJobId = rs.getLong(16);
+			JobStatus joinedJobStatus = JobStatus.fromCode(rs.getInt(17));
 			if (!rs.wasNull())
-				jsr.getJoinedJobs().add(joinedJobId);
+				jsr.getJoinedJobs().put(joinedJobId, joinedJobStatus);
 		}
 	}
 }

@@ -161,11 +161,11 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 
 	@Override
 	public Step<J> createNewStep(Job<J> job, int stepNumber, String stepType) throws Exception {
-		return createNewStep(job, stepNumber, new ArrayList<>(), stepType);
+		return createNewStep(job, stepNumber, Optional.empty(), stepType);
 	}
 
 	@Override
-	public Step<J> createNewStep(Job<J> job, int stepNumber, List<Integer> rollbackStepNumbers, 
+	public Step<J> createNewStep(Job<J> job, int stepNumber, Optional<List<Integer>> rollbackStepNumbers, 
 			String stepType) throws Exception {
 		String stepTypeName = stepType;
 		StepType<J> stepTypeObj = werkConfig.getStepType(stepTypeName);
@@ -177,7 +177,13 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 		StepExec<J> stepExec = werkConfig.getStepExec(stepType);
 		Transitioner<J> stepTransitioner = werkConfig.getStepTransitioner(stepType); 
 		
-		return new WerkStep<J>(job, stepTypeObj, (job.getStatus() == JobStatus.ROLLING_BACK), stepNumber, rollbackStepNumbers,
+		List<Integer> rollbackStepNumbersLst;
+		if (rollbackStepNumbers.isPresent())
+			rollbackStepNumbersLst = rollbackStepNumbers.get();
+		else
+			rollbackStepNumbersLst = new ArrayList<>();
+		
+		return new WerkStep<J>(job, stepTypeObj, (job.getStatus() == JobStatus.ROLLING_BACK), stepNumber, rollbackStepNumbersLst,
 				executionCount, stepParameters, processingLog, stepExec, stepTransitioner, timeProvider); 
 	}
 	

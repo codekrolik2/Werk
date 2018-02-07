@@ -22,7 +22,7 @@ public final class ExecutionResult<J> {
 	@Getter
 	protected final Optional<String> parameterName;
 	@Getter
-	protected final Optional<Long> waitForNJobs;
+	protected final Optional<Integer> waitForNJobs;
 	@Getter
 	protected final Optional<WerkCallback<String>> callback;
 	
@@ -48,10 +48,10 @@ public final class ExecutionResult<J> {
 	
 	public static <J> ExecutionResult<J> joinAll(List<J> jobsToJoin, String joinParameterName) {
 		return new ExecutionResult<J>(StepExecutionStatus.JOIN, Optional.empty(), Optional.empty(),
-				Optional.of(jobsToJoin), Optional.of(joinParameterName), Optional.empty(), Optional.empty());
+				Optional.of(jobsToJoin), Optional.of(joinParameterName), Optional.of(jobsToJoin.size()), Optional.empty());
 	}
 	
-	public static <J> ExecutionResult<J> joinN(List<J> jobsToJoin, String joinParameterName, long waitForNJobs) {
+	public static <J> ExecutionResult<J> joinN(List<J> jobsToJoin, String joinParameterName, int waitForNJobs) {
 		return new ExecutionResult<J>(StepExecutionStatus.JOIN, Optional.empty(), Optional.empty(), 
 				Optional.of(jobsToJoin), Optional.of(joinParameterName), Optional.of(waitForNJobs), Optional.empty());
 	}

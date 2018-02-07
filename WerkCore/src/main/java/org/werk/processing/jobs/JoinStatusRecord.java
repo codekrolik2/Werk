@@ -1,11 +1,9 @@
 package org.werk.processing.jobs;
 
-import java.util.List;
-import java.util.Optional;
+import org.werk.processing.steps.JoinResult;
 
-public interface JoinStatusRecord<J> {
-	List<J> getJoinedJobs();
+public interface JoinStatusRecord<J> extends JoinResult<J> {
 	String getJoinParameterName();
 	JobStatus getStatusBeforeJoin();
-	Optional<Long> getWaitForNJobs();
+	int getWaitForNJobs();
 }

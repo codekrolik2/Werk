@@ -3,7 +3,6 @@ package org.werk.engine.json;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.json.JSONObject;
 import org.werk.processing.jobs.JobStatus;
@@ -33,13 +32,9 @@ public class JoinResultSerializer<J> {
 	}
 	
 	public JSONObject serializeJoinResult(JoinResult<J> joinResult) {
-		Map<J, JobStatus> joinedJobs = joinResult.getJoinedJobs();
-		
 		JSONObject jrObj = new JSONObject();
-		for (Entry<J, JobStatus> ent : joinedJobs.entrySet()) {
-			J jobId = ent.getKey();
-			JobStatus status = ent.getValue();
-			
+		for (J jobId : joinResult.getJoinedJobIds()) {
+			JobStatus status = joinResult.getJoinedJobStatus(jobId);
 			jrObj.put(jobIdSerializer.serializeJobId(jobId), status.toString());
 		}
 		

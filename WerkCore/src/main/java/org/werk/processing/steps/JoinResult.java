@@ -1,9 +1,10 @@
 package org.werk.processing.steps;
 
-import java.util.Map;
+import java.util.Collection;
 
 import org.werk.processing.jobs.JobStatus;
 
 public interface JoinResult<J> {
-	Map<J, JobStatus> getJoinedJobs();
+	Collection<J> getJoinedJobIds();
+	JobStatus getJoinedJobStatus(J joinedJobId);
 }

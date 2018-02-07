@@ -3,6 +3,7 @@ package org.werk.engine.sql;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -14,13 +15,14 @@ import org.werk.config.WerkConfig;
 import org.werk.engine.StepSwitchResult;
 import org.werk.engine.WerkStepSwitcher;
 import org.werk.engine.sql.DAO.JobDAO;
+import org.werk.engine.sql.DAO.SQLJoinStatusRecord;
 import org.werk.engine.sql.DAO.StepDAO;
 import org.werk.exceptions.StepLogLimitExceededException;
 import org.werk.meta.StepType;
 import org.werk.processing.jobs.Job;
 import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.jobs.JoinStatusRecord;
-import org.werk.processing.jobs.JoinStatusRecordImpl;
+import org.werk.processing.parameters.Parameter;
 import org.werk.processing.steps.ExecutionResult;
 import org.werk.processing.steps.StepExec;
 import org.werk.processing.steps.Transition;
@@ -119,13 +121,16 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 		
 		TransactionContext tc = null;
 		try {
-			List<Long> joinedJobs = exec.getJobsToJoin().get();
+			Map<Long, JobStatus> joinedJobs = new HashMap<>();
+			for (long jobId : exec.getJobsToJoin().get())
+				joinedJobs.put(jobId, JobStatus.UNDEFINED);
+			
 			String joinParameterName = exec.getParameterName().get();
 			JobStatus statusBeforeJoin = job.getStatus();
-			Optional<Long> waitForNJobs = exec.getWaitForNJobs();
+			Optional<Integer> waitForNJobs = exec.getWaitForNJobs();
 			
-			JoinStatusRecord<Long> joinStatusRecord = new JoinStatusRecordImpl<Long>(joinedJobs, 
-					joinParameterName, statusBeforeJoin, waitForNJobs);
+			JoinStatusRecord<Long> joinStatusRecord = new SQLJoinStatusRecord<Long>(joinedJobs, 
+					joinParameterName, statusBeforeJoin, waitForNJobs.isPresent() ? waitForNJobs.get() : joinedJobs.size());
 			
 			sqlJob.setJoinStatusRecord(Optional.of(joinStatusRecord));
 			sqlJob.setStatus(JobStatus.JOINING);
@@ -208,8 +213,21 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 				
 				long nextStepId = stepDAO.createRollbackStep(tc, job.getJobId(), stepTypeName, stepNumber, 
 						transition.getRollbackStepParameters(), transition.getRollbackStepNumbers());
-				SQLWerkStep newStep = new SQLWerkStep(sqlJob, stepType, false, stepNumber, transition.getRollbackStepNumbers(),
-						0, transition.getRollbackStepParameters(), new ArrayList<>(), stepExec, stepTransitioner, 
+				
+				List<Integer> rollbackStepNumbers;
+				if (transition.getRollbackStepNumbers().isPresent())
+					rollbackStepNumbers = transition.getRollbackStepNumbers().get();
+				else
+					rollbackStepNumbers = new ArrayList<>();
+				
+				Map<String, Parameter> rollbackStepParameters;
+				if (transition.getRollbackStepParameters().isPresent())
+					rollbackStepParameters = transition.getRollbackStepParameters().get();
+				else
+					rollbackStepParameters = new HashMap<>();
+				
+				SQLWerkStep newStep = new SQLWerkStep(sqlJob, stepType, true, stepNumber, rollbackStepNumbers,
+						0, rollbackStepParameters, new ArrayList<>(), stepExec, stepTransitioner, 
 						timeProvider, nextStepId);
 				
 				//save job update
