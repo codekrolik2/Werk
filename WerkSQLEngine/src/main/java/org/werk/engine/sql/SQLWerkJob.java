@@ -2,6 +2,7 @@ package org.werk.engine.sql;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -47,6 +48,9 @@ public class SQLWerkJob extends WerkJob<Long> {
 	protected JobDAO jobDAO;
 	protected WerkConfig<Long> werkConfig; 
 	
+	@Getter
+	protected Set<Long> forkedJobs;
+	
 	public SQLWerkJob(Long jobId, JobType jobType, long version, Optional<String> jobName, JobStatus status,
 			Map<String, Parameter> jobInitialParameters, Map<String, Parameter> jobParameters,
 			Timestamp nextExecutionTime, Optional<JoinStatusRecord<Long>> joinStatusRecord,
@@ -59,6 +63,7 @@ public class SQLWerkJob extends WerkJob<Long> {
 		this.stepDAO = stepDAO;
 		this.jobDAO = jobDAO;
 		this.werkConfig = werkConfig;
+		forkedJobs = new HashSet<>();
 	}
 
 	public TransactionContext getOrCreateTC() throws Exception {
@@ -124,7 +129,6 @@ public class SQLWerkJob extends WerkJob<Long> {
 	}
 	
 	//----------------------------------------------
-	
 	@Override
 	public Long fork(JobInitInfo jobInitInfo) throws Exception {
 		TransactionContext tc = null;
@@ -138,6 +142,8 @@ public class SQLWerkJob extends WerkJob<Long> {
 			long firstStepId = stepDAO.createProcessingStep(tc, jobId, firstStepType, 0);
 			
 			jobDAO.updateFirstStep(tc, jobId, firstStepId);
+			
+			forkedJobs.add(jobId);
 			
 			return jobId;
 		} catch(Exception e) {
@@ -160,6 +166,8 @@ public class SQLWerkJob extends WerkJob<Long> {
 			long firstStepId = stepDAO.createProcessingStep(tc, jobId, firstStepType, 0);
 			
 			jobDAO.updateFirstStep(tc, jobId, firstStepId);
+			
+			forkedJobs.add(jobId);
 			
 			return jobId;
 		} catch(Exception e) {

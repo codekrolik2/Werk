@@ -1,0 +1,25 @@
+==========================
+  Werk config validation
+==========================
+
+
+1. Fatal errors:
+
+*) First step must exist in job steps
+*) All steps must exist for a job
+*) Step transitions must belong to job steps
+*) Fields of StepExec and Transitioner annotated as @JobParam and @StepParam must be of valid types
+*) Jobs marked as Acyclic must not have cycles
+*) StepTransitioner's fields marked as @Transition and @RollbackTransition must be Step's allowed transitions 
+*) Steps with the same name from multiple configs must be identical
+*) Steps must not have multiple @JobParam or @StepParam fields mapped to the same parameter
+
+----------------------------------------------------------------------
+
+2. Warnings:
+
+*) Warn about conflicting job parameter types, which includes
+	- JobInputParameter from different parameter sets 
+	- @JobParameter fields from steps
+*) Warn about identical parameter sets in a job
+*) Warn about identical Steps with the same name from multiple configs

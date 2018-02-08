@@ -1,5 +1,6 @@
 package org.werk.engine;
 
+import org.pillar.exec.work.WorkThreadPool;
 import org.pillar.time.LongTimeProvider;
 import org.pillar.time.interfaces.TimeProvider;
 import org.werk.engine.processing.WerkJob;
@@ -7,17 +8,25 @@ import org.werk.processing.jobs.Job;
 
 public class WerkEngineImpl<J> implements WerkEngine<J> {
 	protected TimeProvider timeProvider;
-	protected WerkPool<J> werkPool;
+	protected WorkThreadPool<Job<J>> werkPool;
+	protected WerkPoolRunnableFactory<J> runnableFactory;
 	protected WerkCallbackRunnable<J> callbackRunnable;
 	
 	public WerkEngineImpl(int threadCount, WerkStepSwitcher<J> stepSwitcher) {
 		timeProvider = new LongTimeProvider();
 		
 		callbackRunnable = new WerkCallbackRunnable<J>(timeProvider);
-		werkPool = new WerkPool<J>(threadCount, timeProvider, callbackRunnable, stepSwitcher);
-		callbackRunnable.setPool(werkPool);
 		
+		runnableFactory = new WerkPoolRunnableFactory<J>(stepSwitcher);
+		werkPool = new WorkThreadPool<Job<J>>(timeProvider, runnableFactory);
+		
+		callbackRunnable.setPool(werkPool);
 		new Thread(callbackRunnable, "WerkEngine Callback Runnable").start();
+		
+		runnableFactory.setPool(werkPool);
+		runnableFactory.setCallbackRunnable(callbackRunnable);
+		
+		werkPool.start(threadCount);
 	}
 
 	@Override

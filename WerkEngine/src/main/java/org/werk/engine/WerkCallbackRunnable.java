@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.pillar.exec.work.WorkThreadPool;
 import org.pillar.time.interfaces.TimeProvider;
 import org.pillar.time.interfaces.Timestamp;
 import org.werk.processing.jobs.Job;
@@ -45,7 +46,7 @@ public class WerkCallbackRunnable<J> implements Runnable, WerkCallbackListener<S
 	}
 	
 	@Setter
-	protected WerkPool<J> pool;
+	protected WorkThreadPool<Job<J>> pool;
 	protected ReentrantLock lock;
 	protected Condition condition;
 	protected boolean isRunning;

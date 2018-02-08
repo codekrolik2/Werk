@@ -6,7 +6,7 @@ If a Step would block its Execution or Transition processing, effectively that w
 Provided a sufficient number of such Steps that block for significant periods of time, the whole processing in a given WerkEngine might come to a halt.
 
 On top of that, in SQLWerkEngine - (by default) DB Transaction is created before Step processing starts and commits after it's done. The wait for undefined period of time while executing can cause Transaction to timeout or break for other reasons, like network issues, and result in undefined behavior at execution cycle finalization/commit phase. In this case job/step state updates almost certainly will be lost.
-Steps annotated with @ShortTransaction will not keep the transaction open during the execution cycle, only creating a transaction after execution is done, updating the states and commiting right away.
+Steps marked as "shortTransaction" will not keep the transaction open during the execution cycle, only creating a transaction after execution is done, updating the states and commiting right away.
 However, steps with such annotations can't use a common transactional state which might in some cases cripple the functionality.
 But more importantly, other reasons to avoid blocking in Steps as much as possible are as serious.
 

@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.pillar.db.interfaces.TransactionContext;
 import org.pillar.db.interfaces.TransactionFactory;
@@ -124,7 +125,7 @@ public class SQLJobLoader {
 			//TODO: create SQLWerkJob and WerkStep
 			
 			//TODO: Add job to WerkEngine
-				
+			
 			tc.commit();
 		} catch (Exception e) {
 			logger.info(String.format("Failed to load job id [%d]", jobId), e);
@@ -150,15 +151,20 @@ public class SQLJobLoader {
 				Worker self = null;
 				
 				for (ServerPulseRecord<Long> server : servers) {
-					JSONObject srvInfo = new JSONObject(server.getInfo());
-					
-					long ownedWorkUnits = srvInfo.getLong("jobCount");
-					Optional<Long> workUnitLimit = srvInfo.has("jobLimit") ? 
-							Optional.of(srvInfo.getLong("jobLimit")) : Optional.empty();
-
-					MyWorker worker = new MyWorker(workUnitLimit, ownedWorkUnits);
-					if (server.getServerId() == selfFromPulse.getServerId())
-						self = worker;
+					try {
+						JSONObject srvInfo = new JSONObject(server.getInfo());
+						
+						long ownedWorkUnits = srvInfo.getLong("jobCount");
+						Optional<Long> workUnitLimit = srvInfo.has("jobLimit") ? 
+								Optional.of(srvInfo.getLong("jobLimit")) : Optional.empty();
+	
+						MyWorker worker = new MyWorker(workUnitLimit, ownedWorkUnits);
+						if (server.getServerId() == selfFromPulse.getServerId())
+							self = worker;
+					} catch(JSONException je) {
+						//Do nothing: If serverInfo is not compliant with the format, the server won't be 
+						//considered as a part of job distribution simulation 
+					}
 				}
 				
 				//1.2 If local server pulse record not found, lose heartbeat
@@ -166,7 +172,6 @@ public class SQLJobLoader {
 					throw new Exception(
 							String.format("Local server record not found in servers table: [%d]", selfFromPulse.getServerId())
 						);
-					
 				
 				//2. Determine how many jobs can be loaded
 				//JobId, NextExecTime
@@ -187,15 +192,15 @@ public class SQLJobLoader {
 				
 				long jobLoadCount = workCalc.calculate(newJobIds.size(), workers, self);
 				
-				//2. Load jobs
-				//2.1. Load all old jobs and add to WerkEngine
+				//3. Load jobs
+				//3.1. Load all old jobs and add to WerkEngine
 				for (long jobId : oldJobIds)
 					loadJob(tc, jobId);
-				//2.2. Load N new jobs and add to WerkEngine
+				//3.2. Load N new jobs and add to WerkEngine
 				for (int i = 0; i < jobLoadCount; i++)
 					loadJob(tc, newJobIds.get(i));
 				
-				//3. Unlock up to jobLimit of joined jobs that can be unlocked
+				//4. Unlock up to jobLimit of joined jobs that can be unlocked
 				//	(Step 1 should work even if pulse has failed)
 				// Limit number of jobs
 				// Loop until there are jobs or until average unlock time > wait time until next execution
@@ -203,7 +208,7 @@ public class SQLJobLoader {
 			}
 		} catch (Exception e) {
 			logger.error("Jobs load failure, losing Heartbeat", e);
-			pulse.loseHeartbeat();
+			pulse.loseHeartbeat(e);
 		} finally {
 			if (tc != null)
 				tc.close();

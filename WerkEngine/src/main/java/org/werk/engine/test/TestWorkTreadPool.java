@@ -2,18 +2,21 @@ package org.werk.engine.test;
 
 import org.pillar.exec.work.WorkThreadPool;
 import org.pillar.exec.work.WorkThreadPoolRunnable;
+import org.pillar.exec.work.WorkThreadPoolRunnableFactory;
+import org.pillar.log4j.Log4JUtils;
 import org.pillar.time.LongTimeProvider;
 import org.pillar.time.interfaces.TimeProvider;
 
+import lombok.Setter;
+
 public class TestWorkTreadPool {
-	static class MyPool extends WorkThreadPool<String> {
-		public MyPool(int size, TimeProvider timeProvider) {
-			super(size, timeProvider);
-		}
+	static class MyRunnableFactory implements WorkThreadPoolRunnableFactory<String> {
+		@Setter
+		WorkThreadPool<String> pool;
 		
 		@Override
-		protected WorkThreadPoolRunnable<String> createRunnable() {
-			return new MyRunnable(this);
+		public WorkThreadPoolRunnable<String> createRunnable() {
+			return new MyRunnable(pool);
 		}
 	}
 	
@@ -29,9 +32,14 @@ public class TestWorkTreadPool {
 	}
 	
 	public static void main(String[] args) {
+		Log4JUtils.debugInitLog4j();
+		
 		TimeProvider timeProvider = new LongTimeProvider();
 		
-		MyPool pool = new MyPool(4, timeProvider);
+		MyRunnableFactory myFactory = new MyRunnableFactory();
+		WorkThreadPool<String> pool = new WorkThreadPool<String>(timeProvider, myFactory);
+		myFactory.setPool(pool);
+		pool.start(4);
 		
 		for (int i = 0; i < 1000; i++)
 			pool.addUnitOfWork("0 " + i, 0);

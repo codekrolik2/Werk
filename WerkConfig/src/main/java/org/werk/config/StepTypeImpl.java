@@ -34,4 +34,6 @@ public class StepTypeImpl<J> implements StepType<J> {
 	long logLimit;
 	@Getter
 	OverflowAction logOverflowAction;
+	@Getter
+	boolean shortTransaction;
 }

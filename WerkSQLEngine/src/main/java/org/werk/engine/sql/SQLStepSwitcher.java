@@ -17,6 +17,7 @@ import org.werk.engine.WerkStepSwitcher;
 import org.werk.engine.sql.DAO.JobDAO;
 import org.werk.engine.sql.DAO.SQLJoinStatusRecord;
 import org.werk.engine.sql.DAO.StepDAO;
+import org.werk.engine.sql.exception.SQLStepSwitcherException;
 import org.werk.exceptions.StepLogLimitExceededException;
 import org.werk.meta.StepType;
 import org.werk.processing.jobs.Job;
@@ -44,7 +45,9 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 		this.werkConfig = werkConfig;
 	}
 	
-	protected void updateCurrentStep(TransactionContext tc, SQLWerkJob sqlJob) throws Exception {
+	protected void updateCurrentStep(SQLWerkJob sqlJob) throws Exception {
+		TransactionContext tc = sqlJob.getStepTransactionContext();
+		
 		SQLWerkStep step = (SQLWerkStep)sqlJob.getCurrentStep();
 		long stepId = step.getStepId();
 		
@@ -52,24 +55,23 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 				step.getProcessingLog());
 	}
 	
-	protected void updateJob(TransactionContext tc, SQLWerkJob sqlJob) throws Exception {
+	protected void updateJob(SQLWerkJob sqlJob) throws Exception {
+		TransactionContext tc = sqlJob.getStepTransactionContext();
+		
 		long stepId = ((SQLWerkStep)sqlJob.getCurrentStep()).getStepId();
 		jobDAO.updateJob(tc, sqlJob.getJobId(), stepId, sqlJob.getStatus(), sqlJob.getNextExecutionTime(),
 				sqlJob.getJobParameters(), sqlJob.getStepCount(), sqlJob.getJoinStatusRecord());
 	}
 
-	public TransactionContext update(SQLWerkJob sqlJob) throws Exception {
-		TransactionContext tc = sqlJob.getOrCreateTC();
-		updateJob(tc, sqlJob);
-		updateCurrentStep(tc, sqlJob);
-		return tc;
+	public void updateJobAndCurrentStep(SQLWerkJob sqlJob) throws Exception {
+		updateJob(sqlJob);
+		updateCurrentStep(sqlJob);
 	}
 	
 	@Override
 	public StepSwitchResult redo(Job<Long> job, ExecutionResult<Long> exec) {
 		SQLWerkJob sqlJob = (SQLWerkJob)job;
 		
-		TransactionContext tc = null;
 		try {
 			Timestamp nextExecutionTime = timeProvider.getCurrentTime();
 			if (exec.getDelayMS().isPresent())
@@ -77,15 +79,13 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 			
 			sqlJob.setNextExecutionTime(nextExecutionTime);
 			
-			update(sqlJob);
+			updateJobAndCurrentStep(sqlJob);
 		} catch(Exception e) {
 			logger.error(
 				String.format("Error processing redo. Unloading job [%d]. Losing heartbeat.", job.getJobId()),
 				e);
 			
-			//TODO: unload lose HB
-		} finally {
-			sqlJob.closeTCIfNeeded(tc);
+			throw new SQLStepSwitcherException(e);
 		}
 		
 		return StepSwitchResult.process(exec.getDelayMS());
@@ -95,21 +95,17 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 	public StepSwitchResult callback(Job<Long> job, ExecutionResult<Long> exec) {
 		SQLWerkJob sqlJob = (SQLWerkJob)job;
 		
-		TransactionContext tc = null;
 		try {
 			Timestamp nextExecutionTime = timeProvider.getCurrentTime();
 			sqlJob.setNextExecutionTime(nextExecutionTime);
 			
-			tc = update(sqlJob);
+			updateJobAndCurrentStep(sqlJob);
 		} catch(Exception e) {
 			logger.error(
 				String.format("Error processing callback. Unloading job [%d]. Losing heartbeat.", job.getJobId()), 
 				e);
 			
-			//TODO: unload lose HB
-		} finally {
-			if (sqlJob.getStepTransactionContext() != null)
-				try { tc.close(); } catch (Exception e) { logger.error("Transaction close error", e); }
+			throw new SQLStepSwitcherException(e);
 		}
 		
 		return StepSwitchResult.callback(exec.getCallback().get(), exec.getDelayMS(), exec.getParameterName().get());
@@ -119,7 +115,6 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 	public StepSwitchResult join(Job<Long> job, ExecutionResult<Long> exec) {
 		SQLWerkJob sqlJob = (SQLWerkJob)job;
 		
-		TransactionContext tc = null;
 		try {
 			Map<Long, JobStatus> joinedJobs = new HashMap<>();
 			for (long jobId : exec.getJobsToJoin().get())
@@ -138,16 +133,13 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 			Timestamp nextExecutionTime = timeProvider.getCurrentTime();
 			sqlJob.setNextExecutionTime(nextExecutionTime);
 			
-			tc = update(sqlJob);
+			updateJobAndCurrentStep(sqlJob);
 		} catch(Exception e) {
 			logger.error(
 				String.format("Error processing join. Unloading job [%d]. Losing heartbeat.", job.getJobId()), 
 				e);
 			
-			//TODO: unload lose HB
-		} finally {
-			if (sqlJob.getStepTransactionContext() != null)
-				try { tc.close(); } catch (Exception e) { logger.error("Transaction close error", e); }
+			throw new SQLStepSwitcherException(e);
 		}
 		
 		return StepSwitchResult.unload();
@@ -157,7 +149,6 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 	public StepSwitchResult transition(Job<Long> job, Transition transition) {
 		SQLWerkJob sqlJob = (SQLWerkJob)job;
 		
-		TransactionContext tc = null;
 		try {
 			if ((transition.getTransitionStatus() == TransitionStatus.NEXT_STEP) || 
 				(transition.getTransitionStatus() == TransitionStatus.ROLLBACK)) {
@@ -168,9 +159,8 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 			if (transition.getTransitionStatus() == TransitionStatus.NEXT_STEP) {
 				//TODO: check that transition is allowed
 				
-				tc = sqlJob.getOrCreateTC();
 				//Save current step update
-				updateCurrentStep(tc, sqlJob);
+				updateCurrentStep(sqlJob);
 				
 				//create a new step and set it as current for a job
 				int stepNumber = sqlJob.getNextStepNumber();
@@ -180,7 +170,8 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 				StepExec<Long> stepExec = werkConfig.getStepExec(stepTypeName);
 				Transitioner<Long> stepTransitioner = werkConfig.getStepTransitioner(stepTypeName); 
 				
-				long nextStepId = stepDAO.createProcessingStep(tc, job.getJobId(), stepTypeName, stepNumber);
+				long nextStepId = stepDAO.createProcessingStep(((SQLWerkJob)job).getStepTransactionContext(), 
+						job.getJobId(), stepTypeName, stepNumber);
 				SQLWerkStep newStep = new SQLWerkStep(sqlJob, stepType, false, stepNumber, new ArrayList<>(),
 						0, new HashMap<>(), new ArrayList<>(), stepExec, stepTransitioner, timeProvider, nextStepId);
 				
@@ -192,16 +183,16 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 				sqlJob.setStatus(JobStatus.PROCESSING);
 				sqlJob.setCurrentStep(newStep);
 				
-				updateJob(tc, sqlJob);
+				updateJob(sqlJob);
 				
 				return StepSwitchResult.process();
 			} else if (transition.getTransitionStatus() == TransitionStatus.ROLLBACK) {
-				//TODO: check that transition is allowed
+				//TODO: check that rollback transition is allowed
 				
-				tc = sqlJob.getOrCreateTC();
+				sqlJob.getOrCreateTC();
 				
 				//Save current step update
-				updateCurrentStep(tc, sqlJob);
+				updateCurrentStep(sqlJob);
 				
 				//create a new step and set it as current for a job
 				int stepNumber = sqlJob.getNextStepNumber();
@@ -211,7 +202,8 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 				StepExec<Long> stepExec = werkConfig.getStepExec(stepTypeName);
 				Transitioner<Long> stepTransitioner = werkConfig.getStepTransitioner(stepTypeName); 
 				
-				long nextStepId = stepDAO.createRollbackStep(tc, job.getJobId(), stepTypeName, stepNumber, 
+				long nextStepId = stepDAO.createRollbackStep(((SQLWerkJob)job).getStepTransactionContext(), 
+						job.getJobId(), stepTypeName, stepNumber, 
 						transition.getRollbackStepParameters(), transition.getRollbackStepNumbers());
 				
 				List<Integer> rollbackStepNumbers;
@@ -238,7 +230,7 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 				sqlJob.setStatus(JobStatus.ROLLING_BACK);
 				sqlJob.setCurrentStep(newStep);
 				
-				updateJob(tc, sqlJob);
+				updateJob(sqlJob);
 				
 				return StepSwitchResult.process();
 			} else if (transition.getTransitionStatus() == TransitionStatus.FINISH) {
@@ -247,7 +239,7 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 				
 				((SQLWerkJob)job).setStatus(JobStatus.FINISHED);
 				
-				tc = update(sqlJob);
+				updateJobAndCurrentStep(sqlJob);
 				
 				return StepSwitchResult.unload();
 			} else if (transition.getTransitionStatus() == TransitionStatus.FINISH_ROLLBACK) {
@@ -256,7 +248,7 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 				
 				((SQLWerkJob)job).setStatus(JobStatus.ROLLED_BACK);
 				
-				tc = update(sqlJob);
+				updateJobAndCurrentStep(sqlJob);
 				
 				return StepSwitchResult.unload();
 			} else if (transition.getTransitionStatus() == TransitionStatus.FAIL) {
@@ -265,7 +257,7 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 				
 				((SQLWerkJob)job).setStatus(JobStatus.FAILED);
 				
-				tc = update(sqlJob);
+				updateJobAndCurrentStep(sqlJob);
 				
 				return StepSwitchResult.unload();
 			} else
@@ -278,12 +270,7 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 				String.format("Error processing transition. Unloading job [%d]. Losing heartbeat.", job.getJobId()), 
 				e);
 			
-			//TODO: unload lose HB
-			
-			return StepSwitchResult.unload();
-		} finally {
-			if (sqlJob.getStepTransactionContext() != null)
-				try { tc.close(); } catch (Exception e) { logger.error("Transaction close error", e); }
+			throw new SQLStepSwitcherException(e);
 		}
 	}
 	
@@ -303,23 +290,19 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 		
 		SQLWerkJob sqlJob = (SQLWerkJob)job;
 		
-		TransactionContext tc = null;
 		try {
 			Timestamp nextExecutionTime = timeProvider.getCurrentTime();
 			sqlJob.setNextExecutionTime(nextExecutionTime);
 			
 			((SQLWerkJob)job).setStatus(JobStatus.FAILED);
 			
-			tc = update(sqlJob);
+			updateJobAndCurrentStep(sqlJob);
 		} catch(Exception e1) {
 			logger.error(
 				String.format("Error processing stepExecError. Unloading job [%d]. Losing heartbeat.", job.getJobId()), 
 				e1);
 			
-			//TODO: unload lose HB
-		} finally {
-			if (sqlJob.getStepTransactionContext() != null)
-				try { tc.close(); } catch (Exception e1) { logger.error("Transaction close error", e1); }
+			throw new SQLStepSwitcherException(e);
 		}
 		
 		return StepSwitchResult.unload();
@@ -333,7 +316,7 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 				);
 		} catch (StepLogLimitExceededException e1) {
 			logger.error(
-				String.format("Failed to append transitioner error message to step log: log limit exceeded. Message: [%s]",
+				String.format("Failed to append transitioner error message to step log: log limit exceeded. ErrorMessage: [%s]",
 					String.format("Transitioner error [%s]", e)
 				), e
 			);
@@ -341,23 +324,19 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 		
 		SQLWerkJob sqlJob = (SQLWerkJob)job;
 		
-		TransactionContext tc = null;
 		try {
 			Timestamp nextExecutionTime = timeProvider.getCurrentTime();
 			sqlJob.setNextExecutionTime(nextExecutionTime);
 			
 			((SQLWerkJob)job).setStatus(JobStatus.FAILED);
 			
-			tc = update(sqlJob);
+			updateJobAndCurrentStep(sqlJob);
 		} catch(Exception e1) {
 			logger.error(
 				String.format("Error processing stepTransitionError. Unloading job [%d]. Losing heartbeat.", job.getJobId()), 
 				e1);
 			
-			//TODO: unload lose HB
-		} finally {
-			if (sqlJob.getStepTransactionContext() != null)
-				try { tc.close(); } catch (Exception e1) { logger.error("Transaction close error", e1); }
+			throw new SQLStepSwitcherException(e);
 		}
 		
 		return StepSwitchResult.unload();

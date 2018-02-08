@@ -223,10 +223,11 @@ public class AnnotationsWerkConfigLoader<J> implements WerkConfigLoader<J> {
 		
 		long logLimit = stepType.logLimit();
 		OverflowAction logOverflowAction = stepType.logOverflowAction();
+		boolean shortTransaction = stepType.shortTransaction();
 		
 		return new StepTypeImpl<J>(stepTypeName, allowedTransitions, allowedRollbackTransitions, stepExecFactory, 
 				stepTransitionerFactory, processingDescription, rollbackDescription, execConfig, transitionerConfig,
-				logLimit, logOverflowAction);
+				logLimit, logOverflowAction, shortTransaction);
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -262,9 +263,10 @@ public class AnnotationsWerkConfigLoader<J> implements WerkConfigLoader<J> {
 		
 		long logLimit = stepType.logLimit();
 		OverflowAction logOverflowAction = stepType.logOverflowAction();
+		boolean shortTransaction = stepType.shortTransaction();
 		
 		return new StepTypeImpl<J>(stepTypeName, allowedTransitions, allowedRollbackTransitions, stepExecFactory, 
 				stepTransitionerFactory, processingDescription, rollbackDescription, execConfig, transitionerConfig,
-				logLimit, logOverflowAction);
+				logLimit, logOverflowAction, shortTransaction);
 	}
 }

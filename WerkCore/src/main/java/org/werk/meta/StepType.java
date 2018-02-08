@@ -21,4 +21,6 @@ public interface StepType<J> {
 
 	long getLogLimit();
 	OverflowAction getLogOverflowAction();
+	
+	boolean isShortTransaction();
 }

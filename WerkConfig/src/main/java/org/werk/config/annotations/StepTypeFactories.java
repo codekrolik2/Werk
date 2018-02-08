@@ -29,4 +29,6 @@ public @interface StepTypeFactories {
 
 	long logLimit() default 50;
 	OverflowAction logOverflowAction() default OverflowAction.FAIL;
+	
+	boolean shortTransaction() default false;
 }

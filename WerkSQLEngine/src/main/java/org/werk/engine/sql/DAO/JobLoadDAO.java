@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -31,6 +32,23 @@ public class JobLoadDAO {
 		}
 	}
 	
+	public int freeOwnedJobs(TransactionContext tc, long ownerJobId, long currentTime) throws SQLException {
+		Connection connection = ((JDBCTransactionContext)tc).getConnection();
+		PreparedStatement pst = null;
+		
+		try {
+			pst = connection.prepareStatement("UPDATE jobs SET id_locker = ?, next_execution_time = ? WHERE id_locker = ?");
+			
+			pst.setNull(1, java.sql.Types.BIGINT);
+			pst.setLong(2, currentTime);
+			pst.setLong(3, ownerJobId);
+			
+			return pst.executeUpdate();
+		} finally {
+			if (pst != null) pst.close();
+		}
+	}
+	
 	public int deleteUnconfirmedForkedChildJobs(TransactionContext tc, long jobId) throws SQLException {
 		Connection connection = ((JDBCTransactionContext)tc).getConnection();
 		PreparedStatement pst = null;
@@ -40,6 +58,37 @@ public class JobLoadDAO {
 			
 			pst.setLong(1, jobId);
 			pst.setInt(2, JobStatus.UNDEFINED.getCode());
+			
+			return pst.executeUpdate();
+		} finally {
+			if (pst != null) pst.close();
+		}
+	}
+	
+	public int activateForkedChildJobs(TransactionContext tc, Collection<Long> jobIds) throws SQLException {
+		if (jobIds.isEmpty())
+			return 0;
+		
+		Connection connection = ((JDBCTransactionContext)tc).getConnection();
+		PreparedStatement pst = null;
+		
+		try {
+			StringBuilder query = new StringBuilder();
+			query.append("UPDATE jobs SET status = ? WHERE status = ? AND job_id IN (");
+			
+			for (int i = 0; i < jobIds.size(); i++)
+				query.append(i == 0 ? "?" : ", ?");
+			
+			query.append(")");
+			
+			pst = connection.prepareStatement(query.toString());
+			
+			int cnt = 1;
+			pst.setInt(cnt++, JobStatus.PROCESSING.getCode());
+			pst.setInt(cnt++, JobStatus.UNDEFINED.getCode());
+			
+			for (long jobId : jobIds)
+				pst.setLong(cnt++, jobId);
 			
 			return pst.executeUpdate();
 		} finally {

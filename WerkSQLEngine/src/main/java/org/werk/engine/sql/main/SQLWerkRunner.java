@@ -32,6 +32,7 @@ public class SQLWerkRunner {
 		Supplier<String> serverInfoGetter = new Supplier<String>() {
 			@Override
 			public String get() {
+				//TODO: { "jobCount" : 123, "jobLimit" : 456 }
 				return "WerkServer";
 			}
 		};

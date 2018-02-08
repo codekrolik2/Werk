@@ -28,6 +28,9 @@ public class WerkPoolRunnable<J> extends WorkThreadPoolRunnable<Job<J>> {
 	public void process(Job<J> job) {
 		Exception execException = null;
 		ExecutionResult<J> execResult = null;
+		
+		beforeExec(job);
+		
 		try {
 			job.getCurrentStep().incrementExecutionCount();
 			
@@ -49,6 +52,8 @@ public class WerkPoolRunnable<J> extends WorkThreadPoolRunnable<Job<J>> {
 			job.rollbackTempContext();
 			execException = e;
 		}
+		
+		beforeTransition(job);
 		
 		Exception transitionException = null;
 		Transition transition = null;
@@ -79,6 +84,8 @@ public class WerkPoolRunnable<J> extends WorkThreadPoolRunnable<Job<J>> {
 		}
 		
 		//switch step
+		beforeSwitch(job);
+		
 		StepSwitchResult switchResult;
 		
 		if (execException != null)
@@ -118,5 +125,12 @@ public class WerkPoolRunnable<J> extends WorkThreadPoolRunnable<Job<J>> {
 							job.getJobName().isPresent() ? job.getJobName().get() : "No name",
 							job.getStatus())
 				);
+		
+		afterSwitch(job);
 	}
+
+	protected void beforeExec(Job<J> job) {}
+	protected void beforeTransition(Job<J> job) {}
+	protected void beforeSwitch(Job<J> job) {}
+	protected void afterSwitch(Job<J> job) {}
 }
