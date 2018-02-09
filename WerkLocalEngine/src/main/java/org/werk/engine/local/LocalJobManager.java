@@ -17,12 +17,12 @@ import java.util.stream.Collectors;
 import org.apache.log4j.Logger;
 import org.pillar.lru.LRUCache;
 import org.werk.data.StepPOJO;
-import org.werk.engine.JobStepFactory;
 import org.werk.engine.WerkEngine;
 import org.werk.engine.processing.WerkStep;
 import org.werk.exceptions.WerkException;
 import org.werk.meta.JobInitInfo;
 import org.werk.meta.JobReviveInfo;
+import org.werk.meta.NewStepReviveInfo;
 import org.werk.meta.OldVersionJobInitInfo;
 import org.werk.processing.jobs.Job;
 import org.werk.processing.jobs.JobStatus;
@@ -45,7 +45,7 @@ public class LocalJobManager<J> {
 	}
 	
 	@Setter
-	protected JobStepFactory<J> jobStepFactory;
+	protected LocalJobStepFactory<J> jobStepFactory;
 	@Setter
 	protected WerkEngine<J> werkEngine;
 	
@@ -68,7 +68,7 @@ public class LocalJobManager<J> {
 		this(null, null, maxJobCacheSize);
 	}
 	
-	public LocalJobManager(JobStepFactory<J> jobStepFactory, WerkEngine<J> werkEngine,
+	public LocalJobManager(LocalJobStepFactory<J> jobStepFactory, WerkEngine<J> werkEngine,
 			int maxJobCacheSize) {
 		this.jobStepFactory = jobStepFactory;
 		this.werkEngine = werkEngine;
@@ -237,8 +237,7 @@ public class LocalJobManager<J> {
 			}
 			
 			job.getCurrentStep().putStringParameter(joinStatusRecord.getJoinParameterName(), job.joinResultToStr(joinStatusRecord));
-			
-			((LocalWerkJob<J>)job).setStatus(joinStatusRecord.getStatusBeforeJoin());
+			((LocalWerkJob<J>)job).setStatus(job.getCurrentStep().isRollback() ? JobStatus.ROLLING_BACK : JobStatus.PROCESSING);
 			
 			werkEngine.addJob(job);
 		}
@@ -305,7 +304,7 @@ public class LocalJobManager<J> {
 			
 			LocalWerkJob<J> revivedJob = (LocalWerkJob<J>)jobStepFactory.createJob(jobToRevive);
 			revivedJob.setStepCount(((LocalWerkJob<J>)jobToRevive).getStepCount());
-
+			
 			//Update job Parameters
 			for (Entry<String, Parameter> jobPrmEntry : init.getJobParametersUpdate().entrySet()) {
 				String key = jobPrmEntry.getKey();
@@ -326,20 +325,47 @@ public class LocalJobManager<J> {
 				
 				StepPOJO lastStep = null;
 				for (StepPOJO readOnlyStep : processingHistory) {
+					if (lastStep != null)
+						newProcessingHistory.add(lastStep);
 					lastStep = readOnlyStep;
-					newProcessingHistory.add(readOnlyStep);
 				}
 				
+				if (lastStep.isRollback())
+					revivedJob.setStatus(JobStatus.ROLLING_BACK);
+				else
+					revivedJob.setStatus(JobStatus.PROCESSING);
+				
 				processingHistory = newProcessingHistory;
+				
 				currentStep = jobStepFactory.createNewStep(revivedJob, lastStep.getStepNumber(), 
-						lastStep.getStepTypeName());
+						Optional.ofNullable(lastStep.getRollbackStepNumbers()), lastStep.getStepTypeName());
 			} else {
+				//Create a new step
+				NewStepReviveInfo stepInfo = init.getNewStepInfo().get();
+				
+				if (stepInfo.isNewStepRollback())
+					revivedJob.setStatus(JobStatus.ROLLING_BACK);
+				else
+					revivedJob.setStatus(JobStatus.PROCESSING);
+				
 				currentStep = jobStepFactory.createNewStep(revivedJob, revivedJob.getNextStepNumber(), 
-						init.getNewStepTypeName().get());
+						stepInfo.getStepsToRollback(), stepInfo.getNewStepTypeName());
 			}
 			
+			processingHistory.add(currentStep);
 			revivedJob.setProcessingHistory(processingHistory);
 			revivedJob.setCurrentStep((WerkStep<J>)currentStep);
+			
+			//Update currentStep Parameters
+			for (Entry<String, Parameter> stepPrmEntry : init.getStepParametersUpdate().entrySet()) {
+				String key = stepPrmEntry.getKey();
+				Parameter prm = stepPrmEntry.getValue();
+				
+				currentStep.putStepParameter(key, prm);
+			}
+			
+			for (String stepParameterToRemove : init.getStepParametersToRemove())
+				currentStep.removeStepParameter(stepParameterToRemove);
 			
 			currentJobs.put(jobId, revivedJob);
 			
@@ -347,7 +373,15 @@ public class LocalJobManager<J> {
 			evictionLRUCache.remove(cluster);
 			cacheSize.addAndGet(-1L*cluster.jobs.size());
 			
-			werkEngine.addJob(revivedJob);
+			if (init.getJoinStatusRecord().isPresent()) {
+				JoinStatusRecord<J> rec = init.getJoinStatusRecord().get();
+				
+				((LocalWerkJob<J>)revivedJob).setJoinStatusRecord(init.getJoinStatusRecord());
+				((LocalWerkJob<J>)revivedJob).setStatus(JobStatus.JOINING);
+
+				join(revivedJob.getJobId(), rec.getJoinedJobIds());
+			} else
+				werkEngine.addJob(revivedJob);
 		} finally {
 			lock.unlock();
 		}
@@ -436,4 +470,8 @@ public class LocalJobManager<J> {
 	}
 	
 	//---------------------------------------------------
+	
+	public int getJobCount() {
+		return currentJobs.size();
+	}
 }

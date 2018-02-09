@@ -36,7 +36,6 @@ import org.werk.meta.StepTransitionerFactory;
 public class AnnotationsWerkConfigLoader<J> implements WerkConfigLoader<J> {
 	protected JobInputParameterLoader loader = new JobInputParameterLoader();
 	
-	@SuppressWarnings("deprecation")
 	static List<URL> findClassPaths() throws MalformedURLException {
 		List<URL> list = new ArrayList<>();
 		String classpath = System.getProperty("java.class.path");
@@ -48,7 +47,7 @@ public class AnnotationsWerkConfigLoader<J> implements WerkConfigLoader<J> {
 			if (!fp.exists()) {
 				System.out.println("File in java.class.path doesn't exist: " + fp);
 			} else {
-				list.add(fp.toURL());
+				list.add(fp.toURI().toURL());
 			}
 		}
 		

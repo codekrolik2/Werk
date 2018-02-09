@@ -1,7 +1,5 @@
 package org.werk.engine.sql;
 
-import java.util.Collection;
-
 import org.apache.log4j.Logger;
 import org.pillar.db.interfaces.TransactionContext;
 import org.pillar.db.interfaces.TransactionFactory;

@@ -11,7 +11,6 @@ import org.pillar.time.interfaces.Timestamp;
 import org.werk.config.WerkConfig;
 import org.werk.data.JobPOJO;
 import org.werk.data.StepPOJO;
-import org.werk.engine.JobStepFactory;
 import org.werk.engine.json.JobParameterTool;
 import org.werk.engine.json.JoinResultSerializer;
 import org.werk.engine.processing.WerkStep;
@@ -23,12 +22,11 @@ import org.werk.processing.jobs.Job;
 import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.jobs.JoinStatusRecord;
 import org.werk.processing.parameters.Parameter;
-import org.werk.processing.steps.Step;
 import org.werk.processing.steps.StepExec;
 import org.werk.processing.steps.StepProcessingLogRecord;
 import org.werk.processing.steps.Transitioner;
 
-public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
+public abstract class LocalJobStepFactory<J> {
 	protected WerkConfig<J> werkConfig;
 	protected TimeProvider timeProvider;
 	protected LocalJobManager<J> localJobManager;
@@ -45,8 +43,7 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 	
 	protected abstract J getNextJobId();
 	
-	@Override
-	public Job<J> createNewJob(String jobTypeName, Map<String, Parameter> jobInitialParameters, 
+	public LocalWerkJob<J> createNewJob(String jobTypeName, Map<String, Parameter> jobInitialParameters, 
 			Optional<String> jobName, Optional<J> parentJob) throws Exception {
 		JobType jobType = werkConfig.getJobTypeLatestVersion(jobTypeName);
 		if (jobType == null)
@@ -74,8 +71,7 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 				localJobManager, joinResultSerializer);
 	}
 
-	@Override
-	public Job<J> createOldVersionJob(String jobTypeName, long oldVersion, Map<String, Parameter> jobInitialParameters, 
+	public LocalWerkJob<J> createOldVersionJob(String jobTypeName, long oldVersion, Map<String, Parameter> jobInitialParameters, 
 			Optional<String> jobName, Optional<J> parentJob) throws Exception {
 		JobType jobType = werkConfig.getJobTypeForOldVersion(oldVersion, jobTypeName);
 		if (jobType == null)
@@ -103,8 +99,7 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 				localJobManager, joinResultSerializer);
 	}
 
-	@Override
-	public Job<J> createJob(JobPOJO<J> job) throws Exception {
+	public LocalWerkJob<J> createJob(JobPOJO<J> job) throws Exception {
 		String jobTypeName = job.getJobTypeName();
 		long version = job.getVersion();
 		
@@ -130,8 +125,7 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 
 	//---------------------------------------------
 	
-	@Override
-	public Step<J> createStep(Job<J> job, StepPOJO step) throws Exception {
+	public WerkStep<J> createStep(Job<J> job, StepPOJO step) throws Exception {
 		String stepTypeName = step.getStepTypeName();
 		StepType<J> stepType = werkConfig.getStepType(stepTypeName);
 		
@@ -148,8 +142,7 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 				executionCount, stepParameters, processingLog, stepExec, stepTransitioner, timeProvider);
 	}
 
-	@Override
-	public Step<J> createFirstStep(Job<J> job, int stepNumber) throws Exception {
+	public WerkStep<J> createFirstStep(Job<J> job, int stepNumber) throws Exception {
 		JobType jobType = werkConfig.getJobTypeForAnyVersion(job.getVersion(), job.getJobTypeName());
 		if (jobType == null)
 			throw new WerkConfigException(
@@ -159,13 +152,11 @@ public abstract class LocalJobStepFactory<J> implements JobStepFactory<J> {
 		return createNewStep(job, stepNumber, jobType.getFirstStepTypeName());
 	}
 
-	@Override
-	public Step<J> createNewStep(Job<J> job, int stepNumber, String stepType) throws Exception {
+	public WerkStep<J> createNewStep(Job<J> job, int stepNumber, String stepType) throws Exception {
 		return createNewStep(job, stepNumber, Optional.empty(), stepType);
 	}
 
-	@Override
-	public Step<J> createNewStep(Job<J> job, int stepNumber, Optional<List<Integer>> rollbackStepNumbers, 
+	public WerkStep<J> createNewStep(Job<J> job, int stepNumber, Optional<List<Integer>> rollbackStepNumbers, 
 			String stepType) throws Exception {
 		String stepTypeName = stepType;
 		StepType<J> stepTypeObj = werkConfig.getStepType(stepTypeName);

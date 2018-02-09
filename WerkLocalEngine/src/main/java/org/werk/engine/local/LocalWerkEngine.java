@@ -1,18 +1,22 @@
-package org.werk.engine;
+package org.werk.engine.local;
 
 import org.pillar.exec.work.WorkThreadPool;
 import org.pillar.time.LongTimeProvider;
 import org.pillar.time.interfaces.TimeProvider;
+import org.werk.engine.WerkCallbackRunnable;
+import org.werk.engine.WerkEngine;
+import org.werk.engine.WerkPoolRunnableFactory;
+import org.werk.engine.WerkStepSwitcher;
 import org.werk.engine.processing.WerkJob;
 import org.werk.processing.jobs.Job;
 
-public class WerkEngineImpl<J> implements WerkEngine<J> {
+public class LocalWerkEngine<J> implements WerkEngine<J> {
 	protected TimeProvider timeProvider;
 	protected WorkThreadPool<Job<J>> werkPool;
 	protected WerkPoolRunnableFactory<J> runnableFactory;
 	protected WerkCallbackRunnable<J> callbackRunnable;
 	
-	public WerkEngineImpl(int threadCount, WerkStepSwitcher<J> stepSwitcher) {
+	public LocalWerkEngine(int threadCount, WerkStepSwitcher<J> stepSwitcher) {
 		timeProvider = new LongTimeProvider();
 		
 		callbackRunnable = new WerkCallbackRunnable<J>(timeProvider);

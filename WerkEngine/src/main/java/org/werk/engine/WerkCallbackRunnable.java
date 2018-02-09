@@ -126,7 +126,16 @@ public class WerkCallbackRunnable<J> implements Runnable, WerkCallbackListener<S
 			lock.unlock();
 		}
 	}
-	
+
+	public int getCallbacksCount() {
+		lock.lock();
+		try {
+			return callbacks.size();
+		} finally {
+			lock.unlock();
+		}
+	}
+
 	public void shutdown() {
 		lock.lock();
 		try {

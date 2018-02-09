@@ -193,7 +193,7 @@ public class JobDAO {
 			String query;
 			if (joinStatusRecord.isPresent()) {
 				query = "UPDATE jobs SET current_step_id = ?, status = ?, next_execution_time = ?, job_parameter_state = ?, " + 
-						"step_count = ?, wait_for_N_jobs = ?, status_before_join = ?, join_parameter_name = ? " + 
+						"step_count = ?, wait_for_N_jobs = ?, join_parameter_name = ? " + 
 						"WHERE id_job = ?";
 			} else {
 				query = "UPDATE jobs SET current_step_id = ?, status = ?, next_execution_time = ?, job_parameter_state = ?, " + 
@@ -213,9 +213,7 @@ public class JobDAO {
 			
 			if (joinStatusRecord.isPresent()) {
 				pst.setLong(6, joinStatusRecord.get().getWaitForNJobs());
-				
-				pst.setInt(7, joinStatusRecord.get().getStatusBeforeJoin().getCode());
-				pst.setString(8, joinStatusRecord.get().getJoinParameterName());
+				pst.setString(7, joinStatusRecord.get().getJoinParameterName());
 			}
 			
 			int recordsUpdated = pst.executeUpdate();
@@ -312,6 +310,13 @@ public class JobDAO {
 				//Update step
 				stepDAO.updateStep(tc, job.getCurrentStepId(), step.getExecutionCount(), 
 						step.getStepParameters(), step.getProcessingLog());
+			}
+			
+			//4. JoinStatusRecord
+			Optional<JoinStatusRecord<Long>> jsr = init.getJoinStatusRecord();
+			if (jsr.isPresent()) {
+				jobStatus = JobStatus.JOINING;
+				job.setJoinStatusRecord(jsr);
 			}
 			
 			this.updateJob(tc, jobId, newStepId, jobStatus, job.getNextExecutionTime(), 

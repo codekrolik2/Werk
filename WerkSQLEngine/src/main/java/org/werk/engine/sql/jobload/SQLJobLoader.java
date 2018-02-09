@@ -1,4 +1,4 @@
-package org.werk.engine.sql;
+package org.werk.engine.sql.jobload;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -14,22 +14,35 @@ import org.pillar.db.interfaces.TransactionContext;
 import org.pillar.db.interfaces.TransactionFactory;
 import org.pillar.exec.workdistribution.FairWorkDistributionCalc;
 import org.pillar.exec.workdistribution.Worker;
+import org.pillar.time.interfaces.TimeProvider;
+import org.pillar.time.interfaces.Timestamp;
 import org.pulse.interfaces.Pulse;
+import org.pulse.interfaces.ServerPulseDAO;
 import org.pulse.interfaces.ServerPulseRecord;
-import org.pulse.jdbc.JDBCServerPulseDAO;
+import org.werk.config.WerkConfig;
+import org.werk.engine.WerkEngine;
 import org.werk.engine.json.JoinResultSerializer;
+import org.werk.engine.sql.SQLWerkJob;
+import org.werk.engine.sql.SQLWerkStep;
 import org.werk.engine.sql.DAO.DBJobPOJO;
 import org.werk.engine.sql.DAO.DBStepPOJO;
 import org.werk.engine.sql.DAO.JobDAO;
 import org.werk.engine.sql.DAO.JobLoadDAO;
 import org.werk.engine.sql.DAO.StepDAO;
+import org.werk.meta.JobType;
+import org.werk.meta.StepType;
 import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.jobs.JoinStatusRecord;
+import org.werk.processing.parameters.Parameter;
 import org.werk.processing.parameters.impl.StringParameterImpl;
+import org.werk.processing.steps.StepExec;
+import org.werk.processing.steps.StepProcessingLogRecord;
+import org.werk.processing.steps.Transitioner;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+@AllArgsConstructor
 public class SQLJobLoader {
 	final Logger logger = Logger.getLogger(SQLJobLoader.class);
 
@@ -44,12 +57,16 @@ public class SQLJobLoader {
 	protected JobLoadDAO jobLoadDAO;
 	protected JobDAO jobDAO;
 	protected StepDAO stepDAO;
-	protected JDBCServerPulseDAO pulseDAO;
+	protected ServerPulseDAO<Long> pulseDAO;
 	
 	protected JoinResultSerializer<Long> joinResultSerializer;
 	protected FairWorkDistributionCalc workCalc;
-	protected TransactionFactory factory;
+	protected TransactionFactory transactionFactory;
 	protected Pulse<Long> pulse;
+	
+	protected WerkEngine<Long> werkEngine;
+	protected WerkConfig<Long> werkConfig;
+	protected TimeProvider timeProvider;
 	
 	protected void unlockJoinedJob(TransactionContext tc, long jobId) throws Exception {
 		try {
@@ -77,7 +94,9 @@ public class SQLJobLoader {
 			jobLoadDAO.deleteJoinRecords(tc, jobId);
 			
 			//2.4 Update job status, remove JoinStatusRecord
-			jobDAO.updateJob(tc, jobId, step.getStepId(), rec.getStatusBeforeJoin(), job.getNextExecutionTime(),
+			jobDAO.updateJob(tc, jobId, step.getStepId(),
+					step.isRollback() ? JobStatus.ROLLING_BACK : JobStatus.PROCESSING, 
+					job.getNextExecutionTime(),
 					job.getJobParameters(), job.getStepCount(), Optional.empty());
 			
 			tc.commit();
@@ -122,9 +141,39 @@ public class SQLJobLoader {
 			//Remove all child jobs in UNDEFINED state
 			jobLoadDAO.deleteUnconfirmedForkedChildJobs(tc, jobId);
 			
-			//TODO: create SQLWerkJob and WerkStep
+			//create SQLWerkJob and WerkStep
+			long version = job.getVersion();
+			JobType jobType = werkConfig.getJobTypeForAnyVersion(version, job.getJobTypeName());
+			Optional<String> jobName = job.getJobName();
+			JobStatus status = job.getStatus();
+			Map<String, Parameter> jobInitialParameters = job.getJobInitialParameters();
+			Map<String, Parameter> jobParameters = job.getJobParameters();
+			Timestamp nextExecutionTime = job.getNextExecutionTime();
+			Optional<JoinStatusRecord<Long>> joinStatusRecord = job.getJoinStatusRecord();
+			Optional<Long> parentJobId = job.getParentJobId();
+			int stepCount = job.getStepCount();
 			
-			//TODO: Add job to WerkEngine
+			SQLWerkJob sqlWerkJob = new SQLWerkJob(jobId, jobType, version, jobName, status, jobInitialParameters, jobParameters, 
+					nextExecutionTime, joinStatusRecord, parentJobId, stepCount, joinResultSerializer, 
+					transactionFactory, stepDAO, jobDAO, werkConfig); 
+			
+			StepType<Long> stepType = werkConfig.getStepType(currentStep.getStepTypeName());
+			boolean isRollback = currentStep.isRollback();
+			int stepNumber = currentStep.getStepNumber();
+			List<Integer> rollbackStepNumbers = currentStep.getRollbackStepNumbers();
+			int executionCount = currentStep.getExecutionCount();
+			Map<String, Parameter> stepParameters = currentStep.getStepParameters();
+			List<StepProcessingLogRecord> processingLog = currentStep.getProcessingLog();
+			StepExec<Long> stepExec = werkConfig.getStepExec(currentStep.getStepTypeName());
+			Transitioner<Long> stepTransitioner = werkConfig.getStepTransitioner(currentStep.getStepTypeName());
+
+			SQLWerkStep sqlWerkStep = new SQLWerkStep(sqlWerkJob, stepType, isRollback, stepNumber, rollbackStepNumbers, 
+					executionCount, stepParameters, processingLog, stepExec, stepTransitioner, timeProvider, job.getCurrentStepId());
+			
+			sqlWerkJob.setCurrentStep(sqlWerkStep);
+			
+			//Add job to WerkEngine
+			werkEngine.addJob(sqlWerkJob);
 			
 			tc.commit();
 		} catch (Exception e) {
@@ -133,9 +182,7 @@ public class SQLJobLoader {
 		}
 	}
 	
-	public void loadJobs(long heartbeatPeriod, long maxExecutionTime) throws Exception {
-		long startTime = System.currentTimeMillis();
-		
+	public void loadJobs(long startTime, long loadPeriodMS) throws Exception {
 		TransactionContext tc = null;
 		try {
 			Optional<ServerPulseRecord<Long>> pulseRecordOpt = pulse.getActiveServerPulseRecord();
@@ -143,7 +190,7 @@ public class SQLJobLoader {
 				ServerPulseRecord<Long> selfFromPulse = pulseRecordOpt.get();
 				
 				//1. Load server list
-				tc = factory.startTransaction();
+				tc = transactionFactory.startTransaction();
 				List<ServerPulseRecord<Long>> servers = pulseDAO.getAllServers(tc);
 
 				//1.1 Fill workers, self
@@ -157,7 +204,7 @@ public class SQLJobLoader {
 						long ownedWorkUnits = srvInfo.getLong("jobCount");
 						Optional<Long> workUnitLimit = srvInfo.has("jobLimit") ? 
 								Optional.of(srvInfo.getLong("jobLimit")) : Optional.empty();
-	
+						
 						MyWorker worker = new MyWorker(workUnitLimit, ownedWorkUnits);
 						if (server.getServerId() == selfFromPulse.getServerId())
 							self = worker;
@@ -183,7 +230,7 @@ public class SQLJobLoader {
 					long jobId = ent.getKey();
 					long nextExecutionTime = ent.getValue();
 					
-					if (nextExecutionTime < startTime - 4*heartbeatPeriod)
+					if (nextExecutionTime < startTime - 4*loadPeriodMS)
 						oldJobIds.add(jobId);
 					else
 						newJobIds.add(jobId);
@@ -204,7 +251,7 @@ public class SQLJobLoader {
 				//	(Step 1 should work even if pulse has failed)
 				// Limit number of jobs
 				// Loop until there are jobs or until average unlock time > wait time until next execution
-				unlockJoinedJobs(tc, startTime, maxExecutionTime);
+				unlockJoinedJobs(tc, startTime, loadPeriodMS);
 			}
 		} catch (Exception e) {
 			logger.error("Jobs load failure, losing Heartbeat", e);

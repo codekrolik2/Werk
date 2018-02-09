@@ -9,9 +9,9 @@ import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class WerkPulseRecordCleaner implements ServerPulseRecordCleaner<Long> {
-	protected JobLoadDAO jobLoadDAO;  
+	protected JobLoadDAO jobLoadDAO;
 	protected ServerPulseDAO<Long> serverPulseDAO;
-		
+	
 	@Override
 	public void deleteServer(TransactionContext tc, Long serverId) throws Exception {
 		serverPulseDAO.deleteServer(tc, serverId);

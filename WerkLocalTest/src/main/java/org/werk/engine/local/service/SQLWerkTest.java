@@ -2,9 +2,18 @@ package org.werk.engine.local.service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.pillar.db.jdbc.JDBCTransactionFactory;
 import org.pillar.log4j.Log4JUtils;
+import org.pillar.time.LongTimeProvider;
+import org.werk.config.WerkConfig;
+import org.werk.config.annotations.AnnotationsWerkConfigLoader;
+import org.werk.engine.json.ParameterContextSerializer;
+import org.werk.engine.json.StepProcessingHistorySerializer;
+import org.werk.engine.sql.DAO.JobDAO;
+import org.werk.engine.sql.DAO.JobLoadDAO;
+import org.werk.engine.sql.DAO.StepDAO;
 import org.werk.engine.sql.main.SQLWerkRunner;
 import org.werk.meta.JobInitInfo;
 import org.werk.meta.impl.JobInitInfoImpl;
@@ -17,20 +26,29 @@ public class SQLWerkTest {
 	public static void main(String[] args) throws Exception {
 		Log4JUtils.debugInitLog4j();
 		
-		int threadCount = 4;
 		
 		String dbUrl = JDBCTransactionFactory.createMySQLUrl("localhost", "werk_db");
 		String dbUser = "lapot";
 		String dbPassword = "pillar";
+
+		int threadCount = 4;
 		int heartbeatPeriod = 15000;
 		
-		SQLWerkRunner sqlWerkRunner = new SQLWerkRunner(dbUrl, dbUser, dbPassword, heartbeatPeriod);
-		//sqlWerkRunner = SQLWerkRunnner.createAnnotationsConfig(maxJobCacheSize, threadCount);
-		//LocalWerkService service = sqlWerkRunner.getService();
+		Optional<Integer> jobLimit = Optional.of(500);
+		AnnotationsWerkConfigLoader<Long> loader = new AnnotationsWerkConfigLoader<>();
+		WerkConfig<Long> config = loader.loadWerkConfig();
 		
-		/*for (JobType type : sqlWerkRunner.getWerkConfig().getAllJobTypes())
-			System.out.println(type.toString());
-		*/
+		LongTimeProvider timeProvider = new LongTimeProvider();
+		ParameterContextSerializer parameterContextSerializer = new ParameterContextSerializer();
+		StepProcessingHistorySerializer stepProcessingHistorySerializer = new StepProcessingHistorySerializer(timeProvider);
+		
+		StepDAO stepDAO = new StepDAO(parameterContextSerializer, stepProcessingHistorySerializer);
+		JobDAO jobDAO = new JobDAO(timeProvider, parameterContextSerializer, config, stepDAO);
+		JobLoadDAO jobLoadDAO = new JobLoadDAO();
+		
+		SQLWerkRunner sqlWerkRunner = new SQLWerkRunner(dbUrl, dbUser, dbPassword, jobLimit, 
+				threadCount, heartbeatPeriod, config, jobDAO, stepDAO, jobLoadDAO, timeProvider);
+		
 		int i = 0;
 		//for (int i = 0; i < 1000; i++) {
 			String jobTypeName = "Job1";

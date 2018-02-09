@@ -6,12 +6,12 @@ import org.pillar.time.LongTimeProvider;
 import org.werk.config.WerkConfig;
 import org.werk.config.annotations.AnnotationsWerkConfigLoader;
 import org.werk.engine.WerkEngine;
-import org.werk.engine.WerkEngineImpl;
 import org.werk.engine.json.JoinResultSerializer;
 import org.werk.engine.json.LongJobIdSerializer;
 import org.werk.engine.local.LocalJobManager;
 import org.werk.engine.local.LocalJobStepFactory;
 import org.werk.engine.local.LocalStepSwitcher;
+import org.werk.engine.local.LocalWerkEngine;
 import org.werk.engine.local.LocalWerkService;
 import org.werk.exceptions.WerkConfigException;
 
@@ -65,7 +65,7 @@ public class LocalWerkRunner {
 		
 		switcher = new LocalStepSwitcher<Long>(jobStepFactory, localJobManager);
 		
-		werkEngine = new WerkEngineImpl<Long>(threadCount, switcher);
+		werkEngine = new LocalWerkEngine<Long>(threadCount, switcher);
 		localJobManager.setWerkEngine(werkEngine);
 		
 		service = new LocalWerkService(localJobManager, werkConfig);
