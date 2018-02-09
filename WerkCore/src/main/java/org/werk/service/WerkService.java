@@ -1,10 +1,10 @@
 package org.werk.service;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.Optional;
 import java.util.Set;
 
+import org.pillar.time.interfaces.Timestamp;
 import org.werk.data.JobPOJO;
 import org.werk.meta.JobInitInfo;
 import org.werk.meta.JobReviveInfo;
@@ -21,7 +21,7 @@ public interface WerkService<J> {
 	
 	//JOB RETRIEVAL
 	ReadOnlyJob<J> getJobAndHistory(J jobId) throws Exception;
-	Collection<JobPOJO<J>> getJobs(Optional<Date> from, Optional<Date> to, 
+	Collection<JobPOJO<J>> getJobs(Optional<Timestamp> from, Optional<Timestamp> to, 
 			Optional<Set<String>> jobTypes, Optional<Collection<J>> jobIds) throws Exception;
 	
 	Collection<JobPOJO<J>> getChildJobs(J jobId) throws Exception;

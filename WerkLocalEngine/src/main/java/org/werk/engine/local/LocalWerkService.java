@@ -2,11 +2,11 @@ package org.werk.engine.local;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.pillar.time.interfaces.Timestamp;
 import org.werk.config.WerkConfig;
 import org.werk.data.JobPOJO;
 import org.werk.meta.JobInitInfo;
@@ -48,7 +48,7 @@ public class LocalWerkService implements WerkService<Long> {
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-	public Collection<JobPOJO<Long>> getJobs(Optional<Date> from, Optional<Date> to, Optional<Set<String>> jobTypes,
+	public Collection<JobPOJO<Long>> getJobs(Optional<Timestamp> from, Optional<Timestamp> to, Optional<Set<String>> jobTypes,
 			Optional<Collection<Long>> jobIds) throws Exception {
 		return (Collection<JobPOJO<Long>>)(List)localJobManager.getJobs(jobIds.get());
 	}
