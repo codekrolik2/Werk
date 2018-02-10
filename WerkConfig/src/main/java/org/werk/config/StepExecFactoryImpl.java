@@ -20,4 +20,10 @@ public class StepExecFactoryImpl<J> implements StepExecFactory<J> {
 		Constructor<StepExec> constr = stepExec.getConstructor();
 		return (StepExec<J>)constr.newInstance();
 	}
+
+	@SuppressWarnings("rawtypes")
+	@Override
+	public Class getStepExecClass() {
+		return stepExec;
+	}
 }

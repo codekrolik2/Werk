@@ -62,15 +62,15 @@ public interface Job<J> extends ReadOnlyJob<J> {
 	
 	void revive(JobReviveInfo<J> jobReviveInfo) throws Exception;
 	
-	List<J> getCreatedJobs();
+	Collection<J> getCreatedJobs();
 	
 	String joinResultToStr(JoinResult<J> joinResult);
 	JoinResult<J> strToJoinResult(String joinResultStr);
 	
 	ReadOnlyJob<J> loadJob(J jobId) throws Exception;
-	List<ReadOnlyJob<J>> loadJobs(Collection<J> jobIds) throws Exception;
-	List<ReadOnlyJob<J>> loadAllChildJobs() throws Exception;
-	List<ReadOnlyJob<J>> loadChildJobsOfTypes(Set<String> jobTypes) throws Exception;
+	Collection<ReadOnlyJob<J>> loadJobs(Collection<J> jobIds) throws Exception;
+	Collection<ReadOnlyJob<J>> loadAllChildJobs() throws Exception;
+	Collection<ReadOnlyJob<J>> loadChildJobsOfTypes(Set<String> jobTypes) throws Exception;
 	
 	//-------------------------------------------------------------------
 	

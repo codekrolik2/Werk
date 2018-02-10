@@ -344,7 +344,7 @@ public class JobDAO {
 	}
 	
 	public Collection<DBJobPOJO> loadJobs(TransactionContext tc, Optional<Timestamp> from, Optional<Timestamp> to,
-			Optional<Collection<Long>> jobIds, Optional<Long> parentJobId, Optional<Set<String>> jobTypes) throws SQLException {
+			Optional<Collection<Long>> jobIds, Optional<Collection<Long>> parentJobIds, Optional<Set<String>> jobTypes) throws SQLException {
 		Connection connection = ((JDBCTransactionContext)tc).getConnection();
 		PreparedStatement pst = null;
 		
@@ -359,7 +359,7 @@ public class JobDAO {
 					"	ON j.id_job = r.id_awaiting_job");
 			
 			if (from.isPresent() || to.isPresent() || (jobIds.isPresent() && !jobIds.get().isEmpty()) ||
-					parentJobId.isPresent() || jobTypes.isPresent())
+					parentJobIds.isPresent() || jobTypes.isPresent())
 				sb.append(" WHERE ");
 			
 			int count = 0;
@@ -383,9 +383,17 @@ public class JobDAO {
 				
 				sb.append(")");
 			}
-			if (parentJobId.isPresent()) {
+			if (parentJobIds.isPresent() && !parentJobIds.get().isEmpty()) {
 				if (count++ > 0) sb.append(" AND");
-				sb.append(" j.parent_job_id = ? ");
+				sb.append(" j.parent_job_id IN (");
+				
+				int parentJobCount = 0;
+				for (@SuppressWarnings("unused") long parentJob : parentJobIds.get()) {
+					if (parentJobCount++ > 0) sb.append(", ");
+					sb.append("?");
+				}
+				
+				sb.append(")");
 			}
 			if (jobTypes.isPresent()) {
 				if (count++ > 0) sb.append(" AND");
@@ -410,8 +418,9 @@ public class JobDAO {
 			if (jobIds.isPresent() && !jobIds.get().isEmpty())
 				for (long jobId : jobIds.get())
 					pst.setLong(++count, jobId);
-			if (parentJobId.isPresent())
-				pst.setLong(++count, parentJobId.get());
+			if (parentJobIds.isPresent())
+				for (long parentJobId : parentJobIds.get())
+					pst.setLong(++count, parentJobId);
 			if (jobTypes.isPresent())
 				for (String jobType : jobTypes.get())
 					pst.setString(++count, jobType);

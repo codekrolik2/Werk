@@ -20,4 +20,10 @@ public class StepTransitionerFactoryImpl<J> implements StepTransitionerFactory<J
 		Constructor<Transitioner> constr = stepTransitioner.getConstructor();
 		return (Transitioner<J>)constr.newInstance();
 	}
+
+	@SuppressWarnings("rawtypes")
+	@Override
+	public Class getTransitionerClass() {
+		return stepTransitioner;
+	}
 }

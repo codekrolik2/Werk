@@ -98,48 +98,13 @@ public class SQLWerkService implements WerkService<Long> {
 
 	@Override
 	public Collection<JobPOJO<Long>> getJobs(Optional<Timestamp> from, Optional<Timestamp> to, Optional<Set<String>> jobTypes,
-			Optional<Collection<Long>> jobIds) throws Exception {
+			Optional<Collection<Long>> parentJobIds, Optional<Collection<Long>> jobIds) throws Exception {
 		TransactionContext tc = null;
 		try {
 			tc = transactionFactory.startTransaction();
 			@SuppressWarnings({ "unchecked", "rawtypes" })
-			Collection<JobPOJO<Long>> jobs = (Collection)jobDAO.loadJobs(tc, from, to, jobIds, Optional.empty(), jobTypes);
+			Collection<JobPOJO<Long>> jobs = (Collection)jobDAO.loadJobs(tc, from, to, jobIds, parentJobIds, jobTypes);
 			return jobs;
-		} finally {
-			tc.close();
-		}
-	}
-
-	@Override
-	public Collection<JobPOJO<Long>> getChildJobs(Long jobId) throws Exception {
-		TransactionContext tc = null;
-		try {
-			tc = transactionFactory.startTransaction();
-			@SuppressWarnings({ "unchecked", "rawtypes" })
-			Collection<JobPOJO<Long>> jobs = (Collection)jobDAO.loadJobs(tc, Optional.empty(), Optional.empty(),
-					Optional.empty(), Optional.of(jobId), Optional.empty());
-			return jobs;
-		} finally {
-			tc.close();
-		}
-	}
-
-	@Override
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public Collection<ReadOnlyJob<Long>> getChildJobsAndHistory(Long jobId) throws Exception {
-		TransactionContext tc = null;
-		try {
-			tc = transactionFactory.startTransaction();
-			Collection<DBJobPOJO> jobs = jobDAO.loadJobs(tc, Optional.empty(), Optional.empty(),
-					Optional.empty(), Optional.of(jobId), Optional.empty());
-			
-			List<DBReadOnlyJob> roJobs = new ArrayList<DBReadOnlyJob>();
-			for (DBJobPOJO jobPojo : jobs) {
-				DBReadOnlyJob roJob = new DBReadOnlyJob(jobPojo, transactionFactory, null, stepDAO);
-				roJobs.add(roJob);
-			}
-			
-			return (Collection<ReadOnlyJob<Long>>)(Collection)roJobs;
 		} finally {
 			tc.close();
 		}

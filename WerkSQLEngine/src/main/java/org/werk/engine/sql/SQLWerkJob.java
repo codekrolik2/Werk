@@ -212,7 +212,9 @@ public class SQLWerkJob extends WerkJob<Long> {
 
 	@Override
 	public List<ReadOnlyJob<Long>> loadAllChildJobs() throws Exception {
-		return loadJobs(Optional.empty(), Optional.of(getJobId()), Optional.empty());
+		List<Long> parentJobIds = new ArrayList<Long>();
+		parentJobIds.add(getJobId());
+		return loadJobs(Optional.empty(), Optional.of(parentJobIds), Optional.empty());
 	}
 
 	@Override
@@ -220,7 +222,7 @@ public class SQLWerkJob extends WerkJob<Long> {
 		return loadJobs(Optional.empty(), Optional.empty(), Optional.of(jobTypes));
 	}
 
-	protected List<ReadOnlyJob<Long>> loadJobs(Optional<Collection<Long>> jobIds, Optional<Long> parentJobId, 
+	protected List<ReadOnlyJob<Long>> loadJobs(Optional<Collection<Long>> jobIds, Optional<Collection<Long>> parentJobId, 
 			Optional<Set<String>> jobTypes) throws Exception {
 		TransactionContext tc = null;
 		try {

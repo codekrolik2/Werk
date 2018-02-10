@@ -11,6 +11,7 @@
   	<module>WerkLocalEngine</module>
   	<module>WerkSQLEngine</module>
   	<module>WerkLocalTest</module>
+  	<module>WerkREST</module>
   </modules>
   
   <properties>
@@ -22,6 +23,7 @@
   	<pillar.version>0.0.1-SNAPSHOT</pillar.version>
   	<lombok.version>1.16.16</lombok.version>
   	<log4j.version>1.2.16</log4j.version>
+  	<vertx.version>3.5.0</vertx.version>
   </properties>
   
   <dependencyManagement>
@@ -49,6 +51,11 @@
       <dependency>
         <groupId>org.werk</groupId>
         <artifactId>WerkSQLEngine</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.werk</groupId>
+        <artifactId>WerkREST</artifactId>
         <version>${project.version}</version>
       </dependency>
     
@@ -88,6 +95,11 @@
         <artifactId>lombok</artifactId>
         <version>${lombok.version}</version>
         <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.vertx</groupId>
+        <artifactId>vertx-web</artifactId>
+        <version>${vertx.version}</version>
       </dependency>
       <dependency>
         <groupId>com.google.guava</groupId>

@@ -2,9 +2,11 @@ package org.werk.engine.local;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.pillar.time.interfaces.Timestamp;
 import org.werk.config.WerkConfig;
@@ -49,19 +51,29 @@ public class LocalWerkService implements WerkService<Long> {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public Collection<JobPOJO<Long>> getJobs(Optional<Timestamp> from, Optional<Timestamp> to, Optional<Set<String>> jobTypes,
-			Optional<Collection<Long>> jobIds) throws Exception {
-		return (Collection<JobPOJO<Long>>)(List)localJobManager.getJobs(jobIds.get());
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	@Override
-	public Collection<JobPOJO<Long>> getChildJobs(Long jobId) throws Exception {
-		return (Collection<JobPOJO<Long>>)(List)localJobManager.getAllChildJobs(jobId);
-	}
-
-	@Override
-	public Collection<ReadOnlyJob<Long>> getChildJobsAndHistory(Long jobId) throws Exception {
-		return localJobManager.getAllChildJobs(jobId);
+			Optional<Collection<Long>> parentJobIds, Optional<Collection<Long>> jobIds) throws Exception {
+		Collection<JobPOJO<Long>> jobs;
+		if (parentJobIds.isPresent()) {
+			jobs = (Collection<JobPOJO<Long>>)(Collection)localJobManager.getAllChildJobs(parentJobIds.get());
+			if (jobIds.isPresent()) {
+				Set<Long> jobIdSet = new HashSet<>(jobIds.get());
+				jobs = jobs.stream().filter(a -> jobIdSet.contains(a.getJobId())).collect(Collectors.toList());
+			}
+		} else if (jobIds.isPresent())
+			jobs = (Collection<JobPOJO<Long>>)(List)localJobManager.getJobs(jobIds.get());
+		else
+			jobs = (Collection<JobPOJO<Long>>)(List)localJobManager.getAllJobs();
+		
+		if (from.isPresent())
+			jobs = jobs.stream().filter(a -> a.getNextExecutionTime().compareTo(from.get()) >= 0).collect(Collectors.toList());
+		
+		if (to.isPresent())
+			jobs = jobs.stream().filter(a -> a.getNextExecutionTime().compareTo(to.get()) <= 0).collect(Collectors.toList());
+		
+		if (jobTypes.isPresent())
+			jobs = jobs.stream().filter(a -> jobTypes.get().contains(a.getJobTypeName())).collect(Collectors.toList());
+		
+		return jobs;
 	}
 
 	//-------------------------------------------------------------

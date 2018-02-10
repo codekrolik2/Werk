@@ -23,6 +23,8 @@ import org.werk.processing.parameters.Parameter;
 import org.werk.processing.parameters.impl.DoubleParameterImpl;
 import org.werk.processing.parameters.impl.LongParameterImpl;
 import org.werk.processing.parameters.impl.StringParameterImpl;
+import org.werk.rest.VertxRunner;
+import org.werk.rest.WerkREST;
 
 public class SQLWerkTest {
 	public static void main(String[] args) throws Exception {
@@ -70,5 +72,7 @@ public class SQLWerkTest {
 		//SQLWerkRunner sqlWerkRunner = 
 		new SQLWerkRunner(transactionFactory, jobLimit, 
 				threadCount, heartbeatPeriod, config, jobDAO, stepDAO, jobLoadDAO, timeProvider);
+		
+		VertxRunner.runVerticle(new WerkREST(service));
 	}
 }

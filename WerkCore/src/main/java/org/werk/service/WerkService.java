@@ -22,10 +22,8 @@ public interface WerkService<J> {
 	//JOB RETRIEVAL
 	ReadOnlyJob<J> getJobAndHistory(J jobId) throws Exception;
 	Collection<JobPOJO<J>> getJobs(Optional<Timestamp> from, Optional<Timestamp> to, 
-			Optional<Set<String>> jobTypes, Optional<Collection<J>> jobIds) throws Exception;
-	
-	Collection<JobPOJO<J>> getChildJobs(J jobId) throws Exception;
-	Collection<ReadOnlyJob<J>> getChildJobsAndHistory(J jobId) throws Exception;
+			Optional<Set<String>> jobTypes, Optional<Collection<J>> parentJobIds, 
+			Optional<Collection<J>> jobIds) throws Exception;
 	
 	//JOB METADATA RETRIEVAL
 	Collection<JobType> getJobTypes();

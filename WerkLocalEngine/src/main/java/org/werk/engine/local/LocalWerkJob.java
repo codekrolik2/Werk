@@ -95,12 +95,16 @@ public class LocalWerkJob<J> extends WerkJob<J> {
 	}
 
 	@Override
-	public List<ReadOnlyJob<J>> loadAllChildJobs() {
-		return jobManager.getAllChildJobs(getJobId());
+	public Collection<ReadOnlyJob<J>> loadAllChildJobs() {
+		List<J> jobIds = new ArrayList<>();
+		jobIds.add(getJobId());
+		return jobManager.getAllChildJobs(jobIds);
 	}
 
 	@Override
-	public List<ReadOnlyJob<J>> loadChildJobsOfTypes(Set<String> jobTypes) {
-		return jobManager.getChildJobsOfTypes(getJobId(), jobTypes);
+	public Collection<ReadOnlyJob<J>> loadChildJobsOfTypes(Set<String> jobTypes) {
+		List<J> jobIds = new ArrayList<>();
+		jobIds.add(getJobId());
+		return jobManager.getChildJobsOfTypes(jobIds, jobTypes);
 	}
 }

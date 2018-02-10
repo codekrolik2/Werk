@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.log4j.Logger;
 import org.pillar.lru.LRUCache;
@@ -138,6 +139,16 @@ public class LocalJobManager<J> {
 		}
 	}
 	
+	public List<ReadOnlyJob<J>> getAllJobs() {
+		lock.lock();
+		try {
+			return Stream.concat(currentJobs.values().stream(), finishedJobs.values().stream()).
+				collect(Collectors.toList());
+		} finally {
+			lock.unlock();
+		}
+	}
+	
 	public List<ReadOnlyJob<J>> getJobs(Collection<J> jobIds) {
 		lock.lock();
 		try {
@@ -157,17 +168,20 @@ public class LocalJobManager<J> {
 		}
 	}
 	
-	public List<ReadOnlyJob<J>> getAllChildJobs(J jobId) {
+	public Collection<ReadOnlyJob<J>> getAllChildJobs(Collection<J> jobIds) {
 		lock.lock();
 		try {
-			return getJobs(childJobs.get(jobId));
+			Set<ReadOnlyJob<J>> roJobs = new HashSet<>();
+			for (J jobId : jobIds)
+				roJobs.addAll(getJobs(childJobs.get(jobId)));
+			return roJobs;
 		} finally {
 			lock.unlock();
 		}
 	}
 
-	public List<ReadOnlyJob<J>> getChildJobsOfTypes(J jobId, Set<String> jobTypes) {
-		return getAllChildJobs(jobId).stream()
+	public List<ReadOnlyJob<J>> getChildJobsOfTypes(Collection<J> jobIds, Set<String> jobTypes) {
+		return getAllChildJobs(jobIds).stream()
 				.filter(a -> jobTypes.contains(a.getJobTypeName()))
 				.collect(Collectors.toList());
 	}
