@@ -98,7 +98,7 @@ public class StepDAO {
 					+ "	 INNER JOIN steps s2 "
 					+ "  ON s2.id_step = sr.id_step_being_rolled_back "
 					+ "ON s1.id_step = sr.id_rollback_step "
-					+ "WHERE id_job = ?");
+					+ "WHERE s1.id_job = ?");
 			
 			if (stepTypeName.isPresent())
 				sb.append(" AND s1.step_type = ?");

@@ -54,19 +54,19 @@ public class SQLJobLoader {
 		long ownedWorkUnits;
 	};
 	
-	protected JobLoadDAO jobLoadDAO;
-	protected JobDAO jobDAO;
-	protected StepDAO stepDAO;
-	protected ServerPulseDAO<Long> pulseDAO;
+	protected final JobLoadDAO jobLoadDAO;
+	protected final JobDAO jobDAO;
+	protected final StepDAO stepDAO;
+	protected final ServerPulseDAO<Long> pulseDAO;
 	
-	protected JoinResultSerializer<Long> joinResultSerializer;
-	protected FairWorkDistributionCalc workCalc;
-	protected TransactionFactory transactionFactory;
-	protected Pulse<Long> pulse;
+	protected final JoinResultSerializer<Long> joinResultSerializer;
+	protected final FairWorkDistributionCalc workCalc;
+	protected final TransactionFactory transactionFactory;
+	protected final Pulse<Long> pulse;
 	
-	protected WerkEngine<Long> werkEngine;
-	protected WerkConfig<Long> werkConfig;
-	protected TimeProvider timeProvider;
+	protected final WerkEngine<Long> werkEngine;
+	protected final WerkConfig<Long> werkConfig;
+	protected final TimeProvider timeProvider;
 	
 	protected void unlockJoinedJob(TransactionContext tc, long jobId) throws Exception {
 		try {
@@ -208,6 +208,7 @@ public class SQLJobLoader {
 						MyWorker worker = new MyWorker(workUnitLimit, ownedWorkUnits);
 						if (server.getServerId() == selfFromPulse.getServerId())
 							self = worker;
+						workers.add(worker);
 					} catch(JSONException je) {
 						//Do nothing: If serverInfo is not compliant with the format, the server won't be 
 						//considered as a part of job distribution simulation 

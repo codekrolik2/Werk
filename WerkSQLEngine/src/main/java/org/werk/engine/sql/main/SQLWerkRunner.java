@@ -8,7 +8,6 @@ import java.util.function.Supplier;
 
 import org.json.JSONObject;
 import org.pillar.db.interfaces.TransactionFactory;
-import org.pillar.db.jdbc.JDBCTransactionFactory;
 import org.pillar.time.LongTimeProvider;
 import org.pulse.DefaultPulse;
 import org.pulse.NoOpChecker;
@@ -34,17 +33,17 @@ public class SQLWerkRunner {
 	protected Optional<Integer> jobLimit;
 	protected AtomicReference<SQLWerkEngine> currentEngine;
 	
-	public SQLWerkRunner(String dbUrl, String dbUser, String dbPassword, 
+	public SQLWerkRunner(TransactionFactory connectionFactory, 
 			Optional<Integer> jobLimit, int threadCount, int heartbeatPeriod,
 			WerkConfig<Long> config, JobDAO jobDAO, StepDAO stepDAO, JobLoadDAO jobLoadDAO,
 			LongTimeProvider timeProvider) {
 		this.jobLimit = jobLimit;
+		currentEngine = new AtomicReference<>(null);
 		
 		//----------------PULSE----------------
 		
 		ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 		
-		TransactionFactory connectionFactory = new JDBCTransactionFactory(dbUrl, dbUser, dbPassword);
 		ServerPulseDAO<Long> serverDAO = new JDBCServerPulseDAO(timeProvider);
 		
 		ServerChecker<Long> serverChecker = new NoOpChecker<>();
@@ -64,7 +63,7 @@ public class SQLWerkRunner {
 			}
 		};
 		
-		pulseRunnable = new PulseRunnable<Long>(scheduler, pulse, serverInfoGetter, timeProvider, heartbeatPeriod);
+		pulseRunnable = new PulseRunnable<Long>(scheduler, pulse, serverInfoGetter, timeProvider, heartbeatPeriod, 1000);
 		scheduler.execute(pulseRunnable);
 		
 		//-----------SQL WERK ENGINE-----------

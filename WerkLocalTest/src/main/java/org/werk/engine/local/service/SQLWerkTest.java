@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import org.pillar.db.interfaces.TransactionFactory;
 import org.pillar.db.jdbc.JDBCTransactionFactory;
 import org.pillar.log4j.Log4JUtils;
 import org.pillar.time.LongTimeProvider;
@@ -11,6 +12,7 @@ import org.werk.config.WerkConfig;
 import org.werk.config.annotations.AnnotationsWerkConfigLoader;
 import org.werk.engine.json.ParameterContextSerializer;
 import org.werk.engine.json.StepProcessingHistorySerializer;
+import org.werk.engine.sql.SQLWerkService;
 import org.werk.engine.sql.DAO.JobDAO;
 import org.werk.engine.sql.DAO.JobLoadDAO;
 import org.werk.engine.sql.DAO.StepDAO;
@@ -26,7 +28,6 @@ public class SQLWerkTest {
 	public static void main(String[] args) throws Exception {
 		Log4JUtils.debugInitLog4j();
 		
-		
 		String dbUrl = JDBCTransactionFactory.createMySQLUrl("localhost", "werk_db");
 		String dbUser = "lapot";
 		String dbPassword = "pillar";
@@ -34,7 +35,9 @@ public class SQLWerkTest {
 		int threadCount = 4;
 		int heartbeatPeriod = 15000;
 		
-		Optional<Integer> jobLimit = Optional.of(500);
+		//Optional<Integer> jobLimit = Optional.of(500);
+		//Optional<Integer> jobLimit = Optional.empty();
+		Optional<Integer> jobLimit = Optional.of(5000);
 		AnnotationsWerkConfigLoader<Long> loader = new AnnotationsWerkConfigLoader<>();
 		WerkConfig<Long> config = loader.loadWerkConfig();
 		
@@ -45,12 +48,12 @@ public class SQLWerkTest {
 		StepDAO stepDAO = new StepDAO(parameterContextSerializer, stepProcessingHistorySerializer);
 		JobDAO jobDAO = new JobDAO(timeProvider, parameterContextSerializer, config, stepDAO);
 		JobLoadDAO jobLoadDAO = new JobLoadDAO();
+		TransactionFactory transactionFactory = new JDBCTransactionFactory(dbUrl, dbUser, dbPassword);
 		
-		SQLWerkRunner sqlWerkRunner = new SQLWerkRunner(dbUrl, dbUser, dbPassword, jobLimit, 
-				threadCount, heartbeatPeriod, config, jobDAO, stepDAO, jobLoadDAO, timeProvider);
+		SQLWerkService service = new SQLWerkService(config, jobDAO, stepDAO, transactionFactory);
 		
 		int i = 0;
-		//for (int i = 0; i < 1000; i++) {
+		for (i = 0; i < 1000; i++) {
 			String jobTypeName = "Job1";
 			Map<String, Parameter> initParameters = new HashMap<>();
 			initParameters.put("text3", new StringParameterImpl("hello"));
@@ -61,7 +64,11 @@ public class SQLWerkTest {
 			initParameters.put("text2", new StringParameterImpl("c"));
 			
 			JobInitInfo init = new JobInitInfoImpl(jobTypeName, "job" + i, initParameters);
-			//service.createJob(init);
-		//}
+			service.createJob(init);
+		}
+	
+		//SQLWerkRunner sqlWerkRunner = 
+		new SQLWerkRunner(transactionFactory, jobLimit, 
+				threadCount, heartbeatPeriod, config, jobDAO, stepDAO, jobLoadDAO, timeProvider);
 	}
 }

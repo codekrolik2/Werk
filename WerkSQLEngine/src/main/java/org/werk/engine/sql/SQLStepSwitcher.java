@@ -121,11 +121,10 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 				joinedJobs.put(jobId, JobStatus.UNDEFINED);
 			
 			String joinParameterName = exec.getParameterName().get();
-			JobStatus statusBeforeJoin = job.getStatus();
 			Optional<Integer> waitForNJobs = exec.getWaitForNJobs();
 			
 			JoinStatusRecord<Long> joinStatusRecord = new SQLJoinStatusRecord<Long>(joinedJobs, 
-					joinParameterName, statusBeforeJoin, waitForNJobs.isPresent() ? waitForNJobs.get() : joinedJobs.size());
+					joinParameterName, waitForNJobs.isPresent() ? waitForNJobs.get() : joinedJobs.size());
 			
 			sqlJob.setJoinStatusRecord(Optional.of(joinStatusRecord));
 			sqlJob.setStatus(JobStatus.JOINING);

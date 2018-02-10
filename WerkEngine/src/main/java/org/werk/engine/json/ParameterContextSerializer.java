@@ -56,7 +56,7 @@ public class ParameterContextSerializer {
 	//-----------------------------
 	
 	protected Parameter createParameterFromJSONGet(Object value) {
-		if ((value != null) && (value != JSONObject.NULL))
+		if ((value == null) || (value == JSONObject.NULL))
 			return null;
 		
 	    if (value instanceof Integer) {

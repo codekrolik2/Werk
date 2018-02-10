@@ -29,8 +29,6 @@ public class WerkPoolRunnable<J> extends WorkThreadPoolRunnable<Job<J>> {
 		Exception execException = null;
 		ExecutionResult<J> execResult = null;
 		
-		beforeExec(job);
-		
 		try {
 			job.getCurrentStep().incrementExecutionCount();
 			
@@ -101,6 +99,8 @@ public class WerkPoolRunnable<J> extends WorkThreadPoolRunnable<Job<J>> {
 		else
 			switchResult = stepSwitcher.transition(job, transition);
 		
+		afterSwitch(job);
+		
 		if (switchResult.getStatus() == SwitchStatus.PROCESS) {
 			long delayMS = 0;
 			if (switchResult.getDelayMS().isPresent())
@@ -112,24 +112,23 @@ public class WerkPoolRunnable<J> extends WorkThreadPoolRunnable<Job<J>> {
 					switchResult.getParameterName().get());
 		} else if (switchResult.getStatus() == SwitchStatus.UNLOAD) {
 			logger.info(
-					String.format("Unloading job: [%s / %s / %s]",
+					String.format("Unloading job: [Type %s / Id %s / Name %s / Status %s]",
 							job.getJobTypeName(),
+							job.getJobId().toString(),
 							job.getJobName().isPresent() ? job.getJobName().get() : "No name",
 							job.getStatus())
 				);
 		} else 
 			logger.error(
-					String.format("Error - Unknown SwitchStatus: [%s]. Unloading job: [%s / %s / %s]",
+					String.format("Error - Unknown SwitchStatus: [%s]. Unloading job: [Type %s / Id %s / Name %s / Status %s]",
 							switchResult.getStatus(),
 							job.getJobTypeName(),
+							job.getJobId().toString(),
 							job.getJobName().isPresent() ? job.getJobName().get() : "No name",
 							job.getStatus())
 				);
-		
-		afterSwitch(job);
 	}
 
-	protected void beforeExec(Job<J> job) {}
 	protected void beforeTransition(Job<J> job) {}
 	protected void beforeSwitch(Job<J> job) {}
 	protected void afterSwitch(Job<J> job) {}

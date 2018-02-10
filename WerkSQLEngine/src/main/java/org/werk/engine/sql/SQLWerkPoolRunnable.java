@@ -34,6 +34,7 @@ public class SQLWerkPoolRunnable extends WerkPoolRunnable<Long> {
 	@Override
 	public void process(Job<Long> job) {
 		try {
+			beforeExec(job);
 			super.process(job);
 		} catch (Exception e) {
 			logger.info("SQLWerkPoolRunnable exception: losing heartbeat", e);
@@ -41,11 +42,12 @@ public class SQLWerkPoolRunnable extends WerkPoolRunnable<Long> {
 		}
 	}
 	
-	@Override
 	protected void beforeExec(Job<Long> job) {
 		try {
 			//Create and inject transaction if not ShortTransaction
 			if (!job.getCurrentStep().getStepType().isShortTransaction()) {
+				//logger.info(String.format("Create Transaction JobId [%d] self [%s]", job.getJobId(), this));
+				
 				TransactionContext stepTransactionContext = connectionFactory.startTransaction();
 				((SQLWerkJob)job).setStepTransactionContext(stepTransactionContext);
 			}
@@ -59,6 +61,8 @@ public class SQLWerkPoolRunnable extends WerkPoolRunnable<Long> {
 		try {
 			//Create and inject transaction if ShortTransaction
 			if (job.getCurrentStep().getStepType().isShortTransaction()) {
+				//logger.info(String.format("Create Short Transaction JobId [%d] self [%s]", job.getJobId(), this));
+				
 				TransactionContext stepTransactionContext = connectionFactory.startTransaction();
 				((SQLWerkJob)job).setStepTransactionContext(stepTransactionContext);
 			}
@@ -69,10 +73,13 @@ public class SQLWerkPoolRunnable extends WerkPoolRunnable<Long> {
 	
 	@Override
 	protected void afterSwitch(Job<Long> job) {
+		SQLWerkJob sqlWerkJob = null;
 		//Update all forked jobs status, UNDEFINED -> PROCESSING
 		//Commit transaction
 		try {
-			SQLWerkJob sqlWerkJob = (SQLWerkJob)job;
+			//logger.info(String.format("Commit Transaction JobId [%d] self [%s]", job.getJobId(), this));
+			
+			sqlWerkJob = (SQLWerkJob)job;
 			
 			jobLoadDAO.activateForkedChildJobs(sqlWerkJob.getStepTransactionContext(), sqlWerkJob.getForkedJobs());
 			
@@ -81,6 +88,15 @@ public class SQLWerkPoolRunnable extends WerkPoolRunnable<Long> {
 			sqlWerkJob.getStepTransactionContext().commit();
 		} catch (Exception e) {
 			throw new SQLWerkPoolRunnableException(e);
+		} finally {
+			if (sqlWerkJob != null)
+				try {
+					sqlWerkJob.getStepTransactionContext().close();
+				} catch (Exception e) {
+					logger.error(
+						String.format("Failed to close TransactionContext for job: []", job.getJobId()), e
+					);
+				}
 		}
 	}
 }

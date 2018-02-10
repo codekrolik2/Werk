@@ -39,6 +39,11 @@ public class SQLWerkService implements WerkService<Long> {
 		try {
 			tc = transactionFactory.startTransaction();
 			long jobId = jobDAO.createJob(tc, init, JobStatus.PROCESSING.getCode(), Optional.empty(), 0);
+			
+			String firstStepType = werkConfig.getJobTypeLatestVersion(init.getJobTypeName()).getFirstStepTypeName();
+			long firstStepId = stepDAO.createProcessingStep(tc, jobId, firstStepType, 0);
+			jobDAO.updateFirstStep(tc, jobId, firstStepId);
+			
 			tc.commit();
 			
 			return jobId;
@@ -53,6 +58,11 @@ public class SQLWerkService implements WerkService<Long> {
 		try {
 			tc = transactionFactory.startTransaction();
 			long jobId = jobDAO.createOldVersionJob(tc, init, JobStatus.PROCESSING.getCode(), Optional.empty(), 0);
+
+			String firstStepType = werkConfig.getJobTypeLatestVersion(init.getJobTypeName()).getFirstStepTypeName();
+			long firstStepId = stepDAO.createProcessingStep(tc, jobId, firstStepType, 0);
+			jobDAO.updateFirstStep(tc, jobId, firstStepId);
+			
 			tc.commit();
 			
 			return jobId;

@@ -114,7 +114,7 @@ public class JobLoadDAO {
 			
 			Map<Long, Long> jobIds = new HashMap<>();
 			while (rs.next())
-				jobIds.put(rs.getLong(0), rs.getLong(1));
+				jobIds.put(rs.getLong(1), rs.getLong(2));
 			
 			return jobIds;
 		} finally {
@@ -147,7 +147,7 @@ public class JobLoadDAO {
 			
 			Set<Long> jobIds = new HashSet<Long>();
 			while (rs.next())
-				jobIds.add(rs.getLong(0));
+				jobIds.add(rs.getLong(1));
 			
 			return jobIds;
 		} finally {

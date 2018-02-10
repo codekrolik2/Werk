@@ -16,8 +16,6 @@ public class SQLJoinStatusRecord<J> implements JoinStatusRecord<J> {
 	@Getter
 	String joinParameterName;
 	@Getter
-	JobStatus statusBeforeJoin;
-	@Getter
 	int waitForNJobs;
 	
 	@Override

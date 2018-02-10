@@ -46,10 +46,12 @@ public class SchemaCreatorWerk extends JDBCBatchStatementsTool {
 				"CREATE TABLE IF NOT EXISTS `werk_db`.`steps` (\n" + 
 				"  `id_step` BIGINT NOT NULL AUTO_INCREMENT,\n" + 
 				"  `id_job` BIGINT NOT NULL,\n" + 
+				"  `step_type` VARCHAR(255) NOT NULL,\n" + 
+				"  `is_rollback` TINYINT(1) NOT NULL,\n" + 
 				"  `step_number` INT NOT NULL,\n" + 
 				"  `execution_count` INT NOT NULL,\n" + 
-				"  `step_parameter_state` TEXT NOT NULL,\n" + 
-				"  `step_processing_log` TEXT NOT NULL,\n" + 
+				"  `step_parameter_state` TEXT NULL,\n" + 
+				"  `step_processing_log` TEXT NULL,\n" + 
 				"  PRIMARY KEY (`id_step`),\n" + 
 				"  INDEX `fk_step_to_job_idx` (`id_job` ASC),\n" + 
 				"  CONSTRAINT `fk_step_to_job`\n" + 
@@ -69,13 +71,15 @@ public class SchemaCreatorWerk extends JDBCBatchStatementsTool {
 				"  `version` BIGINT NOT NULL,\n" + 
 				"  `job_name` VARCHAR(255) NULL,\n" + 
 				"  `parent_job_id` BIGINT NULL,\n" + 
-				"  `current_step_id` BIGINT NOT NULL,\n" + 
+				"  `current_step_id` BIGINT NULL,\n" + 
 				"  `status` INT NOT NULL,\n" + 
 				"  `next_execution_time` BIGINT NOT NULL,\n" + 
 				"  `job_parameter_state` TEXT NOT NULL,\n" + 
-				"  `job_input_parameter_state` TEXT NOT NULL,\n" + 
-				"  `wait_for_N_jobs` BIGINT NULL,\n" + 
+				"  `job_initial_parameter_state` TEXT NOT NULL,\n" + 
+				"  `wait_for_N_jobs` INT NULL,\n" + 
+				"  `join_parameter_name` VARCHAR(255) NULL,\n" + 
 				"  `id_locker` BIGINT NULL,\n" + 
+				"  `step_count` INT NOT NULL,\n" + 
 				"  PRIMARY KEY (`id_job`),\n" + 
 				"  INDEX `fk_job_to_parent_idx` (`parent_job_id` ASC),\n" + 
 				"  INDEX `fk_jobs_to_current_step_idx` (`current_step_id` ASC),\n" + 
@@ -114,6 +118,27 @@ public class SchemaCreatorWerk extends JDBCBatchStatementsTool {
 				"  CONSTRAINT `fk_id_job`\n" + 
 				"    FOREIGN KEY (`id_job`)\n" + 
 				"    REFERENCES `werk_db`.`jobs` (`id_job`)\n" + 
+				"    ON DELETE NO ACTION\n" + 
+				"    ON UPDATE NO ACTION)\n" + 
+				"ENGINE = InnoDB;\n" + 
+				"\n" + 
+				"\n" + 
+				"-- -----------------------------------------------------\n" + 
+				"-- Table `werk_db`.`step_rollback`\n" + 
+				"-- -----------------------------------------------------\n" + 
+				"CREATE TABLE IF NOT EXISTS `werk_db`.`step_rollback` (\n" + 
+				"  `id_rollback_step` BIGINT NOT NULL,\n" + 
+				"  `id_step_being_rolled_back` BIGINT NOT NULL,\n" + 
+				"  PRIMARY KEY (`id_rollback_step`, `id_step_being_rolled_back`),\n" + 
+				"  INDEX `fk_to_step_to_rollback_idx` (`id_step_being_rolled_back` ASC),\n" + 
+				"  CONSTRAINT `fk_to_step`\n" + 
+				"    FOREIGN KEY (`id_rollback_step`)\n" + 
+				"    REFERENCES `werk_db`.`steps` (`id_step`)\n" + 
+				"    ON DELETE NO ACTION\n" + 
+				"    ON UPDATE NO ACTION,\n" + 
+				"  CONSTRAINT `fk_to_step_to_rollback`\n" + 
+				"    FOREIGN KEY (`id_step_being_rolled_back`)\n" + 
+				"    REFERENCES `werk_db`.`steps` (`id_step`)\n" + 
 				"    ON DELETE NO ACTION\n" + 
 				"    ON UPDATE NO ACTION)\n" + 
 				"ENGINE = InnoDB;\n" + 

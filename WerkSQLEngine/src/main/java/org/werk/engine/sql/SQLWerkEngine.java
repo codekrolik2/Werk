@@ -23,17 +23,18 @@ import org.werk.engine.sql.jobload.SQLJobLoaderRunnable;
 import org.werk.processing.jobs.Job;
 
 public class SQLWerkEngine implements WerkEngine<Long> {
-	protected TimeProvider timeProvider;
-	protected WorkThreadPool<Job<Long>> werkPool;
-	protected SQLWerkPoolRunnableFactory runnableFactory;
-	protected WerkCallbackRunnable<Long> callbackRunnable;
-	protected SQLJobLoaderRunnable sqlJobLoaderRunnable;
-	protected int threadCount;
+	protected final TimeProvider timeProvider;
+	protected final WorkThreadPool<Job<Long>> werkPool;
+	protected final SQLWerkPoolRunnableFactory runnableFactory;
+	protected final WerkCallbackRunnable<Long> callbackRunnable;
+	protected final SQLJobLoaderRunnable sqlJobLoaderRunnable;
+	protected final int threadCount;
 	
 	public SQLWerkEngine(int threadCount, WerkStepSwitcher<Long> stepSwitcher, 
 			TransactionFactory connectionFactory, Pulse<Long> pulse, WerkConfig<Long> config, 
 			JobDAO jobDAO, StepDAO stepDAO, ServerPulseDAO<Long> serverDAO, JobLoadDAO jobLoadDAO,
 			long jobLoadPeriodMS) {
+		this.threadCount = threadCount;
 		timeProvider = new LongTimeProvider();
 		
 		callbackRunnable = new WerkCallbackRunnable<Long>(timeProvider);

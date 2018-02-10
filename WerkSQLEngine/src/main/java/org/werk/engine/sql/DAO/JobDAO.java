@@ -58,11 +58,11 @@ public class JobDAO {
 		PreparedStatement pst = null;
 		
 		try {
-			pst = connection.prepareStatement("UPDATE jobs id_job = ?, current_step_id = ?, step_count = ?");
+			pst = connection.prepareStatement("UPDATE jobs SET current_step_id = ?, step_count = ? WHERE id_job = ?");
 			
-			pst.setLong(1, jobId);
-			pst.setLong(2, newStepId);
-			pst.setInt(3, 1);
+			pst.setLong(1, newStepId);
+			pst.setInt(2, 1);
+			pst.setLong(3, jobId);
 			
 			pst.executeUpdate();
 			
@@ -214,7 +214,9 @@ public class JobDAO {
 			if (joinStatusRecord.isPresent()) {
 				pst.setLong(6, joinStatusRecord.get().getWaitForNJobs());
 				pst.setString(7, joinStatusRecord.get().getJoinParameterName());
-			}
+				pst.setLong(8, jobId);
+			} else
+				pst.setLong(6, jobId);
 			
 			int recordsUpdated = pst.executeUpdate();
 			
@@ -349,7 +351,7 @@ public class JobDAO {
 		try {
 			StringBuilder sb = new StringBuilder("SELECT j.id_job, j.job_type, j.version, j.job_name, j.parent_job_id, " +
 					"j.current_step_id, j.status, j.next_execution_time, j.job_parameter_state, j.job_initial_parameter_state, " +
-					"j.id_locker, j.step_count, j.wait_for_N_jobs, j.status_before_join, j.join_parameter_name, r.id_job, j2.status " +
+					"j.id_locker, j.step_count, j.wait_for_N_jobs, j.join_parameter_name, r.id_job, j2.status " +
 					"FROM jobs j " +
 					"	LEFT JOIN join_record_jobs r " +
 					"		LEFT JOIN jobs j2 " +
@@ -363,15 +365,15 @@ public class JobDAO {
 			int count = 0;
 			if (from.isPresent()) {
 				count++;
-				sb.append(" next_execution_time >= ? ");
+				sb.append(" j.next_execution_time >= ? ");
 			}
 			if (to.isPresent()) {
 				if (count++ > 0) sb.append(" AND");
-				sb.append(" next_execution_time <= ? ");
+				sb.append(" j.next_execution_time <= ? ");
 			}
 			if (jobIds.isPresent() && !jobIds.get().isEmpty()) {
 				if (count++ > 0) sb.append(" AND");
-				sb.append(" id_job IN (");
+				sb.append(" j.id_job IN (");
 				
 				int jobCount = 0;
 				for (@SuppressWarnings("unused") long jobId : jobIds.get()) {
@@ -383,11 +385,11 @@ public class JobDAO {
 			}
 			if (parentJobId.isPresent()) {
 				if (count++ > 0) sb.append(" AND");
-				sb.append(" parent_job_id = ? ");
+				sb.append(" j.parent_job_id = ? ");
 			}
 			if (jobTypes.isPresent()) {
 				if (count++ > 0) sb.append(" AND");
-				sb.append(" job_type IN (");
+				sb.append(" j.job_type IN (");
 				
 				int jobTypeCount = 0;
 				for (@SuppressWarnings("unused") String jobType : jobTypes.get()) {
@@ -467,22 +469,20 @@ public class JobDAO {
 			int stepCount = rs.getInt(12);
 
 			Optional<JoinStatusRecord<Long>> joinStatusRecord;
-			String joinParameterName = rs.getString(15);
+			String joinParameterName = rs.getString(14);
 			if (rs.wasNull()) {
 				joinStatusRecord = Optional.empty();
 			} else {
 				int waitForNJobs = rs.getInt(13);
 				
-				JobStatus statusBeforeJoin = JobStatus.fromCode(rs.getInt(14));
-				
-				long joinedJobId = rs.getLong(16);
-				JobStatus joinedJobStatus = JobStatus.fromCode(rs.getInt(17));
+				long joinedJobId = rs.getLong(15);
+				JobStatus joinedJobStatus = JobStatus.fromCode(rs.getInt(16));
 				
 				Map<Long, JobStatus> joinedJobs = new HashMap<>();
 				joinedJobs.put(joinedJobId, joinedJobStatus);
 				
 				JoinStatusRecord<Long> jsr = new SQLJoinStatusRecord<Long>(joinedJobs, joinParameterName, 
-						statusBeforeJoin, waitForNJobs);
+						waitForNJobs);
 				joinStatusRecord = Optional.of(jsr);
 			}
 			
@@ -494,8 +494,8 @@ public class JobDAO {
 			dbJobPOJO = (DBJobPOJO)jobs.get(jobId);
 			SQLJoinStatusRecord<Long> jsr = (SQLJoinStatusRecord<Long>)dbJobPOJO.joinStatusRecord.get();
 			
-			long joinedJobId = rs.getLong(16);
-			JobStatus joinedJobStatus = JobStatus.fromCode(rs.getInt(17));
+			long joinedJobId = rs.getLong(15);
+			JobStatus joinedJobStatus = JobStatus.fromCode(rs.getInt(16));
 			if (!rs.wasNull())
 				jsr.getJoinedJobs().put(joinedJobId, joinedJobStatus);
 		}
