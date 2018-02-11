@@ -1,12 +1,29 @@
 package org.werk.rest;
 
+import java.util.Collection;
 import java.util.Optional;
 
+import org.apache.log4j.Logger;
 import org.json.JSONArray;
+import org.json.JSONObject;
+import org.pillar.time.interfaces.TimeProvider;
+import org.werk.data.JobPOJO;
+import org.werk.engine.JobIdSerializer;
+import org.werk.meta.JobInitInfo;
+import org.werk.meta.JobRestartInfo;
 import org.werk.meta.JobType;
 import org.werk.meta.StepType;
+import org.werk.meta.VersionJobInitInfo;
+import org.werk.processing.readonly.ReadOnlyJob;
+import org.werk.rest.serializers.JobFiltersSerializer;
+import org.werk.rest.serializers.JobInitInfoSerializer;
+import org.werk.rest.serializers.JobStepSerializer;
 import org.werk.rest.serializers.JobStepTypeRESTSerializer;
 import org.werk.service.WerkService;
+import org.werk.util.JoinResultSerializer;
+import org.werk.util.LongJobIdSerializer;
+import org.werk.util.ParameterContextSerializer;
+import org.werk.util.StepProcessingHistorySerializer;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.http.HttpServerResponse;
@@ -15,10 +32,37 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 
 public class WerkREST extends AbstractVerticle {
-	protected WerkService<Long> werkService;
+	final Logger logger = Logger.getLogger(WerkREST.class);
 	
-	public WerkREST(WerkService<Long> werkService) {
+	protected WerkService<Long> werkService;
+	protected JobIdSerializer<Long> jobIdSerializer; 
+	
+	protected JobStepTypeRESTSerializer jobStepTypeRESTSerializer;
+	protected JobStepSerializer<Long> jobStepSerializer;
+	protected JobFiltersSerializer<Long> jobFiltersSerializer;
+	protected JobInitInfoSerializer jobInitInfoSerializer;
+	
+	protected boolean allowUnfilteredJobListRetrieval;
+	
+	public WerkREST(WerkService<Long> werkService, TimeProvider timeProvider, boolean allowUnfilteredJobListRetrieval) {
 		this.werkService = werkService;
+		this.allowUnfilteredJobListRetrieval = allowUnfilteredJobListRetrieval;
+		
+		jobIdSerializer = new LongJobIdSerializer();
+		
+		jobStepTypeRESTSerializer = new JobStepTypeRESTSerializer();
+		
+		ParameterContextSerializer contextSerializer = new ParameterContextSerializer();
+		JoinResultSerializer<Long> joinResultSerializer = new JoinResultSerializer<>(jobIdSerializer);
+		StepProcessingHistorySerializer stepProcessingHistorySerializer = 
+				new StepProcessingHistorySerializer(timeProvider);
+
+		jobStepSerializer = new JobStepSerializer<>(contextSerializer, joinResultSerializer, 
+				jobIdSerializer, stepProcessingHistorySerializer);
+		
+		jobFiltersSerializer = new JobFiltersSerializer<Long>(timeProvider, jobIdSerializer);
+		
+		jobInitInfoSerializer = new JobInitInfoSerializer(contextSerializer);
 	}
 	
 	@Override
@@ -31,11 +75,130 @@ public class WerkREST extends AbstractVerticle {
 		router.get("/jobTypes/:jobTypeName").handler(this::handleGetJobType);
 		router.get("/jobTypes").handler(this::handleListJobTypes);
 		
+		router.get("/stepTypes").handler(this::handleGetAllStepTypes);
 		router.get("/stepTypes/:stepTypeName").handler(this::handleGetStepType);
 		router.get("/stepTypesForJob/:jobTypeName/:version").handler(this::handleListStepTypes);
 		router.get("/stepTypesForJob/:jobTypeName").handler(this::handleListStepTypes);
 		
+		router.get("/jobsAndHistory/:jobId").handler(this::handleJobsAndHistory);
+
+		//Get jobs - JSON filter definition in request body
+		router.get("/jobs").handler(this::handleGetJobs);
+		//Create job (current or old version)
+		router.post("/jobs").handler(this::handleCreateJob);
+		//Restart job
+		router.patch("/jobs/:jobId").handler(this::handleRestartJob);
+		
 		vertx.createHttpServer().requestHandler(router::accept).listen(8080);
+	}
+	
+	private void handleRestartJob(RoutingContext routingContext) {
+		String body = routingContext.getBodyAsString();
+		HttpServerResponse response = routingContext.response();
+		if ((body == null) || (body.trim().equals(""))) {
+			sendError(400, response);
+		} else {
+			JSONObject jobRestartJSON = new JSONObject(body);
+			JobRestartInfo<Long> jobRestartInfo = jobStepSerializer.deserializeJobRestartInfo(jobRestartJSON);
+			try {
+				werkService.restartJob(jobRestartInfo);
+				
+				JSONObject resp = new JSONObject();
+				resp.put("jobId", jobRestartInfo.getJobId());
+				routingContext.response().putHeader("content-type", "application/json").end(resp.toString());
+			} catch (Exception e) {
+				logger.error(e, e);
+				sendError(400, response);
+				return;
+			}
+		}
+	}
+	
+	private void handleCreateJob(RoutingContext routingContext) {
+		String body = routingContext.getBodyAsString();
+		HttpServerResponse response = routingContext.response();
+		if ((body == null) || (body.trim().equals(""))) {
+			sendError(400, response);
+		} else {
+			try {
+				Long jobId;
+				JSONObject jobInitJSON = new JSONObject(body);
+				if (jobInitJSON.has("jobVersion")) {
+					VersionJobInitInfo versionJobInitInfo = jobInitInfoSerializer.deserializeVersionJobInitInfo(jobInitJSON);
+					jobId = werkService.createJobOfVersion(versionJobInitInfo);
+				} else {
+					JobInitInfo jobInitInfo = jobInitInfoSerializer.deserializeJobInitInfo(jobInitJSON);
+					jobId = werkService.createJob(jobInitInfo);
+				}
+				
+				JSONObject resp = new JSONObject();
+				resp.put("jobId", jobId);
+				routingContext.response().putHeader("content-type", "application/json").end(resp.toString());
+			} catch (Exception e) {
+				logger.error(e, e);
+				sendError(400, response);
+				return;
+			}
+		}
+	}
+	
+	private void handleGetJobs(RoutingContext routingContext) {
+		String filter = routingContext.queryParams().get("filter");
+		HttpServerResponse response = routingContext.response();
+		if ((filter == null) || (filter.trim().equals(""))) {
+			sendError(400, response);
+		} else {
+			JobFilters<Long> jobFilters = jobFiltersSerializer.deserializeJobFilters(new JSONObject(filter));
+			
+			if (!allowUnfilteredJobListRetrieval)
+			if (!jobFilters.getFrom().isPresent() && !jobFilters.getTo().isPresent() &&
+				!jobFilters.getJobTypes().isPresent() && !jobFilters.getParentJobIds().isPresent() &&
+				!jobFilters.getJobIds().isPresent()) {
+				logger.error("Unfiltered JobList Retrieval is not allowed: specify filters");
+				sendError(400, "Unfiltered JobList Retrieval is not allowed: specify filters", response);
+				return;
+			}
+
+			try {
+				Collection<JobPOJO<Long>> jobs = werkService.getJobs(jobFilters.getFrom(), jobFilters.getTo(), 
+						jobFilters.getJobTypes(), jobFilters.getParentJobIds(), jobFilters.getJobIds());
+				
+				JSONArray arr = new JSONArray();
+				for (JobPOJO<Long> job : jobs)
+					arr.put(jobStepSerializer.serializeJob(job));
+				
+				routingContext.response().putHeader("content-type", "application/json").end(arr.toString());
+			} catch (Exception e) {
+				logger.error(e, e);
+				sendError(400, response);
+				return;
+			}
+		}
+	}
+	
+	private void handleJobsAndHistory(RoutingContext routingContext) {
+		String jobIdStr = routingContext.request().getParam("jobId");
+		
+		HttpServerResponse response = routingContext.response();
+		if (jobIdStr == null) {
+			sendError(400, response);
+		} else {
+			long jobId = jobIdSerializer.deSerializeJobId(jobIdStr);
+			try {
+				ReadOnlyJob<Long> readOnlyJob = werkService.getJobAndHistory(jobId);
+				
+				if (readOnlyJob == null) {
+					sendError(404, response);
+				} else {
+					routingContext.response().putHeader("content-type", "application/json").
+						end(jobStepSerializer.serializeJobAndHistory(readOnlyJob).toString());
+				}
+			} catch (Exception e) {
+				logger.error(e, e);
+				sendError(400, response);
+				return;
+			}
+		}
 	}
 	
 	private void handleGetJobType(RoutingContext routingContext) {
@@ -52,6 +215,7 @@ public class WerkREST extends AbstractVerticle {
 					long v = Long.parseLong(versionStr);
 					version = Optional.of(v);
 				} catch (NumberFormatException nfe) {
+					logger.error(nfe, nfe);
 					sendError(400, response);
 					return;
 				}
@@ -62,7 +226,7 @@ public class WerkREST extends AbstractVerticle {
 				sendError(404, response);
 			} else {
 				response.putHeader("content-type", "application/json").
-					end(JobStepTypeRESTSerializer.serializeJobType(jobType).toString());
+					end(jobStepTypeRESTSerializer.serializeJobType(jobType).toString());
 			}
 		}
 	}
@@ -70,7 +234,7 @@ public class WerkREST extends AbstractVerticle {
 	private void handleListJobTypes(RoutingContext routingContext) {
 		JSONArray arr = new JSONArray();
 		for (JobType jobType : werkService.getJobTypes())
-			arr.put(JobStepTypeRESTSerializer.serializeJobType(jobType));
+			arr.put(jobStepTypeRESTSerializer.serializeJobType(jobType));
 		
 		routingContext.response().putHeader("content-type", "application/json").end(arr.toString());
 	}
@@ -85,7 +249,7 @@ public class WerkREST extends AbstractVerticle {
 			StepType<?> stepType = werkService.getStepType(stepTypeName);
 			
 			routingContext.response().putHeader("content-type", "application/json").
-				end(JobStepTypeRESTSerializer.serializeStepType(stepType).toString());
+				end(jobStepTypeRESTSerializer.serializeStepType(stepType).toString());
 		}
 	}
 
@@ -103,6 +267,7 @@ public class WerkREST extends AbstractVerticle {
 					long v = Long.parseLong(versionStr);
 					version = Optional.of(v);
 				} catch (NumberFormatException nfe) {
+					logger.error(nfe, nfe);
 					sendError(400, response);
 					return;
 				}
@@ -110,15 +275,27 @@ public class WerkREST extends AbstractVerticle {
 
 			JSONArray arr = new JSONArray();
 			for (StepType<?> stepType : werkService.getStepTypesForJob(jobTypeName, version))
-				arr.put(JobStepTypeRESTSerializer.serializeStepType(stepType));
+				arr.put(jobStepTypeRESTSerializer.serializeStepType(stepType));
 			
 			routingContext.response().putHeader("content-type", "application/json").end(arr.toString());
 		}
+	}
+	
+	private void handleGetAllStepTypes(RoutingContext routingContext) {
+		JSONArray arr = new JSONArray();
+		for (StepType<?> stepType : werkService.getAllStepTypes())
+			arr.put(jobStepTypeRESTSerializer.serializeStepType(stepType));
+		
+		routingContext.response().putHeader("content-type", "application/json").end(arr.toString());
 	}
 	
 	//------------------------------------
 	
 	protected void sendError(int statusCode, HttpServerResponse response) {
 		response.setStatusCode(statusCode).end();
+	}
+	
+	protected void sendError(int statusCode, String msg, HttpServerResponse response) {
+		response.setStatusCode(statusCode).end(msg);
 	}
 }

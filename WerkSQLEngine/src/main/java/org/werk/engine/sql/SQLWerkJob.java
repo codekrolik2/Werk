@@ -14,20 +14,20 @@ import org.pillar.db.interfaces.TransactionFactory;
 import org.pillar.time.interfaces.Timestamp;
 import org.werk.config.WerkConfig;
 import org.werk.data.StepPOJO;
-import org.werk.engine.json.JoinResultSerializer;
 import org.werk.engine.processing.WerkJob;
 import org.werk.engine.sql.DAO.DBJobPOJO;
 import org.werk.engine.sql.DAO.DBReadOnlyJob;
 import org.werk.engine.sql.DAO.JobDAO;
 import org.werk.engine.sql.DAO.StepDAO;
 import org.werk.meta.JobInitInfo;
-import org.werk.meta.JobReviveInfo;
+import org.werk.meta.JobRestartInfo;
 import org.werk.meta.JobType;
-import org.werk.meta.OldVersionJobInitInfo;
+import org.werk.meta.VersionJobInitInfo;
 import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.jobs.JoinStatusRecord;
 import org.werk.processing.parameters.Parameter;
 import org.werk.processing.readonly.ReadOnlyJob;
+import org.werk.util.JoinResultSerializer;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -154,12 +154,12 @@ public class SQLWerkJob extends WerkJob<Long> {
 	}
 	
 	@Override
-	public Long forkOldVersion(OldVersionJobInitInfo jobInitInfo) throws Exception {
+	public Long forkVersion(VersionJobInitInfo jobInitInfo) throws Exception {
 		TransactionContext tc = null;
 		try {
 			tc = getOrCreateTC();
 			
-			long jobId = jobDAO.createOldVersionJob(tc, jobInitInfo, JobStatus.UNDEFINED.getCode(), Optional.of(getJobId()), 0);
+			long jobId = jobDAO.createJobOfVersion(tc, jobInitInfo, JobStatus.UNDEFINED.getCode(), Optional.of(getJobId()), 0);
 			
 			String firstStepType = werkConfig.getJobTypeForAnyVersion(version, jobInitInfo.getJobTypeName()).getFirstStepTypeName();
 			
@@ -178,12 +178,12 @@ public class SQLWerkJob extends WerkJob<Long> {
 	}
 	
 	@Override
-	public void revive(JobReviveInfo<Long> jobReviveInfo) throws Exception {
+	public void restart(JobRestartInfo<Long> jobRestartInfo) throws Exception {
 		TransactionContext tc = null;
 		try {
 			tc = getOrCreateTC();
 			
-			jobDAO.reviveJob(tc, jobReviveInfo);
+			jobDAO.restartJob(tc, jobRestartInfo);
 		} catch(Exception e) {
 			throw e;
 		} finally {

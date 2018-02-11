@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.werk.engine.json.ParameterUtils;
 import org.werk.engine.processing.mapped.MappedParameter;
 import org.werk.processing.parameters.BoolParameter;
 import org.werk.processing.parameters.DictionaryParameter;
@@ -20,6 +19,7 @@ import org.werk.processing.parameters.impl.DoubleParameterImpl;
 import org.werk.processing.parameters.impl.ListParameterImpl;
 import org.werk.processing.parameters.impl.LongParameterImpl;
 import org.werk.processing.parameters.impl.StringParameterImpl;
+import org.werk.util.ParameterUtils;
 
 public class ParameterContext {
 	protected Map<String, Parameter> parameters;

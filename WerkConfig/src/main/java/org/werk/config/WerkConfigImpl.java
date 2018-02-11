@@ -78,7 +78,7 @@ public class WerkConfigImpl<J> implements WerkConfig<J> {
 		return null;
 	}
 
-	@Override
+	/*@Override
 	public JobType getJobTypeForOldVersion(Long version, String jobTypeName) {
 		JobTypeRegistry registry = jobTypes.get(jobTypeName);
 		
@@ -87,7 +87,7 @@ public class WerkConfigImpl<J> implements WerkConfig<J> {
 				return registry.getJobTypeVersions().get(version);
 		
 		return null;
-	}
+	}*/
 
 	@Override
 	public JobType getJobTypeLatestVersion(String jobTypeName) {

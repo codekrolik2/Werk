@@ -3,8 +3,8 @@ package org.werk.meta;
 import java.util.List;
 import java.util.Optional;
 
-public interface NewStepReviveInfo {
+public interface NewStepRestartInfo {
 	String getNewStepTypeName();
-	Boolean isNewStepRollback();
+	boolean isNewStepRollback();
 	Optional<List<Integer>> getStepsToRollback();
 }

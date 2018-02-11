@@ -7,7 +7,7 @@ import java.util.Optional;
 import org.werk.processing.jobs.JoinStatusRecord;
 import org.werk.processing.parameters.Parameter;
 
-public interface JobReviveInfo<J> {
+public interface JobRestartInfo<J> {
 	J getJobId();
 	
 	Map<String, Parameter> getJobParametersUpdate();
@@ -16,7 +16,7 @@ public interface JobReviveInfo<J> {
 	Map<String, Parameter> getStepParametersUpdate();
 	List<String> getStepParametersToRemove();
 	
-	Optional<NewStepReviveInfo> getNewStepInfo();
+	Optional<NewStepRestartInfo> getNewStepInfo();
 	
 	Optional<JoinStatusRecord<J>> getJoinStatusRecord();
 }

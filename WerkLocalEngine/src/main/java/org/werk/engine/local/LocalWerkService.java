@@ -12,9 +12,9 @@ import org.pillar.time.interfaces.Timestamp;
 import org.werk.config.WerkConfig;
 import org.werk.data.JobPOJO;
 import org.werk.meta.JobInitInfo;
-import org.werk.meta.JobReviveInfo;
+import org.werk.meta.JobRestartInfo;
 import org.werk.meta.JobType;
-import org.werk.meta.OldVersionJobInitInfo;
+import org.werk.meta.VersionJobInitInfo;
 import org.werk.meta.StepType;
 import org.werk.processing.readonly.ReadOnlyJob;
 import org.werk.service.WerkService;
@@ -34,13 +34,13 @@ public class LocalWerkService implements WerkService<Long> {
 	}
 
 	@Override
-	public Long createOldVersionJob(OldVersionJobInitInfo init) throws Exception {
+	public Long createJobOfVersion(VersionJobInitInfo init) throws Exception {
 		return localJobManager.createOldVersionJob(init, Optional.empty());
 	}
 
 	@Override
-	public void reviveJob(JobReviveInfo<Long> jobReviveInfo) throws Exception {
-		localJobManager.reviveJob(jobReviveInfo);
+	public void restartJob(JobRestartInfo<Long> jobRestartInfo) throws Exception {
+		localJobManager.restartJob(jobRestartInfo);
 	}
 
 	@Override
@@ -107,5 +107,10 @@ public class LocalWerkService implements WerkService<Long> {
 	@Override
 	public StepType<Long> getStepType(String stepTypeName) {
 		return werkConfig.getStepType(stepTypeName);
+	}
+
+	@Override
+	public Collection<StepType<Long>> getAllStepTypes() {
+		return werkConfig.getAllStepTypes().values();
 	}
 }

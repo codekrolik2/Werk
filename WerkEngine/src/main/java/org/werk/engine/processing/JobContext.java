@@ -6,8 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.werk.engine.json.ParameterUtils;
 import org.werk.processing.parameters.Parameter;
+import org.werk.util.ParameterUtils;
 
 public class JobContext<J> extends ParameterContext {
 	protected List<J> createdJobs;

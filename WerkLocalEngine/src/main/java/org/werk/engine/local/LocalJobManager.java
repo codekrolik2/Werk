@@ -22,9 +22,9 @@ import org.werk.engine.WerkEngine;
 import org.werk.engine.processing.WerkStep;
 import org.werk.exceptions.WerkException;
 import org.werk.meta.JobInitInfo;
-import org.werk.meta.JobReviveInfo;
-import org.werk.meta.NewStepReviveInfo;
-import org.werk.meta.OldVersionJobInitInfo;
+import org.werk.meta.JobRestartInfo;
+import org.werk.meta.NewStepRestartInfo;
+import org.werk.meta.VersionJobInitInfo;
 import org.werk.processing.jobs.Job;
 import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.jobs.JoinStatusRecord;
@@ -305,33 +305,33 @@ public class LocalJobManager<J> {
 	//---------------------------------------------------
 	//JOB REVIVAL
 	
-	public void reviveJob(JobReviveInfo<J> init) throws Exception {
+	public void restartJob(JobRestartInfo<J> init) throws Exception {
 		lock.lock();
 		try {
 			J jobId = init.getJobId();
 			
-			ReadOnlyJob<J> jobToRevive = finishedJobs.remove(jobId);
-			if (jobToRevive == null)
+			ReadOnlyJob<J> jobToRestart = finishedJobs.remove(jobId);
+			if (jobToRestart == null)
 				throw new WerkException(
 					String.format("Job not found in finishedJobs: id [%d]", jobId)
 				);
 			
-			LocalWerkJob<J> revivedJob = (LocalWerkJob<J>)jobStepFactory.createJob(jobToRevive);
-			revivedJob.setStepCount(((LocalWerkJob<J>)jobToRevive).getStepCount());
+			LocalWerkJob<J> restartedJob = (LocalWerkJob<J>)jobStepFactory.createJob(jobToRestart);
+			restartedJob.setStepCount(((LocalWerkJob<J>)jobToRestart).getStepCount());
 			
 			//Update job Parameters
 			for (Entry<String, Parameter> jobPrmEntry : init.getJobParametersUpdate().entrySet()) {
 				String key = jobPrmEntry.getKey();
 				Parameter prm = jobPrmEntry.getValue();
 				
-				revivedJob.putJobParameter(key, prm);
+				restartedJob.putJobParameter(key, prm);
 			}
 			
 			for (String jobParametersToRemove : init.getJobParametersToRemove())
-				revivedJob.removeJobParameter(jobParametersToRemove);
+				restartedJob.removeJobParameter(jobParametersToRemove);
 			
 			//Copy processing history and set current step
-			Collection<StepPOJO> processingHistory = jobToRevive.getProcessingHistory();
+			Collection<StepPOJO> processingHistory = jobToRestart.getProcessingHistory();
 			Step<J> currentStep;
 			if (!init.getNewStepInfo().isPresent()) {
 				//Restart current step
@@ -345,30 +345,30 @@ public class LocalJobManager<J> {
 				}
 				
 				if (lastStep.isRollback())
-					revivedJob.setStatus(JobStatus.ROLLING_BACK);
+					restartedJob.setStatus(JobStatus.ROLLING_BACK);
 				else
-					revivedJob.setStatus(JobStatus.PROCESSING);
+					restartedJob.setStatus(JobStatus.PROCESSING);
 				
 				processingHistory = newProcessingHistory;
 				
-				currentStep = jobStepFactory.createNewStep(revivedJob, lastStep.getStepNumber(), 
+				currentStep = jobStepFactory.createNewStep(restartedJob, lastStep.getStepNumber(), 
 						Optional.ofNullable(lastStep.getRollbackStepNumbers()), lastStep.getStepTypeName());
 			} else {
 				//Create a new step
-				NewStepReviveInfo stepInfo = init.getNewStepInfo().get();
+				NewStepRestartInfo stepInfo = init.getNewStepInfo().get();
 				
 				if (stepInfo.isNewStepRollback())
-					revivedJob.setStatus(JobStatus.ROLLING_BACK);
+					restartedJob.setStatus(JobStatus.ROLLING_BACK);
 				else
-					revivedJob.setStatus(JobStatus.PROCESSING);
+					restartedJob.setStatus(JobStatus.PROCESSING);
 				
-				currentStep = jobStepFactory.createNewStep(revivedJob, revivedJob.getNextStepNumber(), 
+				currentStep = jobStepFactory.createNewStep(restartedJob, restartedJob.getNextStepNumber(), 
 						stepInfo.getStepsToRollback(), stepInfo.getNewStepTypeName());
 			}
 			
 			processingHistory.add(currentStep);
-			revivedJob.setProcessingHistory(processingHistory);
-			revivedJob.setCurrentStep((WerkStep<J>)currentStep);
+			restartedJob.setProcessingHistory(processingHistory);
+			restartedJob.setCurrentStep((WerkStep<J>)currentStep);
 			
 			//Update currentStep Parameters
 			for (Entry<String, Parameter> stepPrmEntry : init.getStepParametersUpdate().entrySet()) {
@@ -381,7 +381,7 @@ public class LocalJobManager<J> {
 			for (String stepParameterToRemove : init.getStepParametersToRemove())
 				currentStep.removeStepParameter(stepParameterToRemove);
 			
-			currentJobs.put(jobId, revivedJob);
+			currentJobs.put(jobId, restartedJob);
 			
 			JobCluster cluster = jobClusters.get(jobId);
 			evictionLRUCache.remove(cluster);
@@ -390,12 +390,12 @@ public class LocalJobManager<J> {
 			if (init.getJoinStatusRecord().isPresent()) {
 				JoinStatusRecord<J> rec = init.getJoinStatusRecord().get();
 				
-				((LocalWerkJob<J>)revivedJob).setJoinStatusRecord(init.getJoinStatusRecord());
-				((LocalWerkJob<J>)revivedJob).setStatus(JobStatus.JOINING);
+				((LocalWerkJob<J>)restartedJob).setJoinStatusRecord(init.getJoinStatusRecord());
+				((LocalWerkJob<J>)restartedJob).setStatus(JobStatus.JOINING);
 
-				join(revivedJob.getJobId(), rec.getJoinedJobIds());
+				join(restartedJob.getJobId(), rec.getJoinedJobIds());
 			} else
-				werkEngine.addJob(revivedJob);
+				werkEngine.addJob(restartedJob);
 		} finally {
 			lock.unlock();
 		}
@@ -418,8 +418,8 @@ public class LocalJobManager<J> {
 		return job.getJobId();
 	}
 	
-	public J createOldVersionJob(OldVersionJobInitInfo init, Optional<J> parentJob) throws Exception {
-		LocalWerkJob<J> job = (LocalWerkJob<J>)jobStepFactory.createOldVersionJob(init.getJobTypeName(), init.getOldVersion(), 
+	public J createOldVersionJob(VersionJobInitInfo init, Optional<J> parentJob) throws Exception {
+		LocalWerkJob<J> job = (LocalWerkJob<J>)jobStepFactory.createJobOfVersion(init.getJobTypeName(), init.getJobVersion(), 
 				init.getInitParameters(), init.getJobName(), parentJob);
 		
 		lock.lock();

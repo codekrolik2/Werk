@@ -2,6 +2,7 @@ package org.werk.engine.local.service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.pillar.log4j.Log4JUtils;
 import org.werk.engine.local.LocalWerkService;
@@ -38,7 +39,7 @@ public class LocalWerkTest {
 			initParameters.put("d1", new DoubleParameterImpl(5.8));
 			initParameters.put("text2", new StringParameterImpl("c"));
 			
-			JobInitInfo init = new JobInitInfoImpl(jobTypeName, "job" + i, initParameters);
+			JobInitInfo init = new JobInitInfoImpl(jobTypeName, Optional.of("job" + i), initParameters);
 			service.createJob(init);
 		//}
 	}

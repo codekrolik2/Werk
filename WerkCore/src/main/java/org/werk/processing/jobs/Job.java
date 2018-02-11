@@ -6,9 +6,9 @@ import java.util.Map;
 import java.util.Set;
 
 import org.werk.meta.JobInitInfo;
-import org.werk.meta.JobReviveInfo;
+import org.werk.meta.JobRestartInfo;
 import org.werk.meta.JobType;
-import org.werk.meta.OldVersionJobInitInfo;
+import org.werk.meta.VersionJobInitInfo;
 import org.werk.processing.parameters.Parameter;
 import org.werk.processing.readonly.ReadOnlyJob;
 import org.werk.processing.steps.JoinResult;
@@ -58,9 +58,9 @@ public interface Job<J> extends ReadOnlyJob<J> {
 	//-------------------------------------------------------------------
 	
 	J fork(JobInitInfo jobInitInfo) throws Exception;
-	J forkOldVersion(OldVersionJobInitInfo jobInitInfo) throws Exception;
+	J forkVersion(VersionJobInitInfo jobInitInfo) throws Exception;
 	
-	void revive(JobReviveInfo<J> jobReviveInfo) throws Exception;
+	void restart(JobRestartInfo<J> jobRestartInfo) throws Exception;
 	
 	Collection<J> getCreatedJobs();
 	

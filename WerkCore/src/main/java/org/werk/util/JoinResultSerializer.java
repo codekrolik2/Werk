@@ -1,10 +1,11 @@
-package org.werk.engine.json;
+package org.werk.util;
 
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
 import org.json.JSONObject;
+import org.werk.engine.JobIdSerializer;
 import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.steps.JoinResult;
 

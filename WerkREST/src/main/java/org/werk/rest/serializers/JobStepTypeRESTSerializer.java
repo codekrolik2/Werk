@@ -20,7 +20,7 @@ import org.werk.processing.parameters.Parameter;
 import org.werk.processing.parameters.StringParameter;
 
 public class JobStepTypeRESTSerializer {
-	public static JSONObject serializeJobType(JobType jobType) {
+	public JSONObject serializeJobType(JobType jobType) {
 		JSONObject jobTypeJSON = new JSONObject();
 		
 		jobTypeJSON.put("jobTypeName", jobType.getJobTypeName());
@@ -55,7 +55,7 @@ public class JobStepTypeRESTSerializer {
 		return jobTypeJSON;
 	}
 
-	public static JSONObject serializeStepType(StepType<?> stepType) {
+	public JSONObject serializeStepType(StepType<?> stepType) {
 		JSONObject jobTypeJSON = new JSONObject();
 		
 		jobTypeJSON.put("stepTypeName", stepType.getStepTypeName());
@@ -82,7 +82,7 @@ public class JobStepTypeRESTSerializer {
 		return jobTypeJSON;
 	}
 	
-	public static JSONObject serializeJobInputParameter(JobInputParameter jip) {
+	public JSONObject serializeJobInputParameter(JobInputParameter jip) {
 		JSONObject param = new JSONObject();
 		
 		param.put("name", jip.getName());
@@ -116,7 +116,7 @@ public class JobStepTypeRESTSerializer {
 		return param;
 	}
 	
-	public static void addParameterValue(JSONObject obj, String name, Parameter value) {
+	public void addParameterValue(JSONObject obj, String name, Parameter value) {
 		if (value instanceof StringParameter) {
 			obj.put(name, ((StringParameter)value).getValue());
 		} else if (value instanceof LongParameter) {
@@ -140,7 +140,7 @@ public class JobStepTypeRESTSerializer {
 		}
 	}
 
-	public static void addParameterValueToArray(JSONArray arr, Parameter value) {
+	public void addParameterValueToArray(JSONArray arr, Parameter value) {
 		if (value instanceof StringParameter) {
 			arr.put(((StringParameter)value).getValue());
 		} else if (value instanceof LongParameter) {

@@ -16,9 +16,9 @@ import org.werk.engine.sql.DAO.DBReadOnlyJob;
 import org.werk.engine.sql.DAO.JobDAO;
 import org.werk.engine.sql.DAO.StepDAO;
 import org.werk.meta.JobInitInfo;
-import org.werk.meta.JobReviveInfo;
+import org.werk.meta.JobRestartInfo;
 import org.werk.meta.JobType;
-import org.werk.meta.OldVersionJobInitInfo;
+import org.werk.meta.VersionJobInitInfo;
 import org.werk.meta.StepType;
 import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.readonly.ReadOnlyJob;
@@ -53,11 +53,11 @@ public class SQLWerkService implements WerkService<Long> {
 	}
 
 	@Override
-	public Long createOldVersionJob(OldVersionJobInitInfo init) throws Exception {
+	public Long createJobOfVersion(VersionJobInitInfo init) throws Exception {
 		TransactionContext tc = null;
 		try {
 			tc = transactionFactory.startTransaction();
-			long jobId = jobDAO.createOldVersionJob(tc, init, JobStatus.PROCESSING.getCode(), Optional.empty(), 0);
+			long jobId = jobDAO.createJobOfVersion(tc, init, JobStatus.PROCESSING.getCode(), Optional.empty(), 0);
 
 			String firstStepType = werkConfig.getJobTypeLatestVersion(init.getJobTypeName()).getFirstStepTypeName();
 			long firstStepId = stepDAO.createProcessingStep(tc, jobId, firstStepType, 0);
@@ -72,11 +72,11 @@ public class SQLWerkService implements WerkService<Long> {
 	}
 
 	@Override
-	public void reviveJob(JobReviveInfo<Long> jobReviveInfo) throws Exception {
+	public void restartJob(JobRestartInfo<Long> jobRestartInfo) throws Exception {
 		TransactionContext tc = null;
 		try {
 			tc = transactionFactory.startTransaction();
-			jobDAO.reviveJob(tc, jobReviveInfo);
+			jobDAO.restartJob(tc, jobRestartInfo);
 			tc.commit();
 		} finally {
 			tc.close();
@@ -141,5 +141,10 @@ public class SQLWerkService implements WerkService<Long> {
 	@Override
 	public StepType<Long> getStepType(String stepTypeName) {
 		return werkConfig.getStepType(stepTypeName);
+	}
+
+	@Override
+	public Collection<StepType<Long>> getAllStepTypes() {
+		return werkConfig.getAllStepTypes().values();
 	}
 }

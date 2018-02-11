@@ -16,10 +16,10 @@ import org.pillar.db.interfaces.TransactionContext;
 import org.pillar.db.jdbc.JDBCTransactionContext;
 import org.pillar.db.jdbc.JDBCTransactionFactory;
 import org.werk.data.StepPOJO;
-import org.werk.engine.json.ParameterContextSerializer;
-import org.werk.engine.json.StepProcessingHistorySerializer;
 import org.werk.processing.parameters.Parameter;
 import org.werk.processing.steps.StepProcessingLogRecord;
+import org.werk.util.ParameterContextSerializer;
+import org.werk.util.StepProcessingHistorySerializer;
 
 public class StepDAO {
 	protected ParameterContextSerializer parameterContextSerializer;

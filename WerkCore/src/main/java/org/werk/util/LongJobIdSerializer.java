@@ -1,4 +1,6 @@
-package org.werk.engine.json;
+package org.werk.util;
+
+import org.werk.engine.JobIdSerializer;
 
 public class LongJobIdSerializer implements JobIdSerializer<Long> {
 	@Override

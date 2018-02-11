@@ -1,4 +1,4 @@
-package org.werk.engine.json;
+package org.werk.engine;
 
 public interface JobIdSerializer<J> {
 	String serializeJobId(J jobId);

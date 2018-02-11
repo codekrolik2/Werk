@@ -1,4 +1,4 @@
-package org.werk.engine.json;
+package org.werk.util;
 
 import java.util.Collection;
 import java.util.Map;

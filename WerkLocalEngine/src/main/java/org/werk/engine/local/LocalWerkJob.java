@@ -10,16 +10,16 @@ import java.util.stream.Collectors;
 
 import org.pillar.time.interfaces.Timestamp;
 import org.werk.data.StepPOJO;
-import org.werk.engine.json.JoinResultSerializer;
 import org.werk.engine.processing.WerkJob;
 import org.werk.meta.JobInitInfo;
-import org.werk.meta.JobReviveInfo;
+import org.werk.meta.JobRestartInfo;
 import org.werk.meta.JobType;
-import org.werk.meta.OldVersionJobInitInfo;
+import org.werk.meta.VersionJobInitInfo;
 import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.jobs.JoinStatusRecord;
 import org.werk.processing.parameters.Parameter;
 import org.werk.processing.readonly.ReadOnlyJob;
+import org.werk.util.JoinResultSerializer;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -73,13 +73,13 @@ public class LocalWerkJob<J> extends WerkJob<J> {
 	}
 
 	@Override
-	public J forkOldVersion(OldVersionJobInitInfo jobInitInfo) throws Exception {
+	public J forkVersion(VersionJobInitInfo jobInitInfo) throws Exception {
 		return jobManager.createOldVersionJob(jobInitInfo, Optional.of(getJobId()));
 	}
 
 	@Override
-	public void revive(JobReviveInfo<J> jobReviveInfo) throws Exception {
-		jobManager.reviveJob(jobReviveInfo);
+	public void restart(JobRestartInfo<J> jobRestartInfo) throws Exception {
+		jobManager.restartJob(jobRestartInfo);
 	}
 
 	//----------------------------------------------

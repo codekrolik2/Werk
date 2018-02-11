@@ -5,9 +5,9 @@ import java.util.Optional;
 
 import org.werk.processing.parameters.Parameter;
 
-public interface OldVersionJobInitInfo {
+public interface VersionJobInitInfo {
 	String getJobTypeName();
 	Map<String, Parameter> getInitParameters();
-	long getOldVersion();
+	long getJobVersion();
 	Optional<String> getJobName();
 }

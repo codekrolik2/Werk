@@ -12,7 +12,6 @@ import org.werk.config.WerkConfig;
 import org.werk.data.JobPOJO;
 import org.werk.data.StepPOJO;
 import org.werk.engine.json.JobParameterTool;
-import org.werk.engine.json.JoinResultSerializer;
 import org.werk.engine.processing.WerkStep;
 import org.werk.exceptions.WerkConfigException;
 import org.werk.meta.JobType;
@@ -25,6 +24,7 @@ import org.werk.processing.parameters.Parameter;
 import org.werk.processing.steps.StepExec;
 import org.werk.processing.steps.StepProcessingLogRecord;
 import org.werk.processing.steps.Transitioner;
+import org.werk.util.JoinResultSerializer;
 
 public abstract class LocalJobStepFactory<J> {
 	protected WerkConfig<J> werkConfig;
@@ -71,9 +71,9 @@ public abstract class LocalJobStepFactory<J> {
 				localJobManager, joinResultSerializer);
 	}
 
-	public LocalWerkJob<J> createOldVersionJob(String jobTypeName, long oldVersion, Map<String, Parameter> jobInitialParameters, 
+	public LocalWerkJob<J> createJobOfVersion(String jobTypeName, long oldVersion, Map<String, Parameter> jobInitialParameters, 
 			Optional<String> jobName, Optional<J> parentJob) throws Exception {
-		JobType jobType = werkConfig.getJobTypeForOldVersion(oldVersion, jobTypeName);
+		JobType jobType = werkConfig.getJobTypeForAnyVersion(oldVersion, jobTypeName);
 		if (jobType == null)
 			throw new WerkConfigException(
 				String.format("JobType not found [%s] for version [%d]", jobTypeName, oldVersion)

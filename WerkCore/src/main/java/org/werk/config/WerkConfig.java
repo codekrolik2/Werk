@@ -15,7 +15,6 @@ public interface WerkConfig<J> {
 	Collection<Long> getJobTypeVersions(String jobTypeName);
 
 	JobType getJobTypeForAnyVersion(Long version, String jobTypeName);
-	JobType getJobTypeForOldVersion(Long version, String jobTypeName);
 	JobType getJobTypeLatestVersion(String jobTypeName);
 	
 	Map<String, StepType<J>> getAllStepTypes();

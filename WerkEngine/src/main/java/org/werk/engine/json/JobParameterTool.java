@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import org.werk.engine.json.ParameterUtils;
 import org.werk.exceptions.WerkConfigException;
 import org.werk.exceptions.WerkException;
 import org.werk.meta.JobType;
@@ -14,6 +13,7 @@ import org.werk.meta.inputparameters.EnumJobInputParameter;
 import org.werk.meta.inputparameters.JobInputParameter;
 import org.werk.meta.inputparameters.RangeJobInputParameter;
 import org.werk.processing.parameters.Parameter;
+import org.werk.util.ParameterUtils;
 
 public class JobParameterTool {
 	public void fillParameters(List<JobInputParameter> parameterSet, Map<String, Parameter> jobInitialParameters) {

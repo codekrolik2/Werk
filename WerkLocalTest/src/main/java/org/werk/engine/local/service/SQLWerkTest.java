@@ -1,7 +1,5 @@
 package org.werk.engine.local.service;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 import org.pillar.db.interfaces.TransactionFactory;
@@ -10,21 +8,15 @@ import org.pillar.log4j.Log4JUtils;
 import org.pillar.time.LongTimeProvider;
 import org.werk.config.WerkConfig;
 import org.werk.config.annotations.AnnotationsWerkConfigLoader;
-import org.werk.engine.json.ParameterContextSerializer;
-import org.werk.engine.json.StepProcessingHistorySerializer;
 import org.werk.engine.sql.SQLWerkService;
 import org.werk.engine.sql.DAO.JobDAO;
 import org.werk.engine.sql.DAO.JobLoadDAO;
 import org.werk.engine.sql.DAO.StepDAO;
 import org.werk.engine.sql.main.SQLWerkRunner;
-import org.werk.meta.JobInitInfo;
-import org.werk.meta.impl.JobInitInfoImpl;
-import org.werk.processing.parameters.Parameter;
-import org.werk.processing.parameters.impl.DoubleParameterImpl;
-import org.werk.processing.parameters.impl.LongParameterImpl;
-import org.werk.processing.parameters.impl.StringParameterImpl;
 import org.werk.rest.VertxRunner;
 import org.werk.rest.WerkREST;
+import org.werk.util.ParameterContextSerializer;
+import org.werk.util.StepProcessingHistorySerializer;
 
 public class SQLWerkTest {
 	public static void main(String[] args) throws Exception {
@@ -54,7 +46,7 @@ public class SQLWerkTest {
 		
 		SQLWerkService service = new SQLWerkService(config, jobDAO, stepDAO, transactionFactory);
 		
-		int i = 0;
+		/*int i = 0;
 		for (i = 0; i < 1000; i++) {
 			String jobTypeName = "Job1";
 			Map<String, Parameter> initParameters = new HashMap<>();
@@ -67,12 +59,12 @@ public class SQLWerkTest {
 			
 			JobInitInfo init = new JobInitInfoImpl(jobTypeName, "job" + i, initParameters);
 			service.createJob(init);
-		}
+		}*/
 	
 		//SQLWerkRunner sqlWerkRunner = 
 		new SQLWerkRunner(transactionFactory, jobLimit, 
 				threadCount, heartbeatPeriod, config, jobDAO, stepDAO, jobLoadDAO, timeProvider);
 		
-		VertxRunner.runVerticle(new WerkREST(service));
+		VertxRunner.runVerticle(new WerkREST(service, timeProvider, false));
 	}
 }

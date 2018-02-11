@@ -8,12 +8,10 @@ import org.pillar.time.interfaces.TimeProvider;
 import org.pulse.interfaces.Pulse;
 import org.pulse.interfaces.ServerPulseDAO;
 import org.werk.config.WerkConfig;
+import org.werk.engine.JobIdSerializer;
 import org.werk.engine.WerkCallbackRunnable;
 import org.werk.engine.WerkEngine;
 import org.werk.engine.WerkStepSwitcher;
-import org.werk.engine.json.JobIdSerializer;
-import org.werk.engine.json.JoinResultSerializer;
-import org.werk.engine.json.LongJobIdSerializer;
 import org.werk.engine.processing.WerkJob;
 import org.werk.engine.sql.DAO.JobDAO;
 import org.werk.engine.sql.DAO.JobLoadDAO;
@@ -21,6 +19,8 @@ import org.werk.engine.sql.DAO.StepDAO;
 import org.werk.engine.sql.jobload.SQLJobLoader;
 import org.werk.engine.sql.jobload.SQLJobLoaderRunnable;
 import org.werk.processing.jobs.Job;
+import org.werk.util.JoinResultSerializer;
+import org.werk.util.LongJobIdSerializer;
 
 public class SQLWerkEngine implements WerkEngine<Long> {
 	protected final TimeProvider timeProvider;

@@ -23,19 +23,19 @@ import org.pillar.time.interfaces.Timestamp;
 import org.werk.config.WerkConfig;
 import org.werk.data.StepPOJO;
 import org.werk.engine.json.JobParameterTool;
-import org.werk.engine.json.ParameterContextSerializer;
-import org.werk.engine.sql.exception.JobReviveException;
+import org.werk.engine.sql.exception.JobRestartException;
 import org.werk.engine.sql.exception.JoinStateException;
 import org.werk.exceptions.WerkConfigException;
 import org.werk.meta.JobInitInfo;
-import org.werk.meta.JobReviveInfo;
+import org.werk.meta.JobRestartInfo;
 import org.werk.meta.JobType;
-import org.werk.meta.NewStepReviveInfo;
-import org.werk.meta.OldVersionJobInitInfo;
+import org.werk.meta.NewStepRestartInfo;
+import org.werk.meta.VersionJobInitInfo;
 import org.werk.meta.inputparameters.JobInputParameter;
 import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.jobs.JoinStatusRecord;
 import org.werk.processing.parameters.Parameter;
+import org.werk.util.ParameterContextSerializer;
 
 public class JobDAO {
 	protected TimeProvider timeProvider; 
@@ -95,12 +95,12 @@ public class JobDAO {
 				init.getInitParameters(), stepCount);
 	}
 	
-	public Long createOldVersionJob(TransactionContext tc, OldVersionJobInitInfo init, int jobStatus, Optional<Long> parentJob, 
+	public Long createJobOfVersion(TransactionContext tc, VersionJobInitInfo init, int jobStatus, Optional<Long> parentJob, 
 			int stepCount) throws Exception {
-		JobType jobType = werkConfig.getJobTypeForOldVersion(init.getOldVersion(), init.getJobTypeName());
+		JobType jobType = werkConfig.getJobTypeForAnyVersion(init.getJobVersion(), init.getJobTypeName());
 		if (jobType == null)
 			throw new WerkConfigException(
-				String.format("JobType not found [%s] for version [%d]", init.getJobTypeName(), init.getOldVersion())
+				String.format("JobType not found [%s] for version [%d]", init.getJobTypeName(), init.getJobVersion())
 			);
 		
 		//Check initial parameters
@@ -112,7 +112,7 @@ public class JobDAO {
 		//Fill default parameters
 		jobParameterTool.fillParameters(parameterSet, init.getInitParameters());
 		
-		return createJob(tc, init.getJobTypeName(), init.getOldVersion(), init.getJobName(), 
+		return createJob(tc, init.getJobTypeName(), init.getJobVersion(), init.getJobName(), 
 				parentJob, jobStatus, ((LongTimestamp)timeProvider.getCurrentTime()).getTimeMs(), 
 				init.getInitParameters(), stepCount);
 	}
@@ -249,7 +249,7 @@ public class JobDAO {
 		}
 	}
 	
-	public void reviveJob(TransactionContext tc, JobReviveInfo<Long> init) throws Exception {
+	public void restartJob(TransactionContext tc, JobRestartInfo<Long> init) throws Exception {
 		PreparedStatement pst = null;
 		
 		try {
@@ -258,14 +258,14 @@ public class JobDAO {
 			DBJobPOJO job = loadJob(tc, jobId);
 			
 			if (job == null)
-				throw new JobReviveException(
+				throw new JobRestartException(
 						String.format("Job not found: [%d]", jobId)
 					);
 			
 			if ((job.getStatus() != JobStatus.FINISHED) && (job.getStatus() != JobStatus.ROLLED_BACK) && 
 				(job.getStatus() != JobStatus.FAILED))
-				throw new JobReviveException(
-						String.format("Job can't be revived: not in final state: [%d] [%s]", jobId, job.getStatus())
+				throw new JobRestartException(
+						String.format("Job can't be restarted: not in final state: [%d] [%s]", jobId, job.getStatus())
 					);
 			
 			//2. Set updated job parameters
@@ -282,7 +282,7 @@ public class JobDAO {
 			//3. Create new step or update existing step
 			if (init.getNewStepInfo().isPresent()) {
 				//3.1 Create new step
-				NewStepReviveInfo newStepInfo = init.getNewStepInfo().get();
+				NewStepRestartInfo newStepInfo = init.getNewStepInfo().get();
 
 				//Init step parameters
 				Map<String, Parameter> stepParameters = init.getStepParametersUpdate();

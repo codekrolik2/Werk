@@ -21,7 +21,6 @@ import org.pulse.interfaces.ServerPulseDAO;
 import org.pulse.interfaces.ServerPulseRecord;
 import org.werk.config.WerkConfig;
 import org.werk.engine.WerkEngine;
-import org.werk.engine.json.JoinResultSerializer;
 import org.werk.engine.sql.SQLWerkJob;
 import org.werk.engine.sql.SQLWerkStep;
 import org.werk.engine.sql.DAO.DBJobPOJO;
@@ -38,6 +37,7 @@ import org.werk.processing.parameters.impl.StringParameterImpl;
 import org.werk.processing.steps.StepExec;
 import org.werk.processing.steps.StepProcessingLogRecord;
 import org.werk.processing.steps.Transitioner;
+import org.werk.util.JoinResultSerializer;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -6,14 +6,14 @@ import org.pillar.time.LongTimeProvider;
 import org.werk.config.WerkConfig;
 import org.werk.config.annotations.AnnotationsWerkConfigLoader;
 import org.werk.engine.WerkEngine;
-import org.werk.engine.json.JoinResultSerializer;
-import org.werk.engine.json.LongJobIdSerializer;
 import org.werk.engine.local.LocalJobManager;
 import org.werk.engine.local.LocalJobStepFactory;
 import org.werk.engine.local.LocalStepSwitcher;
 import org.werk.engine.local.LocalWerkEngine;
 import org.werk.engine.local.LocalWerkService;
 import org.werk.exceptions.WerkConfigException;
+import org.werk.util.JoinResultSerializer;
+import org.werk.util.LongJobIdSerializer;
 
 import lombok.Getter;
 

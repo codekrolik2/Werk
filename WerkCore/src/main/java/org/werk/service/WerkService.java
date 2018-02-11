@@ -7,17 +7,17 @@ import java.util.Set;
 import org.pillar.time.interfaces.Timestamp;
 import org.werk.data.JobPOJO;
 import org.werk.meta.JobInitInfo;
-import org.werk.meta.JobReviveInfo;
+import org.werk.meta.JobRestartInfo;
 import org.werk.meta.JobType;
-import org.werk.meta.OldVersionJobInitInfo;
+import org.werk.meta.VersionJobInitInfo;
 import org.werk.meta.StepType;
 import org.werk.processing.readonly.ReadOnlyJob;
 
 public interface WerkService<J> {
-	//JOB LIFECYCLE MANAGEMENT
+	//JOB CREATION/RESTART
 	J createJob(JobInitInfo init) throws Exception;
-	J createOldVersionJob(OldVersionJobInitInfo init) throws Exception;
-	void reviveJob(JobReviveInfo<J> jobReviveInfo) throws Exception;
+	J createJobOfVersion(VersionJobInitInfo init) throws Exception;
+	void restartJob(JobRestartInfo<J> jobRestartInfo) throws Exception;
 	
 	//JOB RETRIEVAL
 	ReadOnlyJob<J> getJobAndHistory(J jobId) throws Exception;
@@ -29,6 +29,7 @@ public interface WerkService<J> {
 	Collection<JobType> getJobTypes();
 	JobType getJobType(String jobTypeName, Optional<Long> version);
 	
+	Collection<StepType<J>> getAllStepTypes();
 	Collection<StepType<J>> getStepTypesForJob(String jobTypeName, Optional<Long> version);
 	StepType<J> getStepType(String stepTypeName);
 }

@@ -9,13 +9,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.json.JSONObject;
 import org.pillar.time.interfaces.Timestamp;
-import org.werk.engine.json.JoinResultSerializer;
 import org.werk.meta.JobType;
 import org.werk.processing.jobs.Job;
 import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.jobs.JoinStatusRecord;
 import org.werk.processing.parameters.Parameter;
 import org.werk.processing.steps.JoinResult;
+import org.werk.util.JoinResultSerializer;
 
 import lombok.Getter;
 import lombok.Setter;
