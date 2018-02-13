@@ -1,5 +1,7 @@
 package org.werk.engine.local.service;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import org.pillar.db.interfaces.TransactionFactory;
@@ -13,6 +15,12 @@ import org.werk.engine.sql.DAO.JobDAO;
 import org.werk.engine.sql.DAO.JobLoadDAO;
 import org.werk.engine.sql.DAO.StepDAO;
 import org.werk.engine.sql.main.SQLWerkRunner;
+import org.werk.meta.JobInitInfo;
+import org.werk.meta.impl.JobInitInfoImpl;
+import org.werk.processing.parameters.Parameter;
+import org.werk.processing.parameters.impl.DoubleParameterImpl;
+import org.werk.processing.parameters.impl.LongParameterImpl;
+import org.werk.processing.parameters.impl.StringParameterImpl;
 import org.werk.rest.VertxRunner;
 import org.werk.rest.WerkREST;
 import org.werk.util.ParameterContextSerializer;
@@ -57,7 +65,7 @@ public class SQLWerkTest {
 			initParameters.put("d1", new DoubleParameterImpl(5.8));
 			initParameters.put("text2", new StringParameterImpl("c"));
 			
-			JobInitInfo init = new JobInitInfoImpl(jobTypeName, "job" + i, initParameters);
+			JobInitInfo init = new JobInitInfoImpl(jobTypeName, Optional.of("job" + i), initParameters);
 			service.createJob(init);
 		}*/
 	

@@ -367,18 +367,12 @@ public class JobDAO {
 					"		ON j.id_job = r.id_awaiting_job" + 
 					"	WHERE j.current_step_id = s.id_step");
 			
-			int count = 0;
-			if (from.isPresent()) {
-				count++;
-				sb.append(" j.next_execution_time >= ? ");
-			}
-			if (to.isPresent()) {
-				if (count++ > 0) sb.append(" AND");
-				sb.append(" j.next_execution_time <= ? ");
-			}
+			if (from.isPresent())
+				sb.append(" AND j.next_execution_time >= ? ");
+			if (to.isPresent())
+				sb.append(" AND j.next_execution_time <= ? ");
 			if (jobIds.isPresent() && !jobIds.get().isEmpty()) {
-				if (count++ > 0) sb.append(" AND");
-				sb.append(" j.id_job IN (");
+				sb.append(" AND j.id_job IN (");
 				
 				int jobCount = 0;
 				for (@SuppressWarnings("unused") long jobId : jobIds.get()) {
@@ -389,8 +383,7 @@ public class JobDAO {
 				sb.append(")");
 			}
 			if (parentJobIds.isPresent() && !parentJobIds.get().isEmpty()) {
-				if (count++ > 0) sb.append(" AND");
-				sb.append(" j.parent_job_id IN (");
+				sb.append(" AND j.parent_job_id IN (");
 				
 				int parentJobCount = 0;
 				for (@SuppressWarnings("unused") long parentJob : parentJobIds.get()) {
@@ -401,8 +394,7 @@ public class JobDAO {
 				sb.append(")");
 			}
 			if (jobTypes.isPresent()) {
-				if (count++ > 0) sb.append(" AND");
-				sb.append(" j.job_type IN (");
+				sb.append(" AND j.job_type IN (");
 				
 				int jobTypeCount = 0;
 				for (@SuppressWarnings("unused") String jobType : jobTypes.get()) {
@@ -413,8 +405,7 @@ public class JobDAO {
 				sb.append(")");
 			}
 			if (currentStepTypes.isPresent()) {
-				if (count++ > 0) sb.append(" AND");
-				sb.append(" s.step_type IN (");
+				sb.append(" AND s.step_type IN (");
 				
 				int stepTypeCount = 0;
 				for (@SuppressWarnings("unused") String stepType : currentStepTypes.get()) {
@@ -428,14 +419,14 @@ public class JobDAO {
 			sb.append(" GROUP BY j.id_job, j.job_type, j.version, j.job_name, j.parent_job_id," + 
 			"		j.current_step_id, j.status, j.next_execution_time, j.job_parameter_state, j.job_initial_parameter_state," + 
 			"		j.id_locker, j.step_count, j.wait_for_N_jobs, j.join_parameter_name, s.step_type, j.creation_time" + 
-			"		ORDER BY "); 
+			"		ORDER BY j.creation_time "); 
 			
 			if (pageInfo.isPresent())
 				sb.append("LIMIT ?, ?");
 
 			pst = connection.prepareStatement(sb.toString());
 			
-			count = 0;
+			int count = 0;
 			if (from.isPresent())
 				pst.setLong(++count, ((LongTimestamp)from.get()).getTimeMs());
 			if (to.isPresent())

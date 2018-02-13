@@ -80,6 +80,7 @@ public class SchemaCreatorWerk extends JDBCBatchStatementsTool {
 				"  `join_parameter_name` VARCHAR(255) NULL,\n" + 
 				"  `id_locker` BIGINT NULL,\n" + 
 				"  `step_count` INT NOT NULL,\n" + 
+				"  `creation_time` BIGINT NOT NULL,\n" + 
 				"  PRIMARY KEY (`id_job`),\n" + 
 				"  INDEX `fk_job_to_parent_idx` (`parent_job_id` ASC),\n" + 
 				"  INDEX `fk_jobs_to_current_step_idx` (`current_step_id` ASC),\n" + 
