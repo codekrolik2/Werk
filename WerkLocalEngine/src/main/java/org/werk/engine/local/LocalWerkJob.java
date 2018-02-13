@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.pillar.time.interfaces.Timestamp;
@@ -74,7 +73,7 @@ public class LocalWerkJob<J> extends WerkJob<J> {
 
 	@Override
 	public J forkVersion(VersionJobInitInfo jobInitInfo) throws Exception {
-		return jobManager.createOldVersionJob(jobInitInfo, Optional.of(getJobId()));
+		return jobManager.createJobOfVersion(jobInitInfo, Optional.of(getJobId()));
 	}
 
 	@Override
@@ -102,9 +101,9 @@ public class LocalWerkJob<J> extends WerkJob<J> {
 	}
 
 	@Override
-	public Collection<ReadOnlyJob<J>> loadChildJobsOfTypes(Set<String> jobTypes) {
+	public Collection<ReadOnlyJob<J>> loadChildJobsOfTypes(Map<String, Long> jobTypesAndVersions) {
 		List<J> jobIds = new ArrayList<>();
 		jobIds.add(getJobId());
-		return jobManager.getChildJobsOfTypes(jobIds, jobTypes);
+		return jobManager.getChildJobsOfTypes(jobIds, jobTypesAndVersions);
 	}
 }

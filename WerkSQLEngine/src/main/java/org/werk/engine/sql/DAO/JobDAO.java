@@ -93,8 +93,11 @@ public class JobDAO {
 		//Fill default parameters
 		jobParameterTool.fillParameters(parameterSet, init.getInitParameters());
 		
+		LongTimestamp nextExecutionTime = init.getNextExecutionTime().isPresent() ? 
+				(LongTimestamp)init.getNextExecutionTime().get() : ((LongTimestamp)timeProvider.getCurrentTime());
+		
 		return createJob(tc, init.getJobTypeName(), jobType.getVersion(), init.getJobName(), 
-				parentJob, jobStatus, ((LongTimestamp)timeProvider.getCurrentTime()).getTimeMs(), 
+				parentJob, jobStatus, nextExecutionTime.getTimeMs(), 
 				init.getInitParameters(), stepCount);
 	}
 	
@@ -115,8 +118,11 @@ public class JobDAO {
 		//Fill default parameters
 		jobParameterTool.fillParameters(parameterSet, init.getInitParameters());
 		
+		LongTimestamp nextExecutionTime = init.getNextExecutionTime().isPresent() ? 
+				(LongTimestamp)init.getNextExecutionTime().get() : ((LongTimestamp)timeProvider.getCurrentTime());
+
 		return createJob(tc, init.getJobTypeName(), init.getJobVersion(), init.getJobName(), 
-				parentJob, jobStatus, ((LongTimestamp)timeProvider.getCurrentTime()).getTimeMs(), 
+				parentJob, jobStatus, nextExecutionTime.getTimeMs(), 
 				init.getInitParameters(), stepCount);
 	}
 	
@@ -348,7 +354,8 @@ public class JobDAO {
 	}
 	
 	public JobCollection loadJobs(TransactionContext tc, Optional<Timestamp> from, Optional<Timestamp> to,
-			Optional<Collection<Long>> jobIds, Optional<Collection<Long>> parentJobIds, Optional<Set<String>> jobTypes, 
+			Optional<Collection<Long>> jobIds, Optional<Collection<Long>> parentJobIds, 
+			Optional<Map<String, Long>> jobTypesAndVersions, 
 			Optional<Set<String>> currentStepTypes, Optional<PageInfo> pageInfo) throws SQLException {
 		Connection connection = ((JDBCTransactionContext)tc).getConnection();
 		PreparedStatement pst = null;
@@ -393,18 +400,23 @@ public class JobDAO {
 				
 				sb.append(")");
 			}
-			if (jobTypes.isPresent()) {
-				sb.append(" AND j.job_type IN (");
+			if (jobTypesAndVersions.isPresent() && !jobTypesAndVersions.get().isEmpty()) {
+				sb.append(" AND (");
 				
 				int jobTypeCount = 0;
-				for (@SuppressWarnings("unused") String jobType : jobTypes.get()) {
-					if (jobTypeCount++ > 0) sb.append(", ");
-					sb.append("?");
+				for (Map.Entry<String, Long> ent : jobTypesAndVersions.get().entrySet()) {
+					if (jobTypeCount++ > 0) sb.append("OR ");
+					
+					long value = ent.getValue();
+					if (value > 0)
+						sb.append(" (j.job_type = ? AND j.version = ?) ");
+					else
+						sb.append(" (j.job_type = ?) ");
 				}
 				
 				sb.append(")");
 			}
-			if (currentStepTypes.isPresent()) {
+			if (currentStepTypes.isPresent() && !currentStepTypes.get().isEmpty()) {
 				sb.append(" AND s.step_type IN (");
 				
 				int stepTypeCount = 0;
@@ -437,10 +449,17 @@ public class JobDAO {
 			if (parentJobIds.isPresent())
 				for (long parentJobId : parentJobIds.get())
 					pst.setLong(++count, parentJobId);
-			if (jobTypes.isPresent())
-				for (String jobType : jobTypes.get())
+			for (Map.Entry<String, Long> ent : jobTypesAndVersions.get().entrySet()) {
+				String jobType = ent.getKey();
+				long version = ent.getValue();
+				
+				if (version > 0) {
 					pst.setString(++count, jobType);
-			if (currentStepTypes.isPresent())
+					pst.setLong(++count, version);
+				} else
+					pst.setString(++count, jobType);
+			}
+			if (currentStepTypes.isPresent() && !currentStepTypes.get().isEmpty())
 				for (String stepType : currentStepTypes.get())
 					pst.setString(++count, stepType);
 			if (pageInfo.isPresent()) {

@@ -39,7 +39,7 @@ public class LocalWerkTest {
 			initParameters.put("d1", new DoubleParameterImpl(5.8));
 			initParameters.put("text2", new StringParameterImpl("c"));
 			
-			JobInitInfo init = new JobInitInfoImpl(jobTypeName, Optional.of("job" + i), initParameters);
+			JobInitInfo init = new JobInitInfoImpl(jobTypeName, Optional.of("job" + i), initParameters, Optional.empty());
 			service.createJob(init);
 		//}
 	}

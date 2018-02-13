@@ -3,6 +3,7 @@ package org.werk.meta.impl;
 import java.util.Map;
 import java.util.Optional;
 
+import org.pillar.time.interfaces.Timestamp;
 import org.werk.meta.JobInitInfo;
 import org.werk.processing.parameters.Parameter;
 
@@ -17,10 +18,6 @@ public class JobInitInfoImpl implements JobInitInfo {
 	protected Optional<String> jobName;
 	@Getter
 	protected Map<String, Parameter> initParameters;
-	
-	public JobInitInfoImpl(String jobTypeName, Map<String, Parameter> initParameters) {
-		this.jobTypeName = jobTypeName;
-		this.jobName = Optional.empty();
-		this.initParameters = initParameters;
-	}
+	@Getter
+	protected Optional<Timestamp> nextExecutionTime;
 }

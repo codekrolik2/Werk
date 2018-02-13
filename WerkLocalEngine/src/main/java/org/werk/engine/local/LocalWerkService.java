@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -37,7 +38,7 @@ public class LocalWerkService implements WerkService<Long> {
 
 	@Override
 	public Long createJobOfVersion(VersionJobInitInfo init) throws Exception {
-		return localJobManager.createOldVersionJob(init, Optional.empty());
+		return localJobManager.createJobOfVersion(init, Optional.empty());
 	}
 
 	@Override
@@ -52,7 +53,7 @@ public class LocalWerkService implements WerkService<Long> {
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-	public JobCollection getJobs(Optional<Timestamp> from, Optional<Timestamp> to, Optional<Set<String>> jobTypes,
+	public JobCollection getJobs(Optional<Timestamp> from, Optional<Timestamp> to, Optional<Map<String, Long>> jobTypesAndVersions,
 			Optional<Collection<Long>> parentJobIds, Optional<Collection<Long>> jobIds, Optional<Set<String>> currentStepTypes, 
 			Optional<PageInfo> pageInfo) throws Exception {
 		Collection<JobPOJO<Long>> jobs;
@@ -73,8 +74,18 @@ public class LocalWerkService implements WerkService<Long> {
 		if (to.isPresent())
 			jobs = jobs.stream().filter(a -> a.getNextExecutionTime().compareTo(to.get()) <= 0).collect(Collectors.toList());
 		
-		if (jobTypes.isPresent())
-			jobs = jobs.stream().filter(a -> jobTypes.get().contains(a.getJobTypeName())).collect(Collectors.toList());
+		if (jobTypesAndVersions.isPresent())
+			jobs = jobs.stream().
+				filter(a ->
+					jobTypesAndVersions.get().containsKey(a.getJobTypeName())
+					&&
+					(
+						jobTypesAndVersions.get().get(a.getJobTypeName()).equals(a.getVersion())
+						||
+						(jobTypesAndVersions.get().get(a.getJobTypeName()).compareTo(0L) <= 0)
+					)
+				).
+				collect(Collectors.toList());
 		
 		if (currentStepTypes.isPresent())
 			jobs = jobs.stream().

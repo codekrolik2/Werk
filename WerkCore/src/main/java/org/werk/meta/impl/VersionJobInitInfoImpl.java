@@ -3,6 +3,7 @@ package org.werk.meta.impl;
 import java.util.Map;
 import java.util.Optional;
 
+import org.pillar.time.interfaces.Timestamp;
 import org.werk.meta.VersionJobInitInfo;
 import org.werk.processing.parameters.Parameter;
 
@@ -19,11 +20,6 @@ public class VersionJobInitInfoImpl implements VersionJobInitInfo {
 	long jobVersion;
 	@Getter
 	Optional<String> jobName;
-	
-	public VersionJobInitInfoImpl(String jobTypeName, Map<String, Parameter> initParameters, long jobVersion) {
-		this.jobTypeName = jobTypeName;
-		this.initParameters = initParameters;
-		this.jobVersion = jobVersion;
-		jobName = Optional.empty();
-	}
+	@Getter
+	protected Optional<Timestamp> nextExecutionTime;
 }

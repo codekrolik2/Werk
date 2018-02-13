@@ -220,12 +220,12 @@ public class SQLWerkJob extends WerkJob<Long> {
 	}
 
 	@Override
-	public List<ReadOnlyJob<Long>> loadChildJobsOfTypes(Set<String> jobTypes) throws Exception {
-		return loadJobs(Optional.empty(), Optional.empty(), Optional.of(jobTypes));
+	public List<ReadOnlyJob<Long>> loadChildJobsOfTypes(Map<String, Long> jobTypesAndVersions) throws Exception {
+		return loadJobs(Optional.empty(), Optional.empty(), Optional.of(jobTypesAndVersions));
 	}
 
 	protected List<ReadOnlyJob<Long>> loadJobs(Optional<Collection<Long>> jobIds, Optional<Collection<Long>> parentJobId, 
-			Optional<Set<String>> jobTypes) throws Exception {
+			Optional<Map<String, Long>> jobTypesAndVersions) throws Exception {
 		TransactionContext tc = null;
 		try {
 			tc = getOrCreateTC();
@@ -233,7 +233,7 @@ public class SQLWerkJob extends WerkJob<Long> {
 			List<Long> jobIdList = new ArrayList<>();
 			jobIdList.add(jobId);
 			JobCollection jobs = jobDAO.loadJobs(tc, Optional.empty(), Optional.empty(), 
-					jobIds, parentJobId, jobTypes, Optional.empty(), Optional.empty());
+					jobIds, parentJobId, jobTypesAndVersions, Optional.empty(), Optional.empty());
 			if ((jobs == null) || (jobs.getJobs() == null) || (jobs.getJobs().isEmpty()))
 				return null;
 			

@@ -180,9 +180,16 @@ public class LocalJobManager<J> {
 		}
 	}
 
-	public List<ReadOnlyJob<J>> getChildJobsOfTypes(Collection<J> jobIds, Set<String> jobTypes) {
+	public List<ReadOnlyJob<J>> getChildJobsOfTypes(Collection<J> jobIds, Map<String, Long> jobTypesAndVersions) {
 		return getAllChildJobs(jobIds).stream()
-				.filter(a -> jobTypes.contains(a.getJobTypeName()))
+				.filter(a -> 
+					jobTypesAndVersions.containsKey(a.getJobTypeName())
+					&& (
+						jobTypesAndVersions.get(a.getJobTypeName()).equals(a.getVersion())
+						||
+						jobTypesAndVersions.get(a.getJobTypeName()).compareTo(0L) <= 0
+					)
+				)
 				.collect(Collectors.toList());
 	}
 	
@@ -406,7 +413,7 @@ public class LocalJobManager<J> {
 	
 	public J createJob(JobInitInfo init, Optional<J> parentJob) throws Exception {
 		LocalWerkJob<J> job = (LocalWerkJob<J>)jobStepFactory.createNewJob(init.getJobTypeName(), init.getInitParameters(),
-				init.getJobName(), parentJob);
+				init.getJobName(), init.getNextExecutionTime(), parentJob);
 		
 		lock.lock();
 		try {
@@ -418,9 +425,9 @@ public class LocalJobManager<J> {
 		return job.getJobId();
 	}
 	
-	public J createOldVersionJob(VersionJobInitInfo init, Optional<J> parentJob) throws Exception {
+	public J createJobOfVersion(VersionJobInitInfo init, Optional<J> parentJob) throws Exception {
 		LocalWerkJob<J> job = (LocalWerkJob<J>)jobStepFactory.createJobOfVersion(init.getJobTypeName(), init.getJobVersion(), 
-				init.getInitParameters(), init.getJobName(), parentJob);
+				init.getInitParameters(), init.getJobName(), init.getNextExecutionTime(), parentJob);
 		
 		lock.lock();
 		try {

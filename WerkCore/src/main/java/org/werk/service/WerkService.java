@@ -1,6 +1,7 @@
 package org.werk.service;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -21,7 +22,7 @@ public interface WerkService<J> {
 	//JOB RETRIEVAL
 	ReadOnlyJob<J> getJobAndHistory(J jobId) throws Exception;
 	JobCollection getJobs(Optional<Timestamp> from, Optional<Timestamp> to, 
-			Optional<Set<String>> jobTypes, Optional<Collection<J>> parentJobIds, 
+			Optional<Map<String, Long>> jobTypesAndVersions, Optional<Collection<J>> parentJobIds, 
 			Optional<Collection<J>> jobIds, Optional<Set<String>> currentStepTypes, 
 			Optional<PageInfo> pageInfo) throws Exception;
 	

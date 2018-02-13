@@ -2,8 +2,11 @@ package org.werk.rest.serializers;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -25,7 +28,7 @@ public class JobFiltersSerializer<J> {
 	public JobFilters<J> deserializeJobFilters(JSONObject filtersJSON) {
 		Optional<Timestamp> from = Optional.empty();
 		Optional<Timestamp> to = Optional.empty();
-		Optional<Set<String>> jobTypes = Optional.empty();
+		Optional<Map<String, Long>> jobTypes = Optional.empty();
 		Optional<Collection<J>> parentJobIds = Optional.empty();
 		Optional<Collection<J>> jobIds = Optional.empty();
 		Optional<Set<String>> currentStepTypes = Optional.empty();
@@ -36,13 +39,19 @@ public class JobFiltersSerializer<J> {
 		if (filtersJSON.has("to"))
 			to = Optional.of(timeProvider.createTimestamp(filtersJSON.getString("to")));
 		if (filtersJSON.has("jobTypes")) {
-			Set<String> jobTypesSet = new HashSet<>();
+			Map<String, Long> jobTypesMap = new HashMap<>();
 			
-			JSONArray arr = filtersJSON.getJSONArray("jobTypes");
-			for (int i = 0; i < arr.length(); i++)
-				jobTypesSet.add(arr.getString(i));
+			JSONObject jobTypesJSON = filtersJSON.getJSONObject("jobTypes");
 			
-			jobTypes = Optional.of(jobTypesSet);
+			Iterator<?> keys = jobTypesJSON.keys();
+			while (keys.hasNext()) {
+			    String jobTypeName = (String)keys.next();
+			    Long version  = jobTypesJSON.getLong(jobTypeName);
+			    
+			    jobTypesMap.put(jobTypeName, version);
+			}
+			
+			jobTypes = Optional.of(jobTypesMap);
 		}
 		if (filtersJSON.has("parentJobIds")) {
 			List<J> parentJobIdList = new ArrayList<>();

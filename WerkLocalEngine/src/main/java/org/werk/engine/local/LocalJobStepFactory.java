@@ -44,7 +44,7 @@ public abstract class LocalJobStepFactory<J> {
 	protected abstract J getNextJobId();
 	
 	public LocalWerkJob<J> createNewJob(String jobTypeName, Map<String, Parameter> jobInitialParameters, 
-			Optional<String> jobName, Optional<J> parentJob) throws Exception {
+			Optional<String> jobName, Optional<Timestamp> nextExecutionTimeOpt, Optional<J> parentJob) throws Exception {
 		JobType jobType = werkConfig.getJobTypeLatestVersion(jobTypeName);
 		if (jobType == null)
 			throw new WerkConfigException(
@@ -63,16 +63,17 @@ public abstract class LocalJobStepFactory<J> {
 		long version = jobType.getVersion();
 		JobStatus status = JobStatus.UNDEFINED;
 		Map<String, Parameter> jobParameters = new HashMap<>(jobInitialParameters);
-		Timestamp nextExecutionTime = timeProvider.getCurrentTime();
+		Timestamp currentTime = timeProvider.getCurrentTime();
+		Timestamp nextExecutionTime = nextExecutionTimeOpt.isPresent() ? nextExecutionTimeOpt.get() : currentTime;
 		Optional<JoinStatusRecord<J>> joinStatusRecord = Optional.empty();
 		
-		return new LocalWerkJob<J>(getNextJobId(), jobType, version, jobName, status, 
-				jobInitialParameters, jobParameters, 0, nextExecutionTime, nextExecutionTime, joinStatusRecord, parentJob,
+		return new LocalWerkJob<J>(getNextJobId(), jobType, version, jobName, status, jobInitialParameters, 
+				jobParameters, 0, currentTime, nextExecutionTime, joinStatusRecord, parentJob,
 				localJobManager, joinResultSerializer);
 	}
 
 	public LocalWerkJob<J> createJobOfVersion(String jobTypeName, long oldVersion, Map<String, Parameter> jobInitialParameters, 
-			Optional<String> jobName, Optional<J> parentJob) throws Exception {
+			Optional<String> jobName, Optional<Timestamp> nextExecutionTimeOpt, Optional<J> parentJob) throws Exception {
 		JobType jobType = werkConfig.getJobTypeForAnyVersion(oldVersion, jobTypeName);
 		if (jobType == null)
 			throw new WerkConfigException(
@@ -91,11 +92,12 @@ public abstract class LocalJobStepFactory<J> {
 		long version = jobType.getVersion();
 		JobStatus status = JobStatus.UNDEFINED;
 		Map<String, Parameter> jobParameters = new HashMap<>(jobInitialParameters);
-		Timestamp nextExecutionTime = timeProvider.getCurrentTime();
+		Timestamp currentTime = timeProvider.getCurrentTime();
+		Timestamp nextExecutionTime = nextExecutionTimeOpt.isPresent() ? nextExecutionTimeOpt.get() : currentTime;
 		Optional<JoinStatusRecord<J>> joinStatusRecord = Optional.empty();
 		
 		return new LocalWerkJob<J>(getNextJobId(), jobType, version, jobName, status, 
-				jobInitialParameters, jobParameters, 0, nextExecutionTime, nextExecutionTime, joinStatusRecord, parentJob,
+				jobInitialParameters, jobParameters, 0, currentTime, nextExecutionTime, joinStatusRecord, parentJob,
 				localJobManager, joinResultSerializer);
 	}
 

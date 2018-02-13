@@ -62,7 +62,7 @@ public class WerkREST extends AbstractVerticle {
 		
 		jobFiltersSerializer = new JobFiltersSerializer<Long>(timeProvider, jobIdSerializer);
 		
-		jobInitInfoSerializer = new JobInitInfoSerializer(contextSerializer);
+		jobInitInfoSerializer = new JobInitInfoSerializer(contextSerializer, timeProvider);
 	}
 	
 	@Override
@@ -152,7 +152,7 @@ public class WerkREST extends AbstractVerticle {
 			
 			if (!allowUnfilteredJobListRetrieval)
 			if (!jobFilters.getFrom().isPresent() && !jobFilters.getTo().isPresent() &&
-				!jobFilters.getJobTypes().isPresent() && !jobFilters.getParentJobIds().isPresent() &&
+				!jobFilters.getJobTypesAndVersions().isPresent() && !jobFilters.getParentJobIds().isPresent() &&
 				!jobFilters.getJobIds().isPresent()) {
 				logger.error("Unfiltered JobList Retrieval is not allowed: specify filters");
 				sendError(400, "Unfiltered JobList Retrieval is not allowed: specify filters", response);
@@ -161,7 +161,7 @@ public class WerkREST extends AbstractVerticle {
 
 			try {
 				JobCollection jobs = werkService.getJobs(jobFilters.getFrom(), jobFilters.getTo(),
-						jobFilters.getJobTypes(), jobFilters.getParentJobIds(), jobFilters.getJobIds(),
+						jobFilters.getJobTypesAndVersions(), jobFilters.getParentJobIds(), jobFilters.getJobIds(),
 						jobFilters.getCurrentStepTypes(), jobFilters.getPageInfo());
 				
 				JSONArray arr = new JSONArray();

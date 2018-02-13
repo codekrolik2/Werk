@@ -5,6 +5,7 @@
 
 1. Fatal errors:
 
+*) Job version should be > 0
 *) First step must exist in job steps
 *) All steps must exist for a job
 *) Step transitions must belong to job steps

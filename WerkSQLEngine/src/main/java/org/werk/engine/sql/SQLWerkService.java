@@ -3,6 +3,7 @@ package org.werk.engine.sql;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -98,13 +99,13 @@ public class SQLWerkService implements WerkService<Long> {
 	}
 
 	@Override
-	public JobCollection getJobs(Optional<Timestamp> from, Optional<Timestamp> to, Optional<Set<String>> jobTypes,
+	public JobCollection getJobs(Optional<Timestamp> from, Optional<Timestamp> to, Optional<Map<String, Long>> jobTypesAndVersions,
 			Optional<Collection<Long>> parentJobIds, Optional<Collection<Long>> jobIds, Optional<Set<String>> currentStepTypes, 
 			Optional<PageInfo> pageInfo) throws Exception {
 		TransactionContext tc = null;
 		try {
 			tc = transactionFactory.startTransaction();
-			JobCollection jobs = jobDAO.loadJobs(tc, from, to, jobIds, parentJobIds, jobTypes, 
+			JobCollection jobs = jobDAO.loadJobs(tc, from, to, jobIds, parentJobIds, jobTypesAndVersions, 
 					currentStepTypes, pageInfo);
 			return jobs;
 		} finally {

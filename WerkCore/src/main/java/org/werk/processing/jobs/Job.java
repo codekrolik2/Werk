@@ -3,7 +3,6 @@ package org.werk.processing.jobs;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.werk.meta.JobInitInfo;
 import org.werk.meta.JobRestartInfo;
@@ -70,7 +69,7 @@ public interface Job<J> extends ReadOnlyJob<J> {
 	ReadOnlyJob<J> loadJob(J jobId) throws Exception;
 	Collection<ReadOnlyJob<J>> loadJobs(Collection<J> jobIds) throws Exception;
 	Collection<ReadOnlyJob<J>> loadAllChildJobs() throws Exception;
-	Collection<ReadOnlyJob<J>> loadChildJobsOfTypes(Set<String> jobTypes) throws Exception;
+	Collection<ReadOnlyJob<J>> loadChildJobsOfTypes(Map<String, Long> jobTypesAndVersions) throws Exception;
 	
 	//-------------------------------------------------------------------
 	
