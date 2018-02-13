@@ -5,12 +5,11 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.pillar.time.interfaces.Timestamp;
-import org.werk.data.JobPOJO;
 import org.werk.meta.JobInitInfo;
 import org.werk.meta.JobRestartInfo;
 import org.werk.meta.JobType;
-import org.werk.meta.VersionJobInitInfo;
 import org.werk.meta.StepType;
+import org.werk.meta.VersionJobInitInfo;
 import org.werk.processing.readonly.ReadOnlyJob;
 
 public interface WerkService<J> {
@@ -21,9 +20,10 @@ public interface WerkService<J> {
 	
 	//JOB RETRIEVAL
 	ReadOnlyJob<J> getJobAndHistory(J jobId) throws Exception;
-	Collection<JobPOJO<J>> getJobs(Optional<Timestamp> from, Optional<Timestamp> to, 
+	JobCollection getJobs(Optional<Timestamp> from, Optional<Timestamp> to, 
 			Optional<Set<String>> jobTypes, Optional<Collection<J>> parentJobIds, 
-			Optional<Collection<J>> jobIds) throws Exception;
+			Optional<Collection<J>> jobIds, Optional<Set<String>> currentStepTypes, 
+			Optional<PageInfo> pageInfo) throws Exception;
 	
 	//JOB METADATA RETRIEVAL
 	Collection<JobType> getJobTypes();

@@ -33,6 +33,8 @@ public abstract class WerkJob<J> implements Job<J> {
 	protected JobStatus status;
 	@Getter @Setter
 	protected WerkStep<J> currentStep;
+	@Getter
+	protected Timestamp creationTime;
 	@Getter @Setter
 	protected Timestamp nextExecutionTime;
 	
@@ -52,7 +54,8 @@ public abstract class WerkJob<J> implements Job<J> {
 	protected JoinResultSerializer<J> joinResultSerializer;
 	
 	public WerkJob(JobType jobType, long version, Optional<String> jobName, JobStatus status, 
-			Map<String, Parameter> jobInitialParameters, Map<String, Parameter> jobParameters, Timestamp nextExecutionTime,
+			Map<String, Parameter> jobInitialParameters, Map<String, Parameter> jobParameters, 
+			Timestamp creationTime, Timestamp nextExecutionTime,
 			Optional<JoinStatusRecord<J>> joinStatusRecord, Optional<J> parentJobId, int stepCount,
 			JoinResultSerializer<J> joinResultSerializer) {
 		this.jobType = jobType;
@@ -65,6 +68,7 @@ public abstract class WerkJob<J> implements Job<J> {
 		
 		this.jobInitialParameters = jobInitialParameters;
 		mainContext = new JobContext<J>(jobParameters);
+		this.creationTime = creationTime;
 		this.nextExecutionTime = nextExecutionTime;
 		
 		this.joinResultSerializer = joinResultSerializer;
@@ -100,6 +104,11 @@ public abstract class WerkJob<J> implements Job<J> {
 	@Override
 	public String getJobTypeName() {
 		return jobType.getJobTypeName();
+	}
+
+	@Override
+	public String getCurrentStepTypeName() {
+		return this.getCurrentStep().getStepTypeName();
 	}
 	
 	@Override

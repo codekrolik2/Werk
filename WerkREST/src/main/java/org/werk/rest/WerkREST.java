@@ -1,6 +1,5 @@
 package org.werk.rest;
 
-import java.util.Collection;
 import java.util.Optional;
 
 import org.apache.log4j.Logger;
@@ -19,6 +18,7 @@ import org.werk.rest.serializers.JobFiltersSerializer;
 import org.werk.rest.serializers.JobInitInfoSerializer;
 import org.werk.rest.serializers.JobStepSerializer;
 import org.werk.rest.serializers.JobStepTypeRESTSerializer;
+import org.werk.service.JobCollection;
 import org.werk.service.WerkService;
 import org.werk.util.JoinResultSerializer;
 import org.werk.util.LongJobIdSerializer;
@@ -160,11 +160,12 @@ public class WerkREST extends AbstractVerticle {
 			}
 
 			try {
-				Collection<JobPOJO<Long>> jobs = werkService.getJobs(jobFilters.getFrom(), jobFilters.getTo(), 
-						jobFilters.getJobTypes(), jobFilters.getParentJobIds(), jobFilters.getJobIds());
+				JobCollection jobs = werkService.getJobs(jobFilters.getFrom(), jobFilters.getTo(),
+						jobFilters.getJobTypes(), jobFilters.getParentJobIds(), jobFilters.getJobIds(),
+						jobFilters.getCurrentStepTypes(), jobFilters.getPageInfo());
 				
 				JSONArray arr = new JSONArray();
-				for (JobPOJO<Long> job : jobs)
+				for (JobPOJO<Long> job : jobs.getJobs())
 					arr.put(jobStepSerializer.serializeJob(job));
 				
 				routingContext.response().putHeader("content-type", "application/json").end(arr.toString());

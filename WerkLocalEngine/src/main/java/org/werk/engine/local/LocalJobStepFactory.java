@@ -67,7 +67,7 @@ public abstract class LocalJobStepFactory<J> {
 		Optional<JoinStatusRecord<J>> joinStatusRecord = Optional.empty();
 		
 		return new LocalWerkJob<J>(getNextJobId(), jobType, version, jobName, status, 
-				jobInitialParameters, jobParameters, 0, nextExecutionTime, joinStatusRecord, parentJob,
+				jobInitialParameters, jobParameters, 0, nextExecutionTime, nextExecutionTime, joinStatusRecord, parentJob,
 				localJobManager, joinResultSerializer);
 	}
 
@@ -95,7 +95,7 @@ public abstract class LocalJobStepFactory<J> {
 		Optional<JoinStatusRecord<J>> joinStatusRecord = Optional.empty();
 		
 		return new LocalWerkJob<J>(getNextJobId(), jobType, version, jobName, status, 
-				jobInitialParameters, jobParameters, 0, nextExecutionTime, joinStatusRecord, parentJob,
+				jobInitialParameters, jobParameters, 0, nextExecutionTime, nextExecutionTime, joinStatusRecord, parentJob,
 				localJobManager, joinResultSerializer);
 	}
 
@@ -113,13 +113,14 @@ public abstract class LocalJobStepFactory<J> {
 		JobStatus status = job.getStatus();
 		Map<String, Parameter> jobInitialParameters = job.getJobInitialParameters();
 		Map<String, Parameter> jobParameters = job.getJobParameters();
+		Timestamp creationtime = job.getCreationTime();
 		Timestamp nextExecutionTime = job.getNextExecutionTime();
 		Optional<JoinStatusRecord<J>> joinStatusRecord = job.getJoinStatusRecord();
 		Optional<J> parentJob = job.getParentJobId();
 		int stepCount = job.getStepCount();
 		
 		return new LocalWerkJob<J>(((LocalWerkJob<J>)job).getJobId(), jobType, version, jobName, status, 
-				jobInitialParameters, jobParameters, stepCount, nextExecutionTime, joinStatusRecord, parentJob,
+				jobInitialParameters, jobParameters, stepCount, creationtime, nextExecutionTime, joinStatusRecord, parentJob,
 				localJobManager, joinResultSerializer);
 	}
 

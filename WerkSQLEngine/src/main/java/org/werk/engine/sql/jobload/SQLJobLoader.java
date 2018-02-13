@@ -148,13 +148,14 @@ public class SQLJobLoader {
 			JobStatus status = job.getStatus();
 			Map<String, Parameter> jobInitialParameters = job.getJobInitialParameters();
 			Map<String, Parameter> jobParameters = job.getJobParameters();
+			Timestamp creationTime = job.getNextExecutionTime();
 			Timestamp nextExecutionTime = job.getNextExecutionTime();
 			Optional<JoinStatusRecord<Long>> joinStatusRecord = job.getJoinStatusRecord();
 			Optional<Long> parentJobId = job.getParentJobId();
 			int stepCount = job.getStepCount();
 			
 			SQLWerkJob sqlWerkJob = new SQLWerkJob(jobId, jobType, version, jobName, status, jobInitialParameters, jobParameters, 
-					nextExecutionTime, joinStatusRecord, parentJobId, stepCount, joinResultSerializer, 
+					creationTime, nextExecutionTime, joinStatusRecord, parentJobId, stepCount, joinResultSerializer, 
 					transactionFactory, stepDAO, jobDAO, werkConfig); 
 			
 			StepType<Long> stepType = werkConfig.getStepType(currentStep.getStepTypeName());

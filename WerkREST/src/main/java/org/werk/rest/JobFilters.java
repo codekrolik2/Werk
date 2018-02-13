@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.pillar.time.interfaces.Timestamp;
+import org.werk.service.PageInfo;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -21,4 +22,8 @@ public class JobFilters<J> {
 	Optional<Collection<J>> parentJobIds; 
 	@Getter
 	Optional<Collection<J>> jobIds;
+	@Getter
+	Optional<Set<String>> currentStepTypes;
+	@Getter
+	Optional<PageInfo> pageInfo;
 }

@@ -13,6 +13,7 @@ import org.pillar.db.interfaces.TransactionContext;
 import org.pillar.db.interfaces.TransactionFactory;
 import org.pillar.time.interfaces.Timestamp;
 import org.werk.config.WerkConfig;
+import org.werk.data.JobPOJO;
 import org.werk.data.StepPOJO;
 import org.werk.engine.processing.WerkJob;
 import org.werk.engine.sql.DAO.DBJobPOJO;
@@ -27,6 +28,7 @@ import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.jobs.JoinStatusRecord;
 import org.werk.processing.parameters.Parameter;
 import org.werk.processing.readonly.ReadOnlyJob;
+import org.werk.service.JobCollection;
 import org.werk.util.JoinResultSerializer;
 
 import lombok.Getter;
@@ -53,10 +55,10 @@ public class SQLWerkJob extends WerkJob<Long> {
 	
 	public SQLWerkJob(Long jobId, JobType jobType, long version, Optional<String> jobName, JobStatus status,
 			Map<String, Parameter> jobInitialParameters, Map<String, Parameter> jobParameters,
-			Timestamp nextExecutionTime, Optional<JoinStatusRecord<Long>> joinStatusRecord,
+			Timestamp creationTime, Timestamp nextExecutionTime, Optional<JoinStatusRecord<Long>> joinStatusRecord,
 			Optional<Long> parentJobId, int stepCount, JoinResultSerializer<Long> joinResultSerializer, 
 			TransactionFactory transactionFactory, StepDAO stepDAO, JobDAO jobDAO, WerkConfig<Long> werkConfig) {
-		super(jobType, version, jobName, status, jobInitialParameters, jobParameters, nextExecutionTime, 
+		super(jobType, version, jobName, status, jobInitialParameters, jobParameters, creationTime, nextExecutionTime, 
 				joinStatusRecord, parentJobId, stepCount, joinResultSerializer);
 		this.jobId = jobId;
 		this.transactionFactory = transactionFactory;
@@ -230,14 +232,16 @@ public class SQLWerkJob extends WerkJob<Long> {
 			
 			List<Long> jobIdList = new ArrayList<>();
 			jobIdList.add(jobId);
-			Collection<DBJobPOJO> jobs = jobDAO.loadJobs(tc, Optional.empty(), Optional.empty(), 
-					jobIds, parentJobId, jobTypes);
-			if ((jobs == null) || (jobs.isEmpty()))
+			JobCollection jobs = jobDAO.loadJobs(tc, Optional.empty(), Optional.empty(), 
+					jobIds, parentJobId, jobTypes, Optional.empty(), Optional.empty());
+			if ((jobs == null) || (jobs.getJobs() == null) || (jobs.getJobs().isEmpty()))
 				return null;
 			
 			List<ReadOnlyJob<Long>> readOnlyJobs = new ArrayList<>();
-			for (DBJobPOJO job : jobs)
+			for (JobPOJO<Long> job0 : jobs.getJobs()) {
+				DBJobPOJO job = (DBJobPOJO)job0;
 				readOnlyJobs.add(new DBReadOnlyJob(job, transactionFactory, stepTransactionContext, stepDAO));
+			}
 			
 			return readOnlyJobs;
 		} catch(Exception e) {

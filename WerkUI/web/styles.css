@@ -1,0 +1,33 @@
+@import url(https://fonts.googleapis.com/css?family=Roboto);
+@import url(https://fonts.googleapis.com/css?family=Material+Icons);
+@import 'package:angular_components/css/material/material';
+
+body {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 5vw;
+}
+
+* {
+  font-family: Roboto, Helvetica, Arial, sans-serif;
+}
+
+:host {
+  border: 1px solid;
+  display: block;
+  height: 400px;
+  overflow: hidden;
+  position: relative;
+  width: 800px;
+}
+
+.controls {
+  align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+}
+
+a:link, a:visited, a:active, a:hover {
+  color: aliceblue;
+  text-decoration: none;
+}

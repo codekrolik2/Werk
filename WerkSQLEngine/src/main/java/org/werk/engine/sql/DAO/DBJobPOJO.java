@@ -29,10 +29,14 @@ public class DBJobPOJO implements JobPOJO<Long>{
 	protected int stepCount;
 	@Getter @Setter
 	protected long currentStepId;
+	@Getter @Setter
+	protected String currentStepTypeName;
 	@Getter
 	protected Map<String, Parameter> jobInitialParameters;
 	@Getter @Setter
 	protected JobStatus status;
+	@Getter
+	protected Timestamp creationTime;
 	@Getter
 	protected Timestamp nextExecutionTime;
 	@Getter

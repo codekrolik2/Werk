@@ -16,9 +16,12 @@ public interface JobPOJO<J> {
 	Optional<String> getJobName();
 	Optional<J> getParentJobId();
 	int getStepCount();
+	String getCurrentStepTypeName();
+	
 	Map<String, Parameter> getJobInitialParameters();
 	
 	JobStatus getStatus();
+	Timestamp getCreationTime();
 	Timestamp getNextExecutionTime();
 	Map<String, Parameter> getJobParameters();
 	

@@ -34,9 +34,9 @@ public class LocalWerkJob<J> extends WerkJob<J> {
 	
 	public LocalWerkJob(J jobId, JobType jobType, long version, Optional<String> jobName, JobStatus status,
 			Map<String, Parameter> jobInitialParameters, Map<String, Parameter> jobParameters, int stepCount,
-			Timestamp nextExecutionTime, Optional<JoinStatusRecord<J>> joinStatusRecord, Optional<J> parentJobId,
+			Timestamp creationTime, Timestamp nextExecutionTime, Optional<JoinStatusRecord<J>> joinStatusRecord, Optional<J> parentJobId,
 			LocalJobManager<J> jobManager, JoinResultSerializer<J> joinResultSerializer) {
-		super(jobType, version, jobName, status, jobInitialParameters, jobParameters, nextExecutionTime, 
+		super(jobType, version, jobName, status, jobInitialParameters, jobParameters, creationTime, nextExecutionTime, 
 				joinStatusRecord, parentJobId, stepCount, joinResultSerializer);
 		this.jobId = jobId;
 		processingHistory = new ArrayList<>();

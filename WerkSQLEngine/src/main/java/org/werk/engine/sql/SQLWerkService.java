@@ -10,7 +10,6 @@ import org.pillar.db.interfaces.TransactionContext;
 import org.pillar.db.interfaces.TransactionFactory;
 import org.pillar.time.interfaces.Timestamp;
 import org.werk.config.WerkConfig;
-import org.werk.data.JobPOJO;
 import org.werk.engine.sql.DAO.DBJobPOJO;
 import org.werk.engine.sql.DAO.DBReadOnlyJob;
 import org.werk.engine.sql.DAO.JobDAO;
@@ -18,10 +17,12 @@ import org.werk.engine.sql.DAO.StepDAO;
 import org.werk.meta.JobInitInfo;
 import org.werk.meta.JobRestartInfo;
 import org.werk.meta.JobType;
-import org.werk.meta.VersionJobInitInfo;
 import org.werk.meta.StepType;
+import org.werk.meta.VersionJobInitInfo;
 import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.readonly.ReadOnlyJob;
+import org.werk.service.JobCollection;
+import org.werk.service.PageInfo;
 import org.werk.service.WerkService;
 
 import lombok.AllArgsConstructor;
@@ -97,13 +98,14 @@ public class SQLWerkService implements WerkService<Long> {
 	}
 
 	@Override
-	public Collection<JobPOJO<Long>> getJobs(Optional<Timestamp> from, Optional<Timestamp> to, Optional<Set<String>> jobTypes,
-			Optional<Collection<Long>> parentJobIds, Optional<Collection<Long>> jobIds) throws Exception {
+	public JobCollection getJobs(Optional<Timestamp> from, Optional<Timestamp> to, Optional<Set<String>> jobTypes,
+			Optional<Collection<Long>> parentJobIds, Optional<Collection<Long>> jobIds, Optional<Set<String>> currentStepTypes, 
+			Optional<PageInfo> pageInfo) throws Exception {
 		TransactionContext tc = null;
 		try {
 			tc = transactionFactory.startTransaction();
-			@SuppressWarnings({ "unchecked", "rawtypes" })
-			Collection<JobPOJO<Long>> jobs = (Collection)jobDAO.loadJobs(tc, from, to, jobIds, parentJobIds, jobTypes);
+			JobCollection jobs = jobDAO.loadJobs(tc, from, to, jobIds, parentJobIds, jobTypes, 
+					currentStepTypes, pageInfo);
 			return jobs;
 		} finally {
 			tc.close();

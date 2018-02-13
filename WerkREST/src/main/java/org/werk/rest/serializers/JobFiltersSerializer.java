@@ -13,6 +13,7 @@ import org.pillar.time.interfaces.TimeProvider;
 import org.pillar.time.interfaces.Timestamp;
 import org.werk.engine.JobIdSerializer;
 import org.werk.rest.JobFilters;
+import org.werk.service.PageInfo;
 
 import lombok.AllArgsConstructor;
 
@@ -27,6 +28,8 @@ public class JobFiltersSerializer<J> {
 		Optional<Set<String>> jobTypes = Optional.empty();
 		Optional<Collection<J>> parentJobIds = Optional.empty();
 		Optional<Collection<J>> jobIds = Optional.empty();
+		Optional<Set<String>> currentStepTypes = Optional.empty();
+		Optional<PageInfo> pageInfo = Optional.empty();
 		
 		if (filtersJSON.has("from"))
 			from = Optional.of(timeProvider.createTimestamp(filtersJSON.getString("from")));
@@ -59,7 +62,25 @@ public class JobFiltersSerializer<J> {
 			
 			jobIds = Optional.of(jobIdList);
 		}
+		if (filtersJSON.has("currentStepTypes")) {
+			Set<String> stepTypesSet = new HashSet<>();
+			
+			JSONArray arr = filtersJSON.getJSONArray("currentStepTypes");
+			for (int i = 0; i < arr.length(); i++)
+				stepTypesSet.add(arr.getString(i));
+			
+			currentStepTypes = Optional.of(stepTypesSet);
+		}
+		if (filtersJSON.has("pageInfo")) {
+			JSONObject pageInfoJSON = filtersJSON.getJSONObject("pageInfo");
+			
+			long itemsPerPage = pageInfoJSON.getLong("itemsPerPage");
+			long pageNumber = pageInfoJSON.getLong("pageNumber");
+			
+			PageInfo pageInfoObj = new PageInfo(itemsPerPage, pageNumber);
+			pageInfo = Optional.of(pageInfoObj);
+		}
 		
-		return new JobFilters<>(from, to, jobTypes, parentJobIds, jobIds);
+		return new JobFilters<>(from, to, jobTypes, parentJobIds, jobIds, currentStepTypes, pageInfo);
 	}
 }

@@ -21,6 +21,7 @@ import org.pillar.time.LongTimestamp;
 import org.pillar.time.interfaces.TimeProvider;
 import org.pillar.time.interfaces.Timestamp;
 import org.werk.config.WerkConfig;
+import org.werk.data.JobPOJO;
 import org.werk.data.StepPOJO;
 import org.werk.engine.json.JobParameterTool;
 import org.werk.engine.sql.exception.JobRestartException;
@@ -35,6 +36,8 @@ import org.werk.meta.inputparameters.JobInputParameter;
 import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.jobs.JoinStatusRecord;
 import org.werk.processing.parameters.Parameter;
+import org.werk.service.JobCollection;
+import org.werk.service.PageInfo;
 import org.werk.util.ParameterContextSerializer;
 
 public class JobDAO {
@@ -127,8 +130,8 @@ public class JobDAO {
 		
 		try {
 			String query = "INSERT INTO jobs (job_type, version, job_name, parent_job_id, " +
-					"status, next_execution_time, job_parameter_state, job_initial_parameter_state, step_count) " +
-					"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+					"status, next_execution_time, job_parameter_state, job_initial_parameter_state, step_count, creation_time) " +
+					"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 			
 			pst = connection.prepareStatement(query);
 			
@@ -150,6 +153,7 @@ public class JobDAO {
 			pst.setString(7, jobInitialParameterState);
 			pst.setString(8, jobInitialParameterState);
 			pst.setLong(9, stepCount);
+			pst.setLong(10, ((LongTimestamp)(timeProvider.getCurrentTime())).getTimeMs());
 			
 			pst.executeUpdate();
 			
@@ -331,36 +335,37 @@ public class JobDAO {
 	public DBJobPOJO loadJob(TransactionContext tc, long jobId) throws SQLException {
 		List<Long> jobIds = new ArrayList<>();
 		jobIds.add(jobId);
-		Collection<DBJobPOJO> jobs = loadJobs(tc, Optional.empty(), Optional.empty(), Optional.of(jobIds), 
-				Optional.empty(), Optional.empty());
+		JobCollection jobs = loadJobs(tc, Optional.empty(), Optional.empty(), Optional.of(jobIds), 
+				Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
 		
-		if ((jobs == null) || (jobs.isEmpty()))
+		if ((jobs == null) || (jobs.getJobs() == null) || (jobs.getJobs().isEmpty()))
 			return null;
 		
-		for (DBJobPOJO job : jobs)
-			return job;
+		for (JobPOJO<Long> job : jobs.getJobs())
+			return (DBJobPOJO)job;
 		
 		return null;
 	}
 	
-	public Collection<DBJobPOJO> loadJobs(TransactionContext tc, Optional<Timestamp> from, Optional<Timestamp> to,
-			Optional<Collection<Long>> jobIds, Optional<Collection<Long>> parentJobIds, Optional<Set<String>> jobTypes) throws SQLException {
+	public JobCollection loadJobs(TransactionContext tc, Optional<Timestamp> from, Optional<Timestamp> to,
+			Optional<Collection<Long>> jobIds, Optional<Collection<Long>> parentJobIds, Optional<Set<String>> jobTypes, 
+			Optional<Set<String>> currentStepTypes, Optional<PageInfo> pageInfo) throws SQLException {
 		Connection connection = ((JDBCTransactionContext)tc).getConnection();
 		PreparedStatement pst = null;
 		
 		try {
-			StringBuilder sb = new StringBuilder("SELECT j.id_job, j.job_type, j.version, j.job_name, j.parent_job_id, " +
-					"j.current_step_id, j.status, j.next_execution_time, j.job_parameter_state, j.job_initial_parameter_state, " +
-					"j.id_locker, j.step_count, j.wait_for_N_jobs, j.join_parameter_name, r.id_job, j2.status " +
-					"FROM jobs j " +
-					"	LEFT JOIN join_record_jobs r " +
-					"		LEFT JOIN jobs j2 " +
-					"		ON j2.id_job = r.id_job " +
-					"	ON j.id_job = r.id_awaiting_job");
-			
-			if (from.isPresent() || to.isPresent() || (jobIds.isPresent() && !jobIds.get().isEmpty()) ||
-					parentJobIds.isPresent() || jobTypes.isPresent())
-				sb.append(" WHERE ");
+			StringBuilder sb = new StringBuilder(
+					"SELECT SQL_CALC_FOUND_ROWS j.id_job, j.job_type, j.version, j.job_name, j.parent_job_id," + 
+					"		j.current_step_id, j.status, j.next_execution_time, j.job_parameter_state, j.job_initial_parameter_state," + 
+					"		j.id_locker, j.step_count, j.wait_for_N_jobs, j.join_parameter_name, " + 
+					"	GROUP_CONCAT(r.id_job SEPARATOR ',') AS joined_job_ids, " + 
+					"	GROUP_CONCAT(j2.status SEPARATOR ',') AS joined_job_statuses, s.step_type, j.creation_time " + 
+					"	FROM steps s, jobs j" + 
+					"		LEFT JOIN join_record_jobs r" + 
+					"			LEFT JOIN jobs j2" + 
+					"			ON j2.id_job = r.id_job" + 
+					"		ON j.id_job = r.id_awaiting_job" + 
+					"	WHERE j.current_step_id = s.id_step");
 			
 			int count = 0;
 			if (from.isPresent()) {
@@ -407,7 +412,27 @@ public class JobDAO {
 				
 				sb.append(")");
 			}
+			if (currentStepTypes.isPresent()) {
+				if (count++ > 0) sb.append(" AND");
+				sb.append(" s.step_type IN (");
+				
+				int stepTypeCount = 0;
+				for (@SuppressWarnings("unused") String stepType : currentStepTypes.get()) {
+					if (stepTypeCount++ > 0) sb.append(", ");
+					sb.append("?");
+				}
+				
+				sb.append(")");
+			}
 			
+			sb.append(" GROUP BY j.id_job, j.job_type, j.version, j.job_name, j.parent_job_id," + 
+			"		j.current_step_id, j.status, j.next_execution_time, j.job_parameter_state, j.job_initial_parameter_state," + 
+			"		j.id_locker, j.step_count, j.wait_for_N_jobs, j.join_parameter_name, s.step_type, j.creation_time" + 
+			"		ORDER BY "); 
+			
+			if (pageInfo.isPresent())
+				sb.append("LIMIT ?, ?");
+
 			pst = connection.prepareStatement(sb.toString());
 			
 			count = 0;
@@ -424,89 +449,99 @@ public class JobDAO {
 			if (jobTypes.isPresent())
 				for (String jobType : jobTypes.get())
 					pst.setString(++count, jobType);
-			
+			if (currentStepTypes.isPresent())
+				for (String stepType : currentStepTypes.get())
+					pst.setString(++count, stepType);
+			if (pageInfo.isPresent()) {
+				pst.setLong(++count, pageInfo.get().getItemsPerPage()*pageInfo.get().getPageNumber());
+				pst.setLong(++count, pageInfo.get().getItemsPerPage());
+			}
 			ResultSet rs = pst.executeQuery();
 			
-			Map<Long, DBJobPOJO> jobs = new HashMap<Long, DBJobPOJO>();
+			List<JobPOJO<Long>> jobColl = new ArrayList<JobPOJO<Long>>();
 			while (rs.next())
-				loadJobPOJO(rs, jobs);
+				jobColl.add(loadJobPOJO(rs));
 			
-			return jobs.values();
+			long foundRows = JDBCTransactionFactory.getFoundRows(connection);
+			
+			return new JobCollection(pageInfo, jobColl, foundRows);
 		} finally {
 			if (pst != null) pst.close();
 		}
 	}
 	
-	protected void loadJobPOJO(ResultSet rs, Map<Long, DBJobPOJO> jobs) throws SQLException {
+	protected DBJobPOJO loadJobPOJO(ResultSet rs) throws SQLException {
 		DBJobPOJO dbJobPOJO;
 		long jobId = rs.getLong(1);
 		
-		if (!jobs.containsKey(jobId)) {
-			String jobTypeName = rs.getString(2);
-			long version = rs.getLong(3);
+		String jobTypeName = rs.getString(2);
+		long version = rs.getLong(3);
+		
+		String jobNameStr = rs.getString(4);
+		Optional<String> jobName;
+		if (rs.wasNull())
+			jobName = Optional.empty();
+		else
+			jobName = Optional.of(jobNameStr);
+		
+		long parentJobIdLong = rs.getLong(5);
+		Optional<Long> parentJobId;
+		if (rs.wasNull())
+			parentJobId = Optional.empty();
+		else
+			parentJobId = Optional.of(parentJobIdLong);
+		
+		long currentStepId = rs.getLong(6);
+		
+		JobStatus status = JobStatus.fromCode(rs.getInt(7));
+		Timestamp nextExecutionTime = ((LongTimeProvider)timeProvider).createTimestamp(rs.getLong(8));
+		
+		String jobParametersStr = rs.getString(9);
+		Map<String, Parameter> jobParameters = 
+				parameterContextSerializer.deserializeParameters(new JSONObject(jobParametersStr));
+		
+		String jobInitialParametersStr = rs.getString(10);
+		Map<String, Parameter> jobInitialParameters = 
+				parameterContextSerializer.deserializeParameters(new JSONObject(jobInitialParametersStr));
+		
+		long idLockerL = rs.getLong(11);
+		Optional<Long> idLocker = rs.wasNull() ? Optional.empty() : Optional.of(idLockerL);
+		
+		int stepCount = rs.getInt(12);
+		
+		Optional<JoinStatusRecord<Long>> joinStatusRecord;
+		String joinParameterName = rs.getString(14);
+		if (rs.wasNull()) {
+			joinStatusRecord = Optional.empty();
+		} else {
+			int waitForNJobs = rs.getInt(13);
 			
-			String jobNameStr = rs.getString(4);
-			Optional<String> jobName;
-			if (rs.wasNull())
-				jobName = Optional.empty();
-			else
-				jobName = Optional.of(jobNameStr);
-			
-			long parentJobIdLong = rs.getLong(5);
-			Optional<Long> parentJobId;
-			if (rs.wasNull())
-				parentJobId = Optional.empty();
-			else
-				parentJobId = Optional.of(parentJobIdLong);
-			
-			long currentStepId = rs.getLong(6);
-			
-			JobStatus status = JobStatus.fromCode(rs.getInt(7));
-			Timestamp nextExecutionTime = ((LongTimeProvider)timeProvider).createTimestamp(rs.getLong(8));
-			
-			String jobParametersStr = rs.getString(9);
-			Map<String, Parameter> jobParameters = 
-					parameterContextSerializer.deserializeParameters(new JSONObject(jobParametersStr));
-			
-			String jobInitialParametersStr = rs.getString(10);
-			Map<String, Parameter> jobInitialParameters = 
-					parameterContextSerializer.deserializeParameters(new JSONObject(jobInitialParametersStr));
-			
-			long idLockerL = rs.getLong(11);
-			Optional<Long> idLocker = rs.wasNull() ? Optional.empty() : Optional.of(idLockerL);
-			
-			int stepCount = rs.getInt(12);
+			String joinedJobIds = rs.getString(15).trim();
+			String joinedJobStatuses = rs.getString(16).trim();
 
-			Optional<JoinStatusRecord<Long>> joinStatusRecord;
-			String joinParameterName = rs.getString(14);
-			if (rs.wasNull()) {
-				joinStatusRecord = Optional.empty();
-			} else {
-				int waitForNJobs = rs.getInt(13);
+			String[] joinedJobIdParts = joinedJobIds.split(",");
+			String[] joinedJobStatusParts = joinedJobStatuses.split(",");
+			
+			Map<Long, JobStatus> joinedJobs = new HashMap<>();
+			for (int i = 0; i < joinedJobIdParts.length; i++) {
+				Long joinedJobId = Long.parseLong(joinedJobIdParts[i]);
+				JobStatus joinedJobStatus = JobStatus.fromCode(Integer.parseInt(joinedJobStatusParts[i]));
 				
-				long joinedJobId = rs.getLong(15);
-				JobStatus joinedJobStatus = JobStatus.fromCode(rs.getInt(16));
-				
-				Map<Long, JobStatus> joinedJobs = new HashMap<>();
 				joinedJobs.put(joinedJobId, joinedJobStatus);
-				
-				JoinStatusRecord<Long> jsr = new SQLJoinStatusRecord<Long>(joinedJobs, joinParameterName, 
-						waitForNJobs);
-				joinStatusRecord = Optional.of(jsr);
 			}
 			
-			dbJobPOJO = new DBJobPOJO(jobTypeName, version, jobId, jobName, parentJobId, stepCount,
-					currentStepId, jobInitialParameters, status, nextExecutionTime, 
-					jobParameters, joinStatusRecord, idLocker);
-			jobs.put(jobId, dbJobPOJO);
-		} else {
-			dbJobPOJO = (DBJobPOJO)jobs.get(jobId);
-			SQLJoinStatusRecord<Long> jsr = (SQLJoinStatusRecord<Long>)dbJobPOJO.joinStatusRecord.get();
-			
-			long joinedJobId = rs.getLong(15);
-			JobStatus joinedJobStatus = JobStatus.fromCode(rs.getInt(16));
-			if (!rs.wasNull())
-				jsr.getJoinedJobs().put(joinedJobId, joinedJobStatus);
+			JoinStatusRecord<Long> jsr = new SQLJoinStatusRecord<Long>(joinedJobs, joinParameterName, 
+					waitForNJobs);
+			joinStatusRecord = Optional.of(jsr);
 		}
+		
+		String currentStepType = rs.getString(17);
+		Timestamp creationTime = ((LongTimeProvider)timeProvider).createTimestamp(rs.getLong(18));
+		
+		dbJobPOJO = new DBJobPOJO(jobTypeName, version, jobId, jobName, parentJobId, stepCount,
+				currentStepId, currentStepType, jobInitialParameters, status, creationTime, nextExecutionTime, 
+				jobParameters, joinStatusRecord, idLocker);
+		
+		return dbJobPOJO;
 	}
 }
