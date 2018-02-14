@@ -89,14 +89,28 @@ public class WerkREST extends AbstractVerticle {
 		//Restart job
 		router.patch("/jobs/:jobId").handler(this::handleRestartJob);
 		
+		router.patch("/jobsAdded").handler(this::handleJobsAdded);
+		
 		vertx.createHttpServer().requestHandler(router::accept).listen(8080);
+	}
+	
+	private void handleJobsAdded(RoutingContext routingContext) {
+		HttpServerResponse response = routingContext.response();
+		try {
+			werkService.jobsAdded();
+			response.setStatusCode(200).end();
+		} catch (Exception e) {
+			logger.error(e, e);
+			sendStatus(400, response);
+			return;
+		}
 	}
 	
 	private void handleRestartJob(RoutingContext routingContext) {
 		String body = routingContext.getBodyAsString();
 		HttpServerResponse response = routingContext.response();
 		if ((body == null) || (body.trim().equals(""))) {
-			sendError(400, response);
+			sendStatus(400, response);
 		} else {
 			JSONObject jobRestartJSON = new JSONObject(body);
 			JobRestartInfo<Long> jobRestartInfo = jobStepSerializer.deserializeJobRestartInfo(jobRestartJSON);
@@ -108,7 +122,7 @@ public class WerkREST extends AbstractVerticle {
 				routingContext.response().putHeader("content-type", "application/json").end(resp.toString());
 			} catch (Exception e) {
 				logger.error(e, e);
-				sendError(400, response);
+				sendStatus(400, response);
 				return;
 			}
 		}
@@ -118,7 +132,7 @@ public class WerkREST extends AbstractVerticle {
 		String body = routingContext.getBodyAsString();
 		HttpServerResponse response = routingContext.response();
 		if ((body == null) || (body.trim().equals(""))) {
-			sendError(400, response);
+			sendStatus(400, response);
 		} else {
 			try {
 				Long jobId;
@@ -136,7 +150,7 @@ public class WerkREST extends AbstractVerticle {
 				routingContext.response().putHeader("content-type", "application/json").end(resp.toString());
 			} catch (Exception e) {
 				logger.error(e, e);
-				sendError(400, response);
+				sendStatus(400, response);
 				return;
 			}
 		}
@@ -146,7 +160,7 @@ public class WerkREST extends AbstractVerticle {
 		String filter = routingContext.queryParams().get("filter");
 		HttpServerResponse response = routingContext.response();
 		if ((filter == null) || (filter.trim().equals(""))) {
-			sendError(400, response);
+			sendStatus(400, response);
 		} else {
 			JobFilters<Long> jobFilters = jobFiltersSerializer.deserializeJobFilters(new JSONObject(filter));
 			
@@ -155,7 +169,7 @@ public class WerkREST extends AbstractVerticle {
 				!jobFilters.getJobTypesAndVersions().isPresent() && !jobFilters.getParentJobIds().isPresent() &&
 				!jobFilters.getJobIds().isPresent()) {
 				logger.error("Unfiltered JobList Retrieval is not allowed: specify filters");
-				sendError(400, "Unfiltered JobList Retrieval is not allowed: specify filters", response);
+				sendStatus(400, "Unfiltered JobList Retrieval is not allowed: specify filters", response);
 				return;
 			}
 
@@ -171,7 +185,7 @@ public class WerkREST extends AbstractVerticle {
 				routingContext.response().putHeader("content-type", "application/json").end(arr.toString());
 			} catch (Exception e) {
 				logger.error(e, e);
-				sendError(400, response);
+				sendStatus(400, response);
 				return;
 			}
 		}
@@ -182,21 +196,21 @@ public class WerkREST extends AbstractVerticle {
 		
 		HttpServerResponse response = routingContext.response();
 		if (jobIdStr == null) {
-			sendError(400, response);
+			sendStatus(400, response);
 		} else {
 			long jobId = jobIdSerializer.deSerializeJobId(jobIdStr);
 			try {
 				ReadOnlyJob<Long> readOnlyJob = werkService.getJobAndHistory(jobId);
 				
 				if (readOnlyJob == null) {
-					sendError(404, response);
+					sendStatus(404, response);
 				} else {
 					routingContext.response().putHeader("content-type", "application/json").
 						end(jobStepSerializer.serializeJobAndHistory(readOnlyJob).toString());
 				}
 			} catch (Exception e) {
 				logger.error(e, e);
-				sendError(400, response);
+				sendStatus(400, response);
 				return;
 			}
 		}
@@ -208,7 +222,7 @@ public class WerkREST extends AbstractVerticle {
 		
 		HttpServerResponse response = routingContext.response();
 		if (jobTypeName == null) {
-			sendError(400, response);
+			sendStatus(400, response);
 		} else {
 			Optional<Long> version = Optional.empty();
 			if (versionStr != null) {
@@ -217,14 +231,14 @@ public class WerkREST extends AbstractVerticle {
 					version = Optional.of(v);
 				} catch (NumberFormatException nfe) {
 					logger.error(nfe, nfe);
-					sendError(400, response);
+					sendStatus(400, response);
 					return;
 				}
 			}
 			
 			JobType jobType = werkService.getJobType(jobTypeName, version);
 			if (jobType == null) {
-				sendError(404, response);
+				sendStatus(404, response);
 			} else {
 				response.putHeader("content-type", "application/json").
 					end(jobStepTypeRESTSerializer.serializeJobType(jobType).toString());
@@ -245,7 +259,7 @@ public class WerkREST extends AbstractVerticle {
 		
 		HttpServerResponse response = routingContext.response();
 		if (stepTypeName == null) {
-			sendError(400, response);
+			sendStatus(400, response);
 		} else {
 			StepType<?> stepType = werkService.getStepType(stepTypeName);
 			
@@ -260,7 +274,7 @@ public class WerkREST extends AbstractVerticle {
 		
 		HttpServerResponse response = routingContext.response();
 		if (jobTypeName == null) {
-			sendError(400, response);
+			sendStatus(400, response);
 		} else {
 			Optional<Long> version = Optional.empty();
 			if (versionStr != null) {
@@ -269,7 +283,7 @@ public class WerkREST extends AbstractVerticle {
 					version = Optional.of(v);
 				} catch (NumberFormatException nfe) {
 					logger.error(nfe, nfe);
-					sendError(400, response);
+					sendStatus(400, response);
 					return;
 				}
 			}
@@ -292,11 +306,11 @@ public class WerkREST extends AbstractVerticle {
 	
 	//------------------------------------
 	
-	protected void sendError(int statusCode, HttpServerResponse response) {
+	protected void sendStatus(int statusCode, HttpServerResponse response) {
 		response.setStatusCode(statusCode).end();
 	}
 	
-	protected void sendError(int statusCode, String msg, HttpServerResponse response) {
+	protected void sendStatus(int statusCode, String msg, HttpServerResponse response) {
 		response.setStatusCode(statusCode).end(msg);
 	}
 }

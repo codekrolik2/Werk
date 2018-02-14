@@ -1,7 +1,5 @@
 package org.werk.engine.local.service;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 import org.pillar.db.interfaces.TransactionFactory;
@@ -15,12 +13,6 @@ import org.werk.engine.sql.DAO.JobDAO;
 import org.werk.engine.sql.DAO.JobLoadDAO;
 import org.werk.engine.sql.DAO.StepDAO;
 import org.werk.engine.sql.main.SQLWerkRunner;
-import org.werk.meta.JobInitInfo;
-import org.werk.meta.impl.JobInitInfoImpl;
-import org.werk.processing.parameters.Parameter;
-import org.werk.processing.parameters.impl.DoubleParameterImpl;
-import org.werk.processing.parameters.impl.LongParameterImpl;
-import org.werk.processing.parameters.impl.StringParameterImpl;
 import org.werk.rest.VertxRunner;
 import org.werk.rest.WerkREST;
 import org.werk.util.ParameterContextSerializer;
@@ -52,7 +44,10 @@ public class SQLWerkTest {
 		JobLoadDAO jobLoadDAO = new JobLoadDAO();
 		TransactionFactory transactionFactory = new JDBCTransactionFactory(dbUrl, dbUser, dbPassword);
 		
-		SQLWerkService service = new SQLWerkService(config, jobDAO, stepDAO, transactionFactory);
+		SQLWerkRunner runner = new SQLWerkRunner(transactionFactory, jobLimit, 
+				threadCount, heartbeatPeriod, config, jobDAO, stepDAO, jobLoadDAO, timeProvider);
+
+		SQLWerkService service = new SQLWerkService(config, jobDAO, stepDAO, transactionFactory, runner);
 		
 		/*int i = 0;
 		for (i = 0; i < 1000; i++) {
@@ -70,8 +65,6 @@ public class SQLWerkTest {
 		}*/
 	
 		//SQLWerkRunner sqlWerkRunner = 
-		new SQLWerkRunner(transactionFactory, jobLimit, 
-				threadCount, heartbeatPeriod, config, jobDAO, stepDAO, jobLoadDAO, timeProvider);
 		
 		VertxRunner.runVerticle(new WerkREST(service, timeProvider, false));
 	}

@@ -33,4 +33,7 @@ public interface WerkService<J> {
 	Collection<StepType<J>> getAllStepTypes();
 	Collection<StepType<J>> getStepTypesForJob(String jobTypeName, Optional<Long> version);
 	StepType<J> getStepType(String stepTypeName);
+	
+	//NOTIFICATION
+	void jobsAdded();
 }

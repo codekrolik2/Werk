@@ -22,16 +22,19 @@ import org.werk.processing.jobs.Job;
 import org.werk.util.JoinResultSerializer;
 import org.werk.util.LongJobIdSerializer;
 
+import lombok.Getter;
+
 public class SQLWerkEngine implements WerkEngine<Long> {
 	protected final TimeProvider timeProvider;
 	protected final WorkThreadPool<Job<Long>> werkPool;
 	protected final SQLWerkPoolRunnableFactory runnableFactory;
 	protected final WerkCallbackRunnable<Long> callbackRunnable;
+	@Getter
 	protected final SQLJobLoaderRunnable sqlJobLoaderRunnable;
 	protected final int threadCount;
 	
-	public SQLWerkEngine(int threadCount, WerkStepSwitcher<Long> stepSwitcher, 
-			TransactionFactory connectionFactory, Pulse<Long> pulse, WerkConfig<Long> config, 
+	public SQLWerkEngine(int threadCount, WerkStepSwitcher<Long> stepSwitcher,
+			TransactionFactory connectionFactory, Pulse<Long> pulse, WerkConfig<Long> config,
 			JobDAO jobDAO, StepDAO stepDAO, ServerPulseDAO<Long> serverDAO, JobLoadDAO jobLoadDAO,
 			long jobLoadPeriodMS) {
 		this.threadCount = threadCount;

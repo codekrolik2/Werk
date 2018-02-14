@@ -26,11 +26,14 @@ import org.werk.engine.sql.DAO.JobLoadDAO;
 import org.werk.engine.sql.DAO.StepDAO;
 import org.werk.engine.sql.pulse.WerkPulseRecordCleaner;
 
+import lombok.Getter;
+
 public class SQLWerkRunner {
 	protected PulseRunnable<Long> pulseRunnable;
 	protected PulseReg<Long> pulse;
 	
 	protected Optional<Integer> jobLimit;
+	@Getter
 	protected AtomicReference<SQLWerkEngine> currentEngine;
 	
 	public SQLWerkRunner(TransactionFactory connectionFactory, 

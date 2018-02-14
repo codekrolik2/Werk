@@ -140,4 +140,9 @@ public class LocalWerkService implements WerkService<Long> {
 	public Collection<StepType<Long>> getAllStepTypes() {
 		return werkConfig.getAllStepTypes().values();
 	}
+
+	@Override
+	public void jobsAdded() {
+		// LocalWerkService has no job loader to notify
+	}
 }

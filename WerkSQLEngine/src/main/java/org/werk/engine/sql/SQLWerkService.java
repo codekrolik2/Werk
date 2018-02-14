@@ -15,6 +15,7 @@ import org.werk.engine.sql.DAO.DBJobPOJO;
 import org.werk.engine.sql.DAO.DBReadOnlyJob;
 import org.werk.engine.sql.DAO.JobDAO;
 import org.werk.engine.sql.DAO.StepDAO;
+import org.werk.engine.sql.main.SQLWerkRunner;
 import org.werk.meta.JobInitInfo;
 import org.werk.meta.JobRestartInfo;
 import org.werk.meta.JobType;
@@ -34,6 +35,7 @@ public class SQLWerkService implements WerkService<Long> {
 	protected JobDAO jobDAO;
 	protected StepDAO stepDAO;
 	protected TransactionFactory transactionFactory;
+	protected SQLWerkRunner sqlWerkRunner;
 	
 	@Override
 	public Long createJob(JobInitInfo init) throws Exception {
@@ -149,5 +151,12 @@ public class SQLWerkService implements WerkService<Long> {
 	@Override
 	public Collection<StepType<Long>> getAllStepTypes() {
 		return werkConfig.getAllStepTypes().values();
+	}
+
+	@Override
+	public void jobsAdded() {
+		SQLWerkEngine engine = sqlWerkRunner.getCurrentEngine().get();
+		if (engine != null)
+			engine.getSqlJobLoaderRunnable().startJobLoad();
 	}
 }

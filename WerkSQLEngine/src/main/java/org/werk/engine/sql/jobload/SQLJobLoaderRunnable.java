@@ -60,4 +60,13 @@ public class SQLJobLoaderRunnable implements Runnable {
 			lock.unlock();
 		}
 	}
+	
+	public void startJobLoad() {
+		lock.lock();
+		try {
+			condition.signal();
+		} finally {
+			lock.unlock();
+		}
+	}
 }
