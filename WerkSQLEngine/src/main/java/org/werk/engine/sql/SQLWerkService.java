@@ -7,9 +7,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.json.JSONObject;
 import org.pillar.db.interfaces.TransactionContext;
 import org.pillar.db.interfaces.TransactionFactory;
 import org.pillar.time.interfaces.Timestamp;
+import org.pulse.interfaces.PulseReg;
+import org.pulse.interfaces.ServerPulseRecord;
 import org.werk.config.WerkConfig;
 import org.werk.engine.sql.DAO.DBJobPOJO;
 import org.werk.engine.sql.DAO.DBReadOnlyJob;
@@ -101,13 +104,14 @@ public class SQLWerkService implements WerkService<Long> {
 	}
 
 	@Override
-	public JobCollection getJobs(Optional<Timestamp> from, Optional<Timestamp> to, Optional<Map<String, Long>> jobTypesAndVersions,
+	public JobCollection<Long> getJobs(Optional<Timestamp> from, Optional<Timestamp> to, 
+			Optional<Timestamp> fromExec, Optional<Timestamp> toExec, Optional<Map<String, Long>> jobTypesAndVersions,
 			Optional<Collection<Long>> parentJobIds, Optional<Collection<Long>> jobIds, Optional<Set<String>> currentStepTypes, 
 			Optional<PageInfo> pageInfo) throws Exception {
 		TransactionContext tc = null;
 		try {
 			tc = transactionFactory.startTransaction();
-			JobCollection jobs = jobDAO.loadJobs(tc, from, to, jobIds, parentJobIds, jobTypesAndVersions, 
+			JobCollection<Long> jobs = jobDAO.loadJobs(tc, from, to, fromExec, toExec, jobIds, parentJobIds, jobTypesAndVersions, 
 					currentStepTypes, pageInfo);
 			return jobs;
 		} finally {
@@ -158,5 +162,28 @@ public class SQLWerkService implements WerkService<Long> {
 		SQLWerkEngine engine = sqlWerkRunner.getCurrentEngine().get();
 		if (engine != null)
 			engine.getSqlJobLoaderRunnable().startJobLoad();
+	}
+
+	@Override
+	public JSONObject getServerInfo() {
+		JSONObject info = new JSONObject();
+		info.put("server", "SQL");
+
+		PulseReg<Long> pulse = sqlWerkRunner.getPulse();
+		Optional<ServerPulseRecord<Long>> activeServerOpt = pulse.getActiveServerPulseRecord();
+		if (activeServerOpt.isPresent()) {
+			ServerPulseRecord<Long> srv = activeServerOpt.get();
+
+			JSONObject srvRecord = new JSONObject();
+			srvRecord.put("serverId", srv.getServerId());
+			srvRecord.put("creationTime", srv.getCreationTime());
+			srvRecord.put("lastHBTime", srv.getLastHBTime());
+			srvRecord.put("hbPeriodMs", srv.getHBPeriodMs());
+			srvRecord.put("info", srv.getInfo());
+			
+			info.put("srvRecord", srvRecord);
+		}
+		
+		return info;
 	}
 }

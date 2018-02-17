@@ -18,6 +18,10 @@ public class JobFilters<J> {
 	@Getter
 	Optional<Timestamp> to; 
 	@Getter
+	Optional<Timestamp> fromExec;
+	@Getter
+	Optional<Timestamp> toExec; 
+	@Getter
 	Optional<Map<String, Long>> jobTypesAndVersions;
 	@Getter
 	Optional<Collection<J>> parentJobIds; 

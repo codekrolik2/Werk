@@ -6,7 +6,6 @@ import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.pillar.time.interfaces.TimeProvider;
-import org.werk.data.JobPOJO;
 import org.werk.engine.JobIdSerializer;
 import org.werk.meta.JobInitInfo;
 import org.werk.meta.JobRestartInfo;
@@ -18,6 +17,7 @@ import org.werk.rest.serializers.JobFiltersSerializer;
 import org.werk.rest.serializers.JobInitInfoSerializer;
 import org.werk.rest.serializers.JobStepSerializer;
 import org.werk.rest.serializers.JobStepTypeRESTSerializer;
+import org.werk.rest.serializers.PageInfoSerializer;
 import org.werk.service.JobCollection;
 import org.werk.service.WerkService;
 import org.werk.util.JoinResultSerializer;
@@ -50,6 +50,8 @@ public class WerkREST extends AbstractVerticle {
 		
 		jobIdSerializer = new LongJobIdSerializer();
 		
+		PageInfoSerializer pageInfoSerializer = new PageInfoSerializer();
+		
 		jobStepTypeRESTSerializer = new JobStepTypeRESTSerializer();
 		
 		ParameterContextSerializer contextSerializer = new ParameterContextSerializer();
@@ -58,9 +60,9 @@ public class WerkREST extends AbstractVerticle {
 				new StepProcessingHistorySerializer(timeProvider);
 
 		jobStepSerializer = new JobStepSerializer<>(contextSerializer, joinResultSerializer, 
-				jobIdSerializer, stepProcessingHistorySerializer);
+				jobIdSerializer, stepProcessingHistorySerializer, pageInfoSerializer, timeProvider);
 		
-		jobFiltersSerializer = new JobFiltersSerializer<Long>(timeProvider, jobIdSerializer);
+		jobFiltersSerializer = new JobFiltersSerializer<Long>(timeProvider, jobIdSerializer, pageInfoSerializer);
 		
 		jobInitInfoSerializer = new JobInitInfoSerializer(contextSerializer, timeProvider);
 	}
@@ -174,15 +176,14 @@ public class WerkREST extends AbstractVerticle {
 			}
 
 			try {
-				JobCollection jobs = werkService.getJobs(jobFilters.getFrom(), jobFilters.getTo(),
+				JobCollection<Long> jobs = werkService.getJobs(jobFilters.getFrom(), jobFilters.getTo(), 
+						jobFilters.getFromExec(), jobFilters.getToExec(),
 						jobFilters.getJobTypesAndVersions(), jobFilters.getParentJobIds(), jobFilters.getJobIds(),
 						jobFilters.getCurrentStepTypes(), jobFilters.getPageInfo());
 				
-				JSONArray arr = new JSONArray();
-				for (JobPOJO<Long> job : jobs.getJobs())
-					arr.put(jobStepSerializer.serializeJob(job));
+				JSONObject jsonObject = jobStepSerializer.serializeJobCollection(jobs);
 				
-				routingContext.response().putHeader("content-type", "application/json").end(arr.toString());
+				routingContext.response().putHeader("content-type", "application/json").end(jsonObject.toString());
 			} catch (Exception e) {
 				logger.error(e, e);
 				sendStatus(400, response);

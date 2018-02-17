@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 
@@ -23,11 +24,14 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class JobFiltersSerializer<J> {
 	protected TimeProvider timeProvider;
-	protected JobIdSerializer<J> jobIdSerializer; 
+	protected JobIdSerializer<J> jobIdSerializer;
+	protected PageInfoSerializer pageInfoSerializer;
 	
 	public JobFilters<J> deserializeJobFilters(JSONObject filtersJSON) {
 		Optional<Timestamp> from = Optional.empty();
 		Optional<Timestamp> to = Optional.empty();
+		Optional<Timestamp> fromExec = Optional.empty();
+		Optional<Timestamp> toExec = Optional.empty();
 		Optional<Map<String, Long>> jobTypes = Optional.empty();
 		Optional<Collection<J>> parentJobIds = Optional.empty();
 		Optional<Collection<J>> jobIds = Optional.empty();
@@ -38,6 +42,10 @@ public class JobFiltersSerializer<J> {
 			from = Optional.of(timeProvider.createTimestamp(filtersJSON.getString("from")));
 		if (filtersJSON.has("to"))
 			to = Optional.of(timeProvider.createTimestamp(filtersJSON.getString("to")));
+		if (filtersJSON.has("fromExec"))
+			fromExec = Optional.of(timeProvider.createTimestamp(filtersJSON.getString("from")));
+		if (filtersJSON.has("toExec"))
+			toExec = Optional.of(timeProvider.createTimestamp(filtersJSON.getString("to")));
 		if (filtersJSON.has("jobTypes")) {
 			Map<String, Long> jobTypesMap = new HashMap<>();
 			
@@ -90,6 +98,58 @@ public class JobFiltersSerializer<J> {
 			pageInfo = Optional.of(pageInfoObj);
 		}
 		
-		return new JobFilters<>(from, to, jobTypes, parentJobIds, jobIds, currentStepTypes, pageInfo);
+		return new JobFilters<>(from, to, fromExec, toExec, jobTypes, parentJobIds, jobIds, currentStepTypes, pageInfo);
+	}
+
+	public JSONObject serializeJobFilters(JobFilters<J> filters) {
+		JSONObject filtersJSON = new JSONObject();
+		
+		if (filters.getFrom().isPresent())
+			filtersJSON.put("from", filters.getFrom().get().getRawTime());
+		if (filters.getTo().isPresent())
+			filtersJSON.put("to", filters.getTo().get().getRawTime());
+		if (filters.getFromExec().isPresent())
+			filtersJSON.put("fromExec", filters.getFromExec().get().getRawTime());
+		if (filters.getToExec().isPresent())
+			filtersJSON.put("toExec", filters.getToExec().get().getRawTime());
+		if (filters.getJobTypesAndVersions().isPresent()) {
+			Map<String, Long> jobTypesMap = filters.getJobTypesAndVersions().get();
+			JSONObject jobTypesJSON = new JSONObject();
+			
+			for (Entry<String, Long> ent : jobTypesMap.entrySet())
+				jobTypesJSON.put(ent.getKey(), ent.getValue());
+			
+			filtersJSON.put("jobTypes", jobTypesJSON);
+		}
+		if (filters.getParentJobIds().isPresent()) {
+			JSONArray arr = new JSONArray();
+			
+			for(J j : filters.getParentJobIds().get())
+				arr.put(jobIdSerializer.serializeJobId(j));
+			
+			filtersJSON.put("parentJobIds", arr);
+		}
+		if (filters.getJobIds().isPresent()) {
+			JSONArray arr = new JSONArray();
+			
+			for(J j : filters.getJobIds().get())
+				arr.put(jobIdSerializer.serializeJobId(j));
+			
+			filtersJSON.put("jobIds", arr);
+		}
+		if (filters.getCurrentStepTypes().isPresent()) {
+			JSONArray arr = new JSONArray();
+			
+			for(String s : filters.getCurrentStepTypes().get())
+				arr.put(s);
+			
+			filtersJSON.put("currentStepTypes", arr);
+		}
+		if (filters.getPageInfo().isPresent()) {
+			JSONObject pageInfoJSON = pageInfoSerializer.serializePageInfo(filters.getPageInfo().get());
+			filtersJSON.put("pageInfo", pageInfoJSON);
+		}
+		
+		return filtersJSON;
 	}
 }

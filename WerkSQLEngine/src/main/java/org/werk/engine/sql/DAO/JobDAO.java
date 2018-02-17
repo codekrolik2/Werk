@@ -35,6 +35,7 @@ import org.werk.meta.VersionJobInitInfo;
 import org.werk.meta.inputparameters.JobInputParameter;
 import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.jobs.JoinStatusRecord;
+import org.werk.processing.jobs.MapJoinStatusRecord;
 import org.werk.processing.parameters.Parameter;
 import org.werk.service.JobCollection;
 import org.werk.service.PageInfo;
@@ -289,6 +290,8 @@ public class JobDAO {
 			JobStatus jobStatus = job.getStatus();
 			long newStepId = job.getCurrentStepId();
 			
+			int stepCount = job.getStepCount();
+			
 			//3. Create new step or update existing step
 			if (init.getNewStepInfo().isPresent()) {
 				//3.1 Create new step
@@ -302,11 +305,11 @@ public class JobDAO {
 				//Create step
 				if (newStepInfo.isNewStepRollback()) {
 					jobStatus = JobStatus.ROLLING_BACK;
-					newStepId = stepDAO.createRollbackStep(tc, jobId, newStepInfo.getNewStepTypeName(), job.stepCount++,
+					newStepId = stepDAO.createRollbackStep(tc, jobId, newStepInfo.getNewStepTypeName(), stepCount++,
 						Optional.of(stepParameters), newStepInfo.getStepsToRollback());
 				} else {
 					jobStatus = JobStatus.PROCESSING;
-					newStepId = stepDAO.createProcessingStep(tc, jobId, newStepInfo.getNewStepTypeName(), job.stepCount++,
+					newStepId = stepDAO.createProcessingStep(tc, jobId, newStepInfo.getNewStepTypeName(), stepCount++,
 						Optional.of(stepParameters));
 				}
 			} else {
@@ -332,7 +335,7 @@ public class JobDAO {
 			}
 			
 			this.updateJob(tc, jobId, newStepId, jobStatus, job.getNextExecutionTime(), 
-					job.getJobParameters(), job.getStepCount(), job.getJoinStatusRecord());
+					job.getJobParameters(), stepCount, job.getJoinStatusRecord());
 		} finally {
 			if (pst != null) pst.close();
 		}
@@ -341,7 +344,8 @@ public class JobDAO {
 	public DBJobPOJO loadJob(TransactionContext tc, long jobId) throws SQLException {
 		List<Long> jobIds = new ArrayList<>();
 		jobIds.add(jobId);
-		JobCollection jobs = loadJobs(tc, Optional.empty(), Optional.empty(), Optional.of(jobIds), 
+		JobCollection<Long> jobs = loadJobs(tc, Optional.empty(), Optional.empty(), Optional.empty(), 
+				Optional.empty(), Optional.of(jobIds), 
 				Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
 		
 		if ((jobs == null) || (jobs.getJobs() == null) || (jobs.getJobs().isEmpty()))
@@ -353,7 +357,8 @@ public class JobDAO {
 		return null;
 	}
 	
-	public JobCollection loadJobs(TransactionContext tc, Optional<Timestamp> from, Optional<Timestamp> to,
+	public JobCollection<Long> loadJobs(TransactionContext tc, Optional<Timestamp> from, Optional<Timestamp> to,
+			Optional<Timestamp> fromExec, Optional<Timestamp> toExec,
 			Optional<Collection<Long>> jobIds, Optional<Collection<Long>> parentJobIds, 
 			Optional<Map<String, Long>> jobTypesAndVersions, 
 			Optional<Set<String>> currentStepTypes, Optional<PageInfo> pageInfo) throws SQLException {
@@ -375,8 +380,12 @@ public class JobDAO {
 					"	WHERE j.current_step_id = s.id_step");
 			
 			if (from.isPresent())
-				sb.append(" AND j.next_execution_time >= ? ");
+				sb.append(" AND j.creation_time >= ? ");
 			if (to.isPresent())
+				sb.append(" AND j.creation_time <= ? ");
+			if (fromExec.isPresent())
+				sb.append(" AND j.next_execution_time >= ? ");
+			if (toExec.isPresent())
 				sb.append(" AND j.next_execution_time <= ? ");
 			if (jobIds.isPresent() && !jobIds.get().isEmpty()) {
 				sb.append(" AND j.id_job IN (");
@@ -443,6 +452,10 @@ public class JobDAO {
 				pst.setLong(++count, ((LongTimestamp)from.get()).getTimeMs());
 			if (to.isPresent())
 				pst.setLong(++count, ((LongTimestamp)to.get()).getTimeMs());
+			if (fromExec.isPresent())
+				pst.setLong(++count, ((LongTimestamp)fromExec.get()).getTimeMs());
+			if (toExec.isPresent())
+				pst.setLong(++count, ((LongTimestamp)toExec.get()).getTimeMs());
 			if (jobIds.isPresent() && !jobIds.get().isEmpty())
 				for (long jobId : jobIds.get())
 					pst.setLong(++count, jobId);
@@ -474,7 +487,7 @@ public class JobDAO {
 			
 			long foundRows = JDBCTransactionFactory.getFoundRows(connection);
 			
-			return new JobCollection(pageInfo, jobColl, foundRows);
+			return new JobCollection<Long>(pageInfo, jobColl, foundRows);
 		} finally {
 			if (pst != null) pst.close();
 		}
@@ -540,7 +553,7 @@ public class JobDAO {
 				joinedJobs.put(joinedJobId, joinedJobStatus);
 			}
 			
-			JoinStatusRecord<Long> jsr = new SQLJoinStatusRecord<Long>(joinedJobs, joinParameterName, 
+			JoinStatusRecord<Long> jsr = new MapJoinStatusRecord<Long>(joinedJobs, joinParameterName, 
 					waitForNJobs);
 			joinStatusRecord = Optional.of(jsr);
 		}
@@ -549,8 +562,8 @@ public class JobDAO {
 		Timestamp creationTime = ((LongTimeProvider)timeProvider).createTimestamp(rs.getLong(18));
 		
 		dbJobPOJO = new DBJobPOJO(jobTypeName, version, jobId, jobName, parentJobId, stepCount,
-				currentStepId, currentStepType, jobInitialParameters, status, creationTime, nextExecutionTime, 
-				jobParameters, joinStatusRecord, idLocker);
+				currentStepType, jobInitialParameters, status, creationTime, nextExecutionTime, 
+				jobParameters, joinStatusRecord, currentStepId, idLocker);
 		
 		return dbJobPOJO;
 	}

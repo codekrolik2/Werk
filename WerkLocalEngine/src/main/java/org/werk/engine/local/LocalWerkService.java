@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.json.JSONObject;
 import org.pillar.time.interfaces.Timestamp;
 import org.werk.config.WerkConfig;
 import org.werk.data.JobPOJO;
@@ -53,7 +54,8 @@ public class LocalWerkService implements WerkService<Long> {
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-	public JobCollection getJobs(Optional<Timestamp> from, Optional<Timestamp> to, Optional<Map<String, Long>> jobTypesAndVersions,
+	public JobCollection getJobs(Optional<Timestamp> from, Optional<Timestamp> to, 
+			Optional<Timestamp> fromExec, Optional<Timestamp> toExec, Optional<Map<String, Long>> jobTypesAndVersions,
 			Optional<Collection<Long>> parentJobIds, Optional<Collection<Long>> jobIds, Optional<Set<String>> currentStepTypes, 
 			Optional<PageInfo> pageInfo) throws Exception {
 		Collection<JobPOJO<Long>> jobs;
@@ -68,11 +70,17 @@ public class LocalWerkService implements WerkService<Long> {
 		else
 			jobs = (Collection<JobPOJO<Long>>)(List)localJobManager.getAllJobs();
 		
+		if (fromExec.isPresent())
+			jobs = jobs.stream().filter(a -> a.getNextExecutionTime().compareTo(fromExec.get()) >= 0).collect(Collectors.toList());
+		
+		if (toExec.isPresent())
+			jobs = jobs.stream().filter(a -> a.getNextExecutionTime().compareTo(toExec.get()) <= 0).collect(Collectors.toList());
+		
 		if (from.isPresent())
-			jobs = jobs.stream().filter(a -> a.getNextExecutionTime().compareTo(from.get()) >= 0).collect(Collectors.toList());
+			jobs = jobs.stream().filter(a -> a.getCreationTime().compareTo(from.get()) >= 0).collect(Collectors.toList());
 		
 		if (to.isPresent())
-			jobs = jobs.stream().filter(a -> a.getNextExecutionTime().compareTo(to.get()) <= 0).collect(Collectors.toList());
+			jobs = jobs.stream().filter(a -> a.getCreationTime().compareTo(to.get()) <= 0).collect(Collectors.toList());
 		
 		if (jobTypesAndVersions.isPresent())
 			jobs = jobs.stream().
@@ -144,5 +152,12 @@ public class LocalWerkService implements WerkService<Long> {
 	@Override
 	public void jobsAdded() {
 		// LocalWerkService has no job loader to notify
+	}
+
+	@Override
+	public JSONObject getServerInfo() {
+		JSONObject info = new JSONObject();
+		info.put("server", "In-Process");
+		return info;
 	}
 }

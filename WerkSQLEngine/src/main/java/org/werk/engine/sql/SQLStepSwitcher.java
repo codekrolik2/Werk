@@ -15,7 +15,6 @@ import org.werk.config.WerkConfig;
 import org.werk.engine.StepSwitchResult;
 import org.werk.engine.WerkStepSwitcher;
 import org.werk.engine.sql.DAO.JobDAO;
-import org.werk.engine.sql.DAO.SQLJoinStatusRecord;
 import org.werk.engine.sql.DAO.StepDAO;
 import org.werk.engine.sql.exception.SQLStepSwitcherException;
 import org.werk.exceptions.StepLogLimitExceededException;
@@ -23,6 +22,7 @@ import org.werk.meta.StepType;
 import org.werk.processing.jobs.Job;
 import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.jobs.JoinStatusRecord;
+import org.werk.processing.jobs.MapJoinStatusRecord;
 import org.werk.processing.parameters.Parameter;
 import org.werk.processing.steps.ExecutionResult;
 import org.werk.processing.steps.StepExec;
@@ -123,7 +123,7 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 			String joinParameterName = exec.getParameterName().get();
 			Optional<Integer> waitForNJobs = exec.getWaitForNJobs();
 			
-			JoinStatusRecord<Long> joinStatusRecord = new SQLJoinStatusRecord<Long>(joinedJobs, 
+			JoinStatusRecord<Long> joinStatusRecord = new MapJoinStatusRecord<Long>(joinedJobs, 
 					joinParameterName, waitForNJobs.isPresent() ? waitForNJobs.get() : joinedJobs.size());
 			
 			sqlJob.setJoinStatusRecord(Optional.of(joinStatusRecord));

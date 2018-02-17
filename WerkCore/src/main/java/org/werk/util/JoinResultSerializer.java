@@ -16,7 +16,7 @@ public class JoinResultSerializer<J> {
 		this.jobIdSerializer = jobIdSerializer;
 	}
 	
-	public JoinResult<J> deserializeJoinResult(JSONObject joinResultJSON) {
+	public JoinResultImpl<J> deserializeJoinResult(JSONObject joinResultJSON) {
 		Map<J, JobStatus> joinedJobs = new HashMap<>();
 		
 		Iterator<?> keys = joinResultJSON.keys();

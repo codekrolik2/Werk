@@ -4,45 +4,32 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.pillar.time.interfaces.Timestamp;
-import org.werk.data.JobPOJO;
+import org.werk.data.JobPOJOImpl;
 import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.jobs.JoinStatusRecord;
 import org.werk.processing.parameters.Parameter;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
-@AllArgsConstructor
-public class DBJobPOJO implements JobPOJO<Long>{
-	@Getter
-	protected String jobTypeName;
-	@Getter
-	protected long version;
-	@Getter
-	protected Long jobId;
-	@Getter
-	protected Optional<String> jobName;
-	@Getter
-	protected Optional<Long> parentJobId;
-	@Getter
-	protected int stepCount;
+public class DBJobPOJO extends JobPOJOImpl<Long> {
 	@Getter @Setter
 	protected long currentStepId;
-	@Getter @Setter
-	protected String currentStepTypeName;
-	@Getter
-	protected Map<String, Parameter> jobInitialParameters;
-	@Getter @Setter
-	protected JobStatus status;
-	@Getter
-	protected Timestamp creationTime;
-	@Getter
-	protected Timestamp nextExecutionTime;
-	@Getter
-	protected Map<String, Parameter> jobParameters;
-	@Getter @Setter
-	protected Optional<JoinStatusRecord<Long>> joinStatusRecord;
 	@Getter
 	protected Optional<Long> idLocker;
+	
+	public DBJobPOJO(String jobTypeName, long version, Long jobId, Optional<String> jobName, Optional<Long> parentJobId,
+			int stepCount, String currentStepTypeName, Map<String, Parameter> jobInitialParameters, JobStatus status,
+			Timestamp creationTime, Timestamp nextExecutionTime, Map<String, Parameter> jobParameters,
+			Optional<JoinStatusRecord<Long>> joinStatusRecord, long currentStepId, Optional<Long> idLocker) {
+		super(jobTypeName, version, jobId, jobName, parentJobId, stepCount, currentStepTypeName, jobInitialParameters, status,
+				creationTime, nextExecutionTime, jobParameters, joinStatusRecord);
+		
+		this.currentStepId = currentStepId;
+		this.idLocker = idLocker;
+	}
+	
+	public void setJoinStatusRecord(Optional<JoinStatusRecord<Long>> joinStatusRecord) {
+		this.joinStatusRecord = joinStatusRecord;
+	}
 }

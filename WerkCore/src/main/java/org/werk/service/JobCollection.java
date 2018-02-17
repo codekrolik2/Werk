@@ -9,11 +9,11 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @AllArgsConstructor
-public class JobCollection {
+public class JobCollection<J> {
 	@Getter
 	Optional<PageInfo> pageInfo;
 	@Getter
-	Collection<JobPOJO<Long>> jobs;
+	Collection<JobPOJO<J>> jobs;
 	@Getter
 	long jobCount;
 }

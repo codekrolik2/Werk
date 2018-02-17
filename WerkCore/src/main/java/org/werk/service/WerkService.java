@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.json.JSONObject;
 import org.pillar.time.interfaces.Timestamp;
 import org.werk.meta.JobInitInfo;
 import org.werk.meta.JobRestartInfo;
@@ -21,9 +22,10 @@ public interface WerkService<J> {
 	
 	//JOB RETRIEVAL
 	ReadOnlyJob<J> getJobAndHistory(J jobId) throws Exception;
-	JobCollection getJobs(Optional<Timestamp> from, Optional<Timestamp> to, 
-			Optional<Map<String, Long>> jobTypesAndVersions, Optional<Collection<J>> parentJobIds, 
-			Optional<Collection<J>> jobIds, Optional<Set<String>> currentStepTypes, 
+	JobCollection<J> getJobs(Optional<Timestamp> from, Optional<Timestamp> to,
+			Optional<Timestamp> fromExec, Optional<Timestamp> toExec,
+			Optional<Map<String, Long>> jobTypesAndVersions, Optional<Collection<J>> parentJobIds,
+			Optional<Collection<J>> jobIds, Optional<Set<String>> currentStepTypes,
 			Optional<PageInfo> pageInfo) throws Exception;
 	
 	//JOB METADATA RETRIEVAL
@@ -36,4 +38,10 @@ public interface WerkService<J> {
 	
 	//NOTIFICATION
 	void jobsAdded();
+	
+	/**
+	 * JSONObject json = new JSONObject(jsonString); // Convert text to object
+	 * System.out.println(json.toString(4)); // Print it with specified indentation
+	 */
+	JSONObject getServerInfo();
 }

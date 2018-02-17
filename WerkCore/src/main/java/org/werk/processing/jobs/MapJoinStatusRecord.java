@@ -1,4 +1,4 @@
-package org.werk.engine.sql.DAO;
+package org.werk.processing.jobs;
 
 import java.util.Collection;
 import java.util.Map;
@@ -10,7 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @AllArgsConstructor
-public class SQLJoinStatusRecord<J> implements JoinStatusRecord<J> {
+public class MapJoinStatusRecord<J> implements JoinStatusRecord<J> {
 	@Getter
 	Map<J, JobStatus> joinedJobs;
 	@Getter

@@ -9,16 +9,24 @@ import java.util.Optional;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.pillar.time.interfaces.TimeProvider;
+import org.pillar.time.interfaces.Timestamp;
 import org.werk.data.JobPOJO;
+import org.werk.data.JobPOJOImpl;
 import org.werk.data.StepPOJO;
 import org.werk.engine.JobIdSerializer;
 import org.werk.meta.JobRestartInfo;
 import org.werk.meta.NewStepRestartInfo;
 import org.werk.meta.impl.JobRestartInfoImpl;
 import org.werk.meta.impl.NewStepRestartInfoImpl;
+import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.jobs.JoinStatusRecord;
+import org.werk.processing.jobs.MapJoinStatusRecord;
 import org.werk.processing.parameters.Parameter;
 import org.werk.processing.readonly.ReadOnlyJob;
+import org.werk.service.JobCollection;
+import org.werk.service.PageInfo;
+import org.werk.util.JoinResultImpl;
 import org.werk.util.JoinResultSerializer;
 import org.werk.util.ParameterContextSerializer;
 import org.werk.util.StepProcessingHistorySerializer;
@@ -31,6 +39,8 @@ public class JobStepSerializer<J> {
 	protected JoinResultSerializer<J> joinResultSerializer;
 	protected JobIdSerializer<J> jobIdSerializer;
 	protected StepProcessingHistorySerializer stepProcessingHistorySerializer;
+	protected PageInfoSerializer pageInfoSerializer;
+	protected TimeProvider timeProvider;
 	
 	public JSONObject serializeJobAndHistory(ReadOnlyJob<J> roJob) throws Exception {
 		JSONObject job = serializeJob(roJob);
@@ -74,11 +84,13 @@ public class JobStepSerializer<J> {
 		if (jobPOJO.getParentJobId().isPresent())
 			job.put("parentJobId", jobPOJO.getParentJobId().get());
 		job.put("stepCount", jobPOJO.getStepCount());
+		job.put("currentStepTypeName", jobPOJO.getCurrentStepTypeName());
 		
 		job.put("jobInitialParameters", contextSerializer.serializeParameters(jobPOJO.getJobInitialParameters()));
 		
-		job.put("status", jobPOJO.getStatus());
-		job.put("nextExecutionTime", jobPOJO.getNextExecutionTime());
+		job.put("status", jobPOJO.getStatus().toString());
+		job.put("creationTime", jobPOJO.getCreationTime().getRawTime());
+		job.put("nextExecutionTime", jobPOJO.getNextExecutionTime().getRawTime());
 		job.put("jobParameters", contextSerializer.serializeParameters(jobPOJO.getJobParameters()));
 		
 		if (jobPOJO.getJoinStatusRecord().isPresent())
@@ -87,11 +99,66 @@ public class JobStepSerializer<J> {
 		return job;
 	}
 	
+	public JobPOJO<J> deserializeJob(JSONObject job) {
+		String jobTypeName;
+		long version;
+		J jobId;
+		Optional<String> jobName = Optional.empty();
+		Optional<J> parentJobId = Optional.empty();
+		int stepCount;
+		String currentStepTypeName;
+		Map<String, Parameter> jobInitialParameters;
+		JobStatus status;
+		Timestamp creationTime;
+		Timestamp nextExecutionTime;
+		Map<String, Parameter> jobParameters;
+		Optional<JoinStatusRecord<J>> joinStatusRecord = Optional.empty();
+		
+		jobTypeName = job.getString("jobTypeName");
+		version = job.getLong("version");
+		
+		jobId = jobIdSerializer.deSerializeJobId(job.getString("jobId"));
+		
+		if (job.has("jobName"))
+			jobName = Optional.of(job.getString("jobName"));
+		if (job.has("parentJobId"))
+			parentJobId = Optional.of(jobIdSerializer.deSerializeJobId(job.getString("parentJobId")));
+		
+		stepCount = job.getInt("stepCount");
+		currentStepTypeName = job.getString("currentStepTypeName");
+		
+		jobInitialParameters = contextSerializer.deserializeParameters(job.getJSONObject("jobInitialParameters"));
+		
+		status = JobStatus.valueOf(job.getString("status"));
+		
+		creationTime = timeProvider.createTimestamp(job.getString("creationTime"));
+		nextExecutionTime = timeProvider.createTimestamp(job.getString("nextExecutionTime"));
+		
+		jobParameters = contextSerializer.deserializeParameters(job.getJSONObject("jobParameters"));
+		
+		if (job.has("joinStatusRecord"))
+			joinStatusRecord = Optional.of(deserializeMapJoinStatusRecord(job.getJSONObject("joinStatusRecord")));
+		
+		return new JobPOJOImpl<>(
+				jobTypeName, version, jobId, jobName, parentJobId, stepCount, currentStepTypeName, jobInitialParameters, 
+				status, creationTime, nextExecutionTime, jobParameters, joinStatusRecord
+			);
+	}
+	
 	public JSONObject serializeJoinStatusRecord(JoinStatusRecord<J> rec) {
 		JSONObject resultJSON = joinResultSerializer.serializeJoinResult(rec);
 		resultJSON.put("waitForNJobs", rec.getWaitForNJobs());
 		resultJSON.put("joinParameterName", rec.getJoinParameterName());
 		return resultJSON;
+	}
+
+	public JoinStatusRecord<J> deserializeMapJoinStatusRecord(JSONObject recJSON) {
+		JoinResultImpl<J> joinResult = joinResultSerializer.deserializeJoinResult(recJSON);
+
+		int waitForNJobs = recJSON.getInt("waitForNJobs");
+		String joinParameterName = recJSON.getString("joinParameterName");
+		
+		return new MapJoinStatusRecord<J>(joinResult.getJoinedJobs(), joinParameterName, waitForNJobs);
 	}
 	
 	public JobRestartInfo<J> deserializeJobRestartInfo(JSONObject jobRestartInfoJSON) {
@@ -160,5 +227,42 @@ public class JobStepSerializer<J> {
 		NewStepRestartInfoImpl newStepRestartInfo = new NewStepRestartInfoImpl(newStepTypeName, 
 				isNewStepRollback, stepsToRollback);
 		return newStepRestartInfo;
+	}
+	
+	public JSONObject serializeJobCollection(JobCollection<J> jobCollection) {
+		JSONObject jobCollectionJSON = new JSONObject();
+		
+		JSONArray arr = new JSONArray();
+		if ((jobCollection.getJobs() != null) && (!jobCollection.getJobs().isEmpty()))
+			for (JobPOJO<J> job : jobCollection.getJobs())
+				arr.put(serializeJob(job));
+		jobCollectionJSON.put("jobs", arr);
+		
+		if (jobCollection.getPageInfo().isPresent())
+			jobCollectionJSON.put("pageInfo", 
+					pageInfoSerializer.serializePageInfo(jobCollection.getPageInfo().get()));
+		
+		jobCollectionJSON.put("jobCount", jobCollection.getJobCount());
+		
+		return jobCollectionJSON;
+	}
+	
+	public JobCollection<J> deserializeJobCollection(JSONObject jobCollectionJSON) {
+		Optional<PageInfo> pageInfo = Optional.empty();
+		if (jobCollectionJSON.has("pageInfo"))
+			pageInfo = Optional.of(
+					pageInfoSerializer.deserializePageInfo(new JSONObject(jobCollectionJSON.getString("pageInfo")))
+				);
+		
+		List<JobPOJO<J>> jobs = new ArrayList<>();
+		JSONArray jobsJSONArray = jobCollectionJSON.getJSONArray("jobs");
+		for (int i = 0; i < jobsJSONArray.length(); i++) {
+			JSONObject jobJSON = jobsJSONArray.getJSONObject(i);
+			jobs.add(deserializeJob(jobJSON));
+		}
+		
+		long jobCount = jobCollectionJSON.getLong("jobCount");
+		
+		return new JobCollection<J>(pageInfo, jobs, jobCount);
 	}
 }

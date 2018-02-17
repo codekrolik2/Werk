@@ -30,6 +30,7 @@ import lombok.Getter;
 
 public class SQLWerkRunner {
 	protected PulseRunnable<Long> pulseRunnable;
+	@Getter
 	protected PulseReg<Long> pulse;
 	
 	protected Optional<Integer> jobLimit;

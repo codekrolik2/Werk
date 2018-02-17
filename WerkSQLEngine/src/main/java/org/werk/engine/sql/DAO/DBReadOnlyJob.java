@@ -20,10 +20,10 @@ public class DBReadOnlyJob extends DBJobPOJO implements ReadOnlyJob<Long> {
 	public DBReadOnlyJob(DBJobPOJO dbJobPOJO, TransactionFactory transactionFactory, 
 			TransactionContext stepTransactionContext, StepDAO stepDAO) {
 		super(dbJobPOJO.getJobTypeName(), dbJobPOJO.getVersion(), dbJobPOJO.getJobId(), dbJobPOJO.getJobName(), 
-				dbJobPOJO.getParentJobId(), dbJobPOJO.getStepCount(), dbJobPOJO.getCurrentStepId(), 
+				dbJobPOJO.getParentJobId(), dbJobPOJO.getStepCount(), 
 				dbJobPOJO.getCurrentStepTypeName(), dbJobPOJO.getJobInitialParameters(), dbJobPOJO.getStatus(), 
 				dbJobPOJO.getCreationTime(), dbJobPOJO.getNextExecutionTime(), dbJobPOJO.getJobParameters(), 
-				dbJobPOJO.getJoinStatusRecord(), dbJobPOJO.getIdLocker());
+				dbJobPOJO.getJoinStatusRecord(), dbJobPOJO.getCurrentStepId(), dbJobPOJO.getIdLocker());
 		this.transactionFactory = transactionFactory;
 		this.stepTransactionContext = stepTransactionContext;
 		this.stepDAO = stepDAO;

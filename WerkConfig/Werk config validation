@@ -14,6 +14,7 @@
 *) StepTransitioner's fields marked as @Transition and @RollbackTransition must be Step's allowed transitions 
 *) Steps with the same name from multiple configs must be identical
 *) Steps must not have multiple @JobParam or @StepParam fields mapped to the same parameter
+*) No init parameter signatures with the same name
 
 ----------------------------------------------------------------------
 
