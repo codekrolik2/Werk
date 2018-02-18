@@ -66,7 +66,7 @@ public class DBReadOnlyJob extends DBJobPOJO implements ReadOnlyJob<Long> {
 	}
 
 	@Override
-	public StepPOJO getStep(long stepNumber) throws Exception {
+	public StepPOJO getStep(int stepNumber) throws Exception {
 		TransactionContext tc = null;
 		try {
 			if (stepTransactionContext != null)

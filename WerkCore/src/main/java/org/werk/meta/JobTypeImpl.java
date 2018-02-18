@@ -1,11 +1,9 @@
-package org.werk.config;
+package org.werk.meta;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.werk.meta.JobType;
-import org.werk.meta.OverflowAction;
 import org.werk.meta.inputparameters.JobInputParameter;
 
 import lombok.AllArgsConstructor;

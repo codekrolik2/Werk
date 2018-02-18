@@ -110,7 +110,7 @@ public class SQLWerkJob extends WerkJob<Long> {
 	}
 
 	@Override
-	public StepPOJO getStep(long stepNumber) throws Exception {
+	public StepPOJO getStep(int stepNumber) throws Exception {
 		TransactionContext tc = null;
 		try {
 			tc = getOrCreateTC();

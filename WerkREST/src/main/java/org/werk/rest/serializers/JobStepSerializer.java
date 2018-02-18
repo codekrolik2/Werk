@@ -14,6 +14,7 @@ import org.pillar.time.interfaces.Timestamp;
 import org.werk.data.JobPOJO;
 import org.werk.data.JobPOJOImpl;
 import org.werk.data.StepPOJO;
+import org.werk.data.StepPOJOImpl;
 import org.werk.engine.JobIdSerializer;
 import org.werk.meta.JobRestartInfo;
 import org.werk.meta.NewStepRestartInfo;
@@ -24,6 +25,8 @@ import org.werk.processing.jobs.JoinStatusRecord;
 import org.werk.processing.jobs.MapJoinStatusRecord;
 import org.werk.processing.parameters.Parameter;
 import org.werk.processing.readonly.ReadOnlyJob;
+import org.werk.processing.readonly.ReadOnlyJobImpl;
+import org.werk.processing.steps.StepProcessingLogRecord;
 import org.werk.service.JobCollection;
 import org.werk.service.PageInfo;
 import org.werk.util.JoinResultImpl;
@@ -55,6 +58,36 @@ public class JobStepSerializer<J> {
 		return job;
 	}
 	
+	public ReadOnlyJob<J> deserializeJobAndHistory(JSONObject roJobJSON) throws Exception {
+		JobPOJO<J> job = deserializeJob(roJobJSON);
+		
+		List<StepPOJO> steps = new ArrayList<>();
+		JSONArray history = roJobJSON.getJSONArray("history");
+		for (int i = 0; i < history.length(); i++) {
+			JSONObject stepJSON = history.getJSONObject(i);
+			StepPOJO step = deserializeStep(stepJSON);
+			
+			steps.add(step);
+		}
+		
+		String jobTypeName = job.getJobTypeName();
+		long version = job.getVersion();
+		J jobId = job.getJobId();
+		Optional<String> jobName = job.getJobName();
+		Optional<J> parentJobId = job.getParentJobId();
+		int stepCount = job.getStepCount();
+		String currentStepTypeName = job.getCurrentStepTypeName();
+		Map<String, Parameter> jobInitialParameters = job.getJobInitialParameters();
+		JobStatus status = job.getStatus();
+		Timestamp creationTime = job.getCreationTime();
+		Timestamp nextExecutionTime = job.getNextExecutionTime();
+		Map<String, Parameter> jobParameters = job.getJobParameters();
+		Optional<JoinStatusRecord<J>> joinStatusRecord = job.getJoinStatusRecord();
+		
+		return new ReadOnlyJobImpl<J>(jobTypeName, version, jobId, jobName, parentJobId, stepCount, currentStepTypeName, jobInitialParameters, status,
+				creationTime, nextExecutionTime, jobParameters, joinStatusRecord, steps);
+	}
+	
 	public JSONObject serializeStep(StepPOJO stepPOJO) {
 		JSONObject step = new JSONObject();
 		
@@ -69,6 +102,26 @@ public class JobStepSerializer<J> {
 		step.put("processingLog", stepProcessingHistorySerializer.serializeLog(stepPOJO.getProcessingLog()));
 		
 		return step;
+	}
+	
+	public StepPOJO deserializeStep(JSONObject stepJSON) {
+		String stepTypeName = stepJSON.getString("stepTypeName");
+		boolean isRollback = stepJSON.getBoolean("isRollback");
+		int stepNumber = stepJSON.getInt("stepNumber");
+		
+		JSONArray rollbackStepNumbersJSON = stepJSON.getJSONArray("rollbackStepNumbers");
+		List<Integer> rollbackStepNumbers = new ArrayList<Integer>();
+		for (int i = 0; i < rollbackStepNumbersJSON.length(); i++)
+			rollbackStepNumbers.add(rollbackStepNumbersJSON.getInt(i));
+		
+		int executionCount = stepJSON.getInt("executionCount");
+		Map<String, Parameter> stepParameters = 
+				contextSerializer.deserializeParameters(stepJSON.getJSONObject("stepParameters"));
+		List<StepProcessingLogRecord> processingLog = 
+				stepProcessingHistorySerializer.deserializeLog(stepJSON.getJSONObject("processingLog"));
+		
+		return new StepPOJOImpl(stepTypeName, isRollback, stepNumber, rollbackStepNumbers, 
+				executionCount, stepParameters, processingLog);
 	}
 	
 	public JSONObject serializeJob(JobPOJO<J> jobPOJO) {
@@ -161,6 +214,35 @@ public class JobStepSerializer<J> {
 		return new MapJoinStatusRecord<J>(joinResult.getJoinedJobs(), joinParameterName, waitForNJobs);
 	}
 	
+	public JSONObject serializeJobRestartInfo(JobRestartInfo<J> jobRestartInfo) throws Exception {
+		JSONObject jobRestartInfoJSON = new JSONObject();
+		jobRestartInfoJSON.put("jobId", jobIdSerializer.serializeJobId(jobRestartInfo.getJobId()));
+		
+		jobRestartInfoJSON.put("jobParametersUpdate", 
+				contextSerializer.serializeParameters(jobRestartInfo.getJobParametersUpdate()));
+
+		JSONArray jobParametersToRemoveArr = new JSONArray();
+		for (String prmName : jobRestartInfo.getJobParametersToRemove())
+			jobParametersToRemoveArr.put(prmName);
+		jobRestartInfoJSON.put("jobParametersToRemove", jobParametersToRemoveArr);
+		
+		jobRestartInfoJSON.put("stepParametersUpdate",
+				contextSerializer.serializeParameters(jobRestartInfo.getJobParametersUpdate()));
+		
+		JSONArray stepParametersToRemoveArr = new JSONArray();
+		for (String prmName : jobRestartInfo.getStepParametersToRemove())
+			stepParametersToRemoveArr.put(prmName);
+		jobRestartInfoJSON.put("stepParametersToRemove", stepParametersToRemoveArr);
+		
+		if (jobRestartInfo.getNewStepInfo().isPresent())
+			jobRestartInfoJSON.put("newStepInfo", serializeNewStepRestartInfo(jobRestartInfo.getNewStepInfo().get()));
+		
+		if (jobRestartInfo.getJoinStatusRecord().isPresent())
+			jobRestartInfoJSON.put("joinStatusRecord", serializeJoinStatusRecord(jobRestartInfo.getJoinStatusRecord().get()));
+		
+		return jobRestartInfoJSON;
+	}
+	
 	public JobRestartInfo<J> deserializeJobRestartInfo(JSONObject jobRestartInfoJSON) {
 		J jobId = jobIdSerializer.deSerializeJobId(jobRestartInfoJSON.getString("jobId"));
 		//-------------------------------
@@ -227,6 +309,22 @@ public class JobStepSerializer<J> {
 		NewStepRestartInfoImpl newStepRestartInfo = new NewStepRestartInfoImpl(newStepTypeName, 
 				isNewStepRollback, stepsToRollback);
 		return newStepRestartInfo;
+	}
+	
+	public JSONObject serializeNewStepRestartInfo(NewStepRestartInfo newStepRestartInfo) {
+		JSONObject newStepRestartInfoObj = new JSONObject();
+		
+		newStepRestartInfoObj.put("newStepTypeName", newStepRestartInfo.getNewStepTypeName());
+		newStepRestartInfoObj.put("isNewStepRollback", newStepRestartInfo.isNewStepRollback());
+		
+		if (newStepRestartInfo.getStepsToRollback().isPresent()) {
+			JSONArray stepsToRollbackJSON = new JSONArray();
+			for (int step : newStepRestartInfo.getStepsToRollback().get())
+				stepsToRollbackJSON.put(step);
+			newStepRestartInfoObj.put("stepsToRollback", stepsToRollbackJSON);
+		}
+		
+		return newStepRestartInfoObj;
 	}
 	
 	public JSONObject serializeJobCollection(JobCollection<J> jobCollection) {

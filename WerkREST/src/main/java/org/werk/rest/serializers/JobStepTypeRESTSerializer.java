@@ -1,25 +1,85 @@
 package org.werk.rest.serializers;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.werk.meta.JobType;
+import org.werk.meta.JobTypeImpl;
+import org.werk.meta.OverflowAction;
+import org.werk.meta.StepExecFactory;
+import org.werk.meta.StepTransitionerFactory;
 import org.werk.meta.StepType;
+import org.werk.meta.StepTypeImpl;
 import org.werk.meta.inputparameters.DefaultValueJobInputParameter;
 import org.werk.meta.inputparameters.EnumJobInputParameter;
 import org.werk.meta.inputparameters.JobInputParameter;
 import org.werk.meta.inputparameters.RangeJobInputParameter;
+import org.werk.meta.inputparameters.impl.DefaultValueJobInputParameterImpl;
+import org.werk.meta.inputparameters.impl.EnumJobInputParameterImpl;
+import org.werk.meta.inputparameters.impl.JobInputParameterImpl;
+import org.werk.meta.inputparameters.impl.RangeJobInputParameterImpl;
 import org.werk.processing.parameters.BoolParameter;
 import org.werk.processing.parameters.DictionaryParameter;
 import org.werk.processing.parameters.DoubleParameter;
 import org.werk.processing.parameters.ListParameter;
 import org.werk.processing.parameters.LongParameter;
 import org.werk.processing.parameters.Parameter;
+import org.werk.processing.parameters.ParameterType;
 import org.werk.processing.parameters.StringParameter;
+import org.werk.processing.steps.StepExec;
+import org.werk.processing.steps.Transitioner;
+import org.werk.util.ParameterContextSerializer;
 
-public class JobStepTypeRESTSerializer {
+public class JobStepTypeRESTSerializer<J> {
+	ParameterContextSerializer parameterContextSerializer;
+	
+	public JobType deserializeJobType(JSONObject jobTypeJSON) {
+		String jobTypeName = jobTypeJSON.getString("jobTypeName");
+		long version = jobTypeJSON.getLong("version");
+		
+		String firstStepTypeName = jobTypeJSON.getString("firstStepTypeName");
+		
+		List<String> stepTypes = new ArrayList<>();
+		JSONArray stepTypesArray = jobTypeJSON.getJSONArray("stepTypes");
+		for (int i = 0; i < stepTypesArray.length(); i++)
+			stepTypes.add(stepTypesArray.getString(i));
+
+		String description = jobTypeJSON.getString("description");
+		
+		String jobConfig = jobTypeJSON.getString("jobConfig");
+		boolean isForceAcyclic = jobTypeJSON.getBoolean("forceAcyclic");
+
+		long historyLimit = jobTypeJSON.getLong("historyLimit");
+		OverflowAction historyOverflowAction = OverflowAction.valueOf(jobTypeJSON.getString("historyOverflowAction"));
+		
+		Map<String, List<JobInputParameter>> initParameters = new HashMap<>();
+		JSONObject parameterSets = jobTypeJSON.getJSONObject("initParameters");
+		Iterator<?> keys = parameterSets.keys();
+		while (keys.hasNext()) {
+		    String parameterSetName = (String)keys.next();
+		    JSONArray prms = parameterSets.getJSONArray(jobTypeName);
+		    
+		    List<JobInputParameter> jips = new ArrayList<>();
+		    for (int i = 0; i < prms.length(); i++) {
+		    	JSONObject jobInputParameterJSON = prms.getJSONObject(i);
+		    	jips.add(deserializeJobInputParameter(jobInputParameterJSON));
+		    }
+		    
+		    initParameters.put(parameterSetName, jips);
+		}
+		
+		return new JobTypeImpl(jobTypeName, stepTypes, initParameters, firstStepTypeName, description,
+				jobConfig, isForceAcyclic, version, historyLimit, historyOverflowAction);
+	}
+	
 	public JSONObject serializeJobType(JobType jobType) {
 		JSONObject jobTypeJSON = new JSONObject();
 		
@@ -37,7 +97,7 @@ public class JobStepTypeRESTSerializer {
 		jobTypeJSON.put("forceAcyclic", jobType.isForceAcyclic());
 		
 		jobTypeJSON.put("historyLimit", jobType.getHistoryLimit());
-		jobTypeJSON.put("historyOverflowAction", jobType.getHistoryOverflowAction());
+		jobTypeJSON.put("historyOverflowAction", jobType.getHistoryOverflowAction().toString());
 		
 		//-------------------------
 		
@@ -55,38 +115,124 @@ public class JobStepTypeRESTSerializer {
 		return jobTypeJSON;
 	}
 
+	public StepType<J> deserializeStepType(JSONObject stepType) {
+		String stepTypeName = stepType.getString("stepTypeName");
+		String processingDescription = stepType.getString("processingDescription");
+		String rollbackDescription = stepType.getString("rollbackDescription");
+		String execConfig = stepType.getString("execConfig");
+		String transitionerConfig = stepType.getString("transitionerConfig");
+		long logLimit = stepType.getLong("logLimit");
+		OverflowAction logOverflowAction = OverflowAction.valueOf(stepType.getString("logOverflowAction"));
+		boolean shortTransaction = stepType.getBoolean("shortTransaction");
+		
+		JSONArray allowedTransitionsJSON = stepType.getJSONArray("allowedTransitions");
+		Set<String> allowedTransitions = new HashSet<>();
+		for (int i = 0; i < allowedTransitionsJSON.length(); i++)
+			allowedTransitions.add(allowedTransitionsJSON.getString(i));
+		
+		JSONArray allowedRollbackTransitionsJSON = stepType.getJSONArray("allowedRollbackTransitions");
+		Set<String> allowedRollbackTransitions = new HashSet<>();
+		for (int i = 0; i < allowedRollbackTransitionsJSON.length(); i++)
+			allowedRollbackTransitions.add(allowedRollbackTransitionsJSON.getString(i));
+		
+		String stepExecClassName = stepType.getString("stepExec");
+		String stepTransitionerName = stepType.getString("transitioner");
+		
+		StepExecFactory<J> stepExecFactory = new StepExecFactory<J>() {
+			@Override public StepExec<J> createStepExec() throws Exception { return null; }
+			@SuppressWarnings("rawtypes")
+			@Override public Class getStepExecClass() { return null; }
+			@SuppressWarnings("unused")
+			public String getStepExecClassName() { return stepExecClassName; }
+		};
+		StepTransitionerFactory<J> stepTransitionerFactory = new StepTransitionerFactory<J>() {
+			@Override public Transitioner<J> createStepTransitioner() throws Exception { return null; }
+			@SuppressWarnings("rawtypes")
+			@Override public Class getTransitionerClass() { return null; }
+			@SuppressWarnings("unused")
+			public String getTransitionerClassName() { return stepTransitionerName; }
+		};
+		
+		return new StepTypeImpl<>(stepTypeName, allowedTransitions, allowedRollbackTransitions, stepExecFactory,
+				stepTransitionerFactory, processingDescription, rollbackDescription, execConfig,
+				transitionerConfig, logLimit, logOverflowAction, shortTransaction);
+	}
+	
 	public JSONObject serializeStepType(StepType<?> stepType) {
-		JSONObject jobTypeJSON = new JSONObject();
+		JSONObject stepTypeJSON = new JSONObject();
 		
-		jobTypeJSON.put("stepTypeName", stepType.getStepTypeName());
+		stepTypeJSON.put("stepTypeName", stepType.getStepTypeName());
 		
-		jobTypeJSON.put("allowedTransitions", stepType.getAllowedTransitions());
-		jobTypeJSON.put("allowedRollbackTransitions", stepType.getAllowedRollbackTransitions());
+		stepTypeJSON.put("allowedTransitions", stepType.getAllowedTransitions());
+		stepTypeJSON.put("allowedRollbackTransitions", stepType.getAllowedRollbackTransitions());
 		
-		jobTypeJSON.put("stepExec", stepType.getStepExecFactory().getStepExecClass());
-		jobTypeJSON.put("transitioner", stepType.getStepTransitionerFactory().getTransitionerClass());
+		stepTypeJSON.put("stepExec", stepType.getStepExecFactory().getStepExecClass().toString());
+		stepTypeJSON.put("transitioner", stepType.getStepTransitionerFactory().getTransitionerClass().toString());
 
 		//-------------------------
 		
-		jobTypeJSON.put("processingDescription", stepType.getProcessingDescription());
-		jobTypeJSON.put("rollbackDescription", stepType.getRollbackDescription());
+		stepTypeJSON.put("processingDescription", stepType.getProcessingDescription());
+		stepTypeJSON.put("rollbackDescription", stepType.getRollbackDescription());
 
-		jobTypeJSON.put("execConfig", stepType.getExecConfig());
-		jobTypeJSON.put("transitionerConfig", stepType.getTransitionerConfig());
+		stepTypeJSON.put("execConfig", stepType.getExecConfig());
+		stepTypeJSON.put("transitionerConfig", stepType.getTransitionerConfig());
 		
-		jobTypeJSON.put("logLimit", stepType.getLogLimit());
-		jobTypeJSON.put("logOverflowAction", stepType.getLogOverflowAction());
+		stepTypeJSON.put("logLimit", stepType.getLogLimit());
+		stepTypeJSON.put("logOverflowAction", stepType.getLogOverflowAction());
 
-		jobTypeJSON.put("shortTransaction", stepType.isShortTransaction());
+		stepTypeJSON.put("shortTransaction", stepType.isShortTransaction());
 		
-		return jobTypeJSON;
+		return stepTypeJSON;
+	}
+	
+	public JobInputParameter deserializeJobInputParameter(JSONObject param) {
+		String name = param.getString("name");
+		ParameterType type = ParameterType.valueOf(param.getString("type"));
+		boolean isOptional = param.getBoolean("isOptional");
+		String description = param.getString("description");
+		
+		if (param.has("isDefaultValueImmutable")) {
+			boolean isDefaultValueImmutable = param.getBoolean("isDefaultValueImmutable");
+			Object obj = param.get("defaultValue");
+			Parameter defaultValue = parameterContextSerializer.createParameterFromJSONGet(obj);
+			
+			return new DefaultValueJobInputParameterImpl(name, type, isOptional, description, 
+					isDefaultValueImmutable, defaultValue);
+		} else if (param.has("isProhibitValues")) {
+			boolean isProhibitValues = param.getBoolean("isProhibitValues");
+			
+			JSONArray valuesJSON = param.getJSONArray("values");
+			List<Parameter> values = new ArrayList<>();
+			for (int i = 0; i < valuesJSON.length(); i++) {
+				JSONObject obj = valuesJSON.getJSONObject(i);
+				Parameter defaultValue = parameterContextSerializer.createParameterFromJSONGet(obj);
+				values.add(defaultValue);
+			}
+			
+			return new EnumJobInputParameterImpl(name, type, isOptional, description,
+					values, isProhibitValues);
+		} else if (param.has("isProhibitRange")) {
+			Object startValue = param.get("start");
+			Parameter start = parameterContextSerializer.createParameterFromJSONGet(startValue);
+			
+			Object endValue = param.get("end");
+			Parameter end = parameterContextSerializer.createParameterFromJSONGet(endValue);
+			
+			boolean isStartInclusive = param.getBoolean("isStartInclusive");
+			boolean isEndInclusive = param.getBoolean("isEndInclusive");
+			boolean isProhibitRange = param.getBoolean("isProhibitRange");
+			
+			return new RangeJobInputParameterImpl(name, type, isOptional, description,
+					start, end, isStartInclusive, isEndInclusive, isProhibitRange);
+		} else
+			return new JobInputParameterImpl(name, type, isOptional, description);
 	}
 	
 	public JSONObject serializeJobInputParameter(JobInputParameter jip) {
 		JSONObject param = new JSONObject();
 		
 		param.put("name", jip.getName());
-		param.put("type", jip.getType());
+		param.put("type", jip.getType().toString());
 		param.put("isOptional", jip.isOptional());
 		param.put("description", jip.getDescription());
 		
@@ -115,7 +261,7 @@ public class JobStepTypeRESTSerializer {
 		
 		return param;
 	}
-	
+
 	public void addParameterValue(JSONObject obj, String name, Parameter value) {
 		if (value instanceof StringParameter) {
 			obj.put(name, ((StringParameter)value).getValue());

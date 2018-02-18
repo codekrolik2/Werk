@@ -85,7 +85,7 @@ public class StepDAO {
 	}
 	
 	public Collection<StepPOJO> getProcessingHistory(TransactionContext tc, Long jobId, Optional<String> stepTypeName,
-			Optional<Long> stepNumber, Optional<Long> stepId) throws SQLException {
+			Optional<Integer> stepNumber, Optional<Long> stepId) throws SQLException {
 		Connection connection = ((JDBCTransactionContext)tc).getConnection();
 		PreparedStatement pst = null;
 		
@@ -116,7 +116,7 @@ public class StepDAO {
 			if (stepTypeName.isPresent())
 				pst.setString(cnt++, stepTypeName.get());
 			if (stepNumber.isPresent())
-				pst.setLong(cnt++, stepNumber.get());
+				pst.setInt(cnt++, stepNumber.get());
 			if (stepId.isPresent())
 				pst.setLong(cnt++, stepId.get());
 			

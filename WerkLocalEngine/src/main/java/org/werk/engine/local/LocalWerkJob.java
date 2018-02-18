@@ -56,7 +56,7 @@ public class LocalWerkJob<J> extends WerkJob<J> {
 	}
 
 	@Override
-	public StepPOJO getStep(long stepNumber) {
+	public StepPOJO getStep(int stepNumber) {
 		for (StepPOJO historyStep : processingHistory)
 			if (historyStep.getStepNumber() == stepNumber)
 				return historyStep;

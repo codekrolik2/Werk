@@ -7,7 +7,6 @@ import java.util.Map;
 
 import org.pillar.time.LongTimeProvider;
 import org.pillar.time.interfaces.TimeProvider;
-import org.werk.config.StepTypeImpl;
 import org.werk.config.annotations.inject.JobParameter;
 import org.werk.config.annotations.inject.StepParameter;
 import org.werk.engine.processing.ContextParameterMapper;
@@ -15,6 +14,7 @@ import org.werk.engine.processing.JobContext;
 import org.werk.engine.processing.StepContext;
 import org.werk.meta.OverflowAction;
 import org.werk.meta.StepType;
+import org.werk.meta.StepTypeImpl;
 import org.werk.processing.parameters.StringParameter;
 import org.werk.processing.parameters.impl.StringParameterImpl;
 

@@ -19,19 +19,19 @@ import java.util.Set;
 import java.util.StringTokenizer;
 
 import org.scannotation.AnnotationDB;
-import org.werk.config.JobTypeImpl;
 import org.werk.config.StepExecFactoryImpl;
 import org.werk.config.StepTransitionerFactoryImpl;
-import org.werk.config.StepTypeImpl;
 import org.werk.config.WerkConfig;
 import org.werk.config.WerkConfigImpl;
 import org.werk.config.WerkConfigLoader;
 import org.werk.config.annotations.inject.RollbackTransition;
 import org.werk.config.annotations.inject.Transition;
 import org.werk.exceptions.WerkConfigException;
+import org.werk.meta.JobTypeImpl;
 import org.werk.meta.OverflowAction;
 import org.werk.meta.StepExecFactory;
 import org.werk.meta.StepTransitionerFactory;
+import org.werk.meta.StepTypeImpl;
 
 public class AnnotationsWerkConfigLoader<J> implements WerkConfigLoader<J> {
 	protected JobInputParameterLoader loader = new JobInputParameterLoader();

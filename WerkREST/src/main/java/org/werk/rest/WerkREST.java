@@ -37,7 +37,7 @@ public class WerkREST extends AbstractVerticle {
 	protected WerkService<Long> werkService;
 	protected JobIdSerializer<Long> jobIdSerializer; 
 	
-	protected JobStepTypeRESTSerializer jobStepTypeRESTSerializer;
+	protected JobStepTypeRESTSerializer<Long> jobStepTypeRESTSerializer;
 	protected JobStepSerializer<Long> jobStepSerializer;
 	protected JobFiltersSerializer<Long> jobFiltersSerializer;
 	protected JobInitInfoSerializer jobInitInfoSerializer;
@@ -52,7 +52,7 @@ public class WerkREST extends AbstractVerticle {
 		
 		PageInfoSerializer pageInfoSerializer = new PageInfoSerializer();
 		
-		jobStepTypeRESTSerializer = new JobStepTypeRESTSerializer();
+		jobStepTypeRESTSerializer = new JobStepTypeRESTSerializer<Long>();
 		
 		ParameterContextSerializer contextSerializer = new ParameterContextSerializer();
 		JoinResultSerializer<Long> joinResultSerializer = new JoinResultSerializer<>(jobIdSerializer);
@@ -83,7 +83,7 @@ public class WerkREST extends AbstractVerticle {
 		router.get("/stepTypesForJob/:jobTypeName").handler(this::handleListStepTypes);
 		
 		router.get("/jobsAndHistory/:jobId").handler(this::handleJobsAndHistory);
-
+		
 		//Get jobs - JSON filter definition in request body
 		router.get("/jobs").handler(this::handleGetJobs);
 		//Create job (current or old version)
@@ -92,6 +92,7 @@ public class WerkREST extends AbstractVerticle {
 		router.patch("/jobs/:jobId").handler(this::handleRestartJob);
 		
 		router.patch("/jobsAdded").handler(this::handleJobsAdded);
+		router.patch("/serverInfo").handler(this::handleServerInfo);
 		
 		vertx.createHttpServer().requestHandler(router::accept).listen(8080);
 	}
@@ -101,6 +102,18 @@ public class WerkREST extends AbstractVerticle {
 		try {
 			werkService.jobsAdded();
 			response.setStatusCode(200).end();
+		} catch (Exception e) {
+			logger.error(e, e);
+			sendStatus(400, response);
+			return;
+		}
+	}
+	
+	private void handleServerInfo(RoutingContext routingContext) {
+		HttpServerResponse response = routingContext.response();
+		try {
+			JSONObject info = werkService.getServerInfo();
+			response.setStatusCode(200).end(info.toString());
 		} catch (Exception e) {
 			logger.error(e, e);
 			sendStatus(400, response);
@@ -252,7 +265,10 @@ public class WerkREST extends AbstractVerticle {
 		for (JobType jobType : werkService.getJobTypes())
 			arr.put(jobStepTypeRESTSerializer.serializeJobType(jobType));
 		
-		routingContext.response().putHeader("content-type", "application/json").end(arr.toString());
+		JSONObject obj = new JSONObject();
+		obj.put("jobTypes", arr);
+		
+		routingContext.response().putHeader("content-type", "application/json").end(obj.toString());
 	}
 
 	private void handleGetStepType(RoutingContext routingContext) {
@@ -293,7 +309,10 @@ public class WerkREST extends AbstractVerticle {
 			for (StepType<?> stepType : werkService.getStepTypesForJob(jobTypeName, version))
 				arr.put(jobStepTypeRESTSerializer.serializeStepType(stepType));
 			
-			routingContext.response().putHeader("content-type", "application/json").end(arr.toString());
+			JSONObject obj = new JSONObject();
+			obj.put("stepTypes", arr);
+			
+			routingContext.response().putHeader("content-type", "application/json").end(obj.toString());
 		}
 	}
 	
@@ -302,7 +321,10 @@ public class WerkREST extends AbstractVerticle {
 		for (StepType<?> stepType : werkService.getAllStepTypes())
 			arr.put(jobStepTypeRESTSerializer.serializeStepType(stepType));
 		
-		routingContext.response().putHeader("content-type", "application/json").end(arr.toString());
+		JSONObject obj = new JSONObject();
+		obj.put("stepTypes", arr);
+		
+		routingContext.response().putHeader("content-type", "application/json").end(obj.toString());
 	}
 	
 	//------------------------------------

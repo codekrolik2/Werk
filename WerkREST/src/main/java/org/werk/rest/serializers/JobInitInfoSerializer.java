@@ -46,4 +46,31 @@ public class JobInitInfoSerializer {
 		
 		return new VersionJobInitInfoImpl(jobTypeName, initParameters, jobVersion, jobName, nextExecutionTime);
 	}
+	
+	public JSONObject deserializeJobInitInfo(JobInitInfo jobInitInfo) {
+		JSONObject jobInitInfoJSON = new JSONObject();
+		
+		jobInitInfoJSON.put("jobTypeName", jobInitInfo.getJobTypeName());
+		if (jobInitInfo.getJobName().isPresent())
+			jobInitInfoJSON.put("jobName", jobInitInfo.getJobName().get());
+		jobInitInfoJSON.put("initParameters", parameterSerializer.serializeParameters(jobInitInfo.getInitParameters()));
+		if (jobInitInfo.getNextExecutionTime().isPresent())
+			jobInitInfoJSON.put("nextExecutionTime", jobInitInfo.getNextExecutionTime().get().getRawTime());
+		
+		return jobInitInfoJSON;
+	}
+	
+	public JSONObject deserializeVersionJobInitInfo(VersionJobInitInfo versionJobInitInfo) {
+		JSONObject jobInitInfoJSON = new JSONObject();
+		
+		jobInitInfoJSON.put("jobTypeName", versionJobInitInfo.getJobTypeName());
+		jobInitInfoJSON.put("jobVersion", versionJobInitInfo.getJobVersion());
+		if (versionJobInitInfo.getJobName().isPresent())
+			jobInitInfoJSON.put("jobName", versionJobInitInfo.getJobName().get());
+		jobInitInfoJSON.put("initParameters", parameterSerializer.serializeParameters(versionJobInitInfo.getInitParameters()));
+		if (versionJobInitInfo.getNextExecutionTime().isPresent())
+			jobInitInfoJSON.put("nextExecutionTime", versionJobInitInfo.getNextExecutionTime().get().getRawTime());
+		
+		return jobInitInfoJSON;
+	}
 }

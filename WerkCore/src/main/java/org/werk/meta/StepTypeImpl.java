@@ -1,11 +1,6 @@
-package org.werk.config;
+package org.werk.meta;
 
 import java.util.Set;
-
-import org.werk.meta.OverflowAction;
-import org.werk.meta.StepExecFactory;
-import org.werk.meta.StepTransitionerFactory;
-import org.werk.meta.StepType;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
