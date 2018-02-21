@@ -91,8 +91,8 @@ public class WerkREST extends AbstractVerticle {
 		//Restart job
 		router.patch("/jobs/:jobId").handler(this::handleRestartJob);
 		
-		router.patch("/jobsAdded").handler(this::handleJobsAdded);
-		router.patch("/serverInfo").handler(this::handleServerInfo);
+		router.get("/jobsAdded").handler(this::handleJobsAdded);
+		router.get("/serverInfo").handler(this::handleServerInfo);
 		
 		vertx.createHttpServer().requestHandler(router::accept).listen(8080);
 	}

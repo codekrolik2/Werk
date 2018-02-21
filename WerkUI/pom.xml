@@ -12,6 +12,16 @@
   		<groupId>org.pillar</groupId>
   		<artifactId>Common</artifactId>
   	</dependency>
+    <dependency>
+      <groupId>org.werk</groupId>
+      <artifactId>WerkREST</artifactId>
+    </dependency>
+  	
+	<dependency>
+	    <groupId>com.google.inject</groupId>
+	    <artifactId>guice</artifactId>
+	    <version>4.0</version>
+	</dependency>
   	<dependency>
   		<groupId>org.projectlombok</groupId>
   		<artifactId>lombok</artifactId>

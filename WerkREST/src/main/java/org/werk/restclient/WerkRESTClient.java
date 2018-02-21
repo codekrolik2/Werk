@@ -10,7 +10,10 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.pillar.time.LongTimeProvider;
+import org.pillar.time.interfaces.TimeProvider;
 import org.pillar.time.interfaces.Timestamp;
+import org.werk.engine.JobIdSerializer;
 import org.werk.meta.JobInitInfo;
 import org.werk.meta.JobRestartInfo;
 import org.werk.meta.JobType;
@@ -22,8 +25,13 @@ import org.werk.rest.serializers.JobFiltersSerializer;
 import org.werk.rest.serializers.JobInitInfoSerializer;
 import org.werk.rest.serializers.JobStepSerializer;
 import org.werk.rest.serializers.JobStepTypeRESTSerializer;
+import org.werk.rest.serializers.PageInfoSerializer;
 import org.werk.service.JobCollection;
 import org.werk.service.PageInfo;
+import org.werk.util.JoinResultSerializer;
+import org.werk.util.LongJobIdSerializer;
+import org.werk.util.ParameterContextSerializer;
+import org.werk.util.StepProcessingHistorySerializer;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
@@ -34,25 +42,45 @@ import io.vertx.ext.web.client.WebClientOptions;
 import lombok.Getter;
 
 public class WerkRESTClient {
-	final Logger logger = Logger.getLogger(WerkRESTClient.class);
+	static final Logger logger = Logger.getLogger(WerkRESTClient.class);
 	
-	protected JobStepSerializer<Long> jobStepSerializer;
-	protected JobInitInfoSerializer jobInitInfoSerializer;
-	protected JobStepTypeRESTSerializer<Long> jobStepTypeRESTSerializer;
+	public static WerkRESTClient create(Vertx vertx) {
+		TimeProvider timeProvider = new LongTimeProvider();
+		JobIdSerializer<Long> jobIdSerializer = new LongJobIdSerializer();
+		JoinResultSerializer<Long> joinResultSerializer = new JoinResultSerializer<>(jobIdSerializer);
+		ParameterContextSerializer contextSerializer = new ParameterContextSerializer();
+		PageInfoSerializer pageInfoSerializer = new PageInfoSerializer();
+		StepProcessingHistorySerializer stepProcessingHistorySerializer = new StepProcessingHistorySerializer(timeProvider);
+		
+		JobStepSerializer<Long> jobStepSerializer = new JobStepSerializer<Long>(contextSerializer, joinResultSerializer, 
+				jobIdSerializer, stepProcessingHistorySerializer, pageInfoSerializer, timeProvider);
+		JobInitInfoSerializer jobInitInfoSerializer = new JobInitInfoSerializer(contextSerializer, timeProvider);
+		JobStepTypeRESTSerializer<Long> jobStepTypeRESTSerializer = new JobStepTypeRESTSerializer<Long>();
+		
+		JobFiltersSerializer<Long> jobFiltersSerializer =
+				new JobFiltersSerializer<>(timeProvider, jobIdSerializer, pageInfoSerializer);
+		
+		return new WerkRESTClient(vertx,
+				jobStepSerializer, jobInitInfoSerializer, jobStepTypeRESTSerializer, jobFiltersSerializer);
+	}
 	
 	@Getter
 	protected WebClient client;
 	
-	@Getter
-	protected String host;
-	@Getter
-	protected int port;
-	
+	protected JobStepSerializer<Long> jobStepSerializer;
+	protected JobInitInfoSerializer jobInitInfoSerializer;
+	protected JobStepTypeRESTSerializer<Long> jobStepTypeRESTSerializer;
 	protected JobFiltersSerializer<Long> jobFiltersSerializer;
 	
-	public WerkRESTClient(String host, int port, Vertx vertx) {
-		this.host = host;
-		this.port = port;
+	public WerkRESTClient(Vertx vertx,
+			JobStepSerializer<Long> jobStepSerializer,
+			JobInitInfoSerializer jobInitInfoSerializer,
+			JobStepTypeRESTSerializer<Long> jobStepTypeRESTSerializer,
+			JobFiltersSerializer<Long> jobFiltersSerializer) {
+		this.jobStepSerializer = jobStepSerializer;
+		this.jobInitInfoSerializer = jobInitInfoSerializer;
+		this.jobStepTypeRESTSerializer = jobStepTypeRESTSerializer;
+		this.jobFiltersSerializer = jobFiltersSerializer;
 		
 		WebClientOptions options = new WebClientOptions()
 				  .setUserAgent("WerkRESTClient/0.0.1");
@@ -60,21 +88,21 @@ public class WerkRESTClient {
 		client = WebClient.create(vertx);
 	}
 	
-	public void createJob(Callback<Long> callback, JobInitInfo init) throws Exception {
+	public void createJob(String host, int port, Callback<Long> callback, JobInitInfo init) throws Exception {
 		String str = jobInitInfoSerializer.deserializeJobInitInfo(init).toString();
 		Buffer buffer = Buffer.buffer(str);
 		
-		sendCreateJobRequest(callback, buffer);
+		sendCreateJobRequest(host, port, callback, buffer);
 	}
 	
-	public void createJobOfVersion(Callback<Long> callback, VersionJobInitInfo init) throws Exception {
+	public void createJobOfVersion(String host, int port, Callback<Long> callback, VersionJobInitInfo init) throws Exception {
 		String str = jobInitInfoSerializer.deserializeVersionJobInitInfo(init).toString();
 		Buffer buffer = Buffer.buffer(str);
 		
-		sendCreateJobRequest(callback, buffer);
+		sendCreateJobRequest(host, port, callback, buffer);
 	}
 	
-	public void sendCreateJobRequest(Callback<Long> callback, Buffer buffer) throws Exception {
+	public void sendCreateJobRequest(String host, int port, Callback<Long> callback, Buffer buffer) throws Exception {
 		client.post(port, host, "/jobs").sendBuffer(buffer, ar -> {
 			try {
 				if (ar.succeeded()) {
@@ -91,13 +119,13 @@ public class WerkRESTClient {
 				} else
 					throw ar.cause();
 			} catch(Throwable e) {
-				logger.error("createJob Exception ", ar.cause());
-				callback.error(ar.cause());
+				logger.error("getServerInfo Exception ", e);
+				callback.error(e);
 			}
 		});
 	}
 
-	public void restartJob(Callback<Long> callback, JobRestartInfo<Long> jobRestartInfo) throws Exception {
+	public void restartJob(String host, int port, Callback<Long> callback, JobRestartInfo<Long> jobRestartInfo) throws Exception {
 		String str = jobStepSerializer.serializeJobRestartInfo(jobRestartInfo).toString();
 		Buffer buffer = Buffer.buffer(str);
 		
@@ -117,13 +145,13 @@ public class WerkRESTClient {
 				} else
 					throw ar.cause();
 			} catch(Throwable e) {
-				logger.error("restartJob Exception ", ar.cause());
-				callback.error(ar.cause());
+				logger.error("getServerInfo Exception ", e);
+				callback.error(e);
 			}
 		});
 	}
 
-	public void getJobAndHistory(Callback<ReadOnlyJob<Long>> callback, Long jobId) throws Exception {
+	public void getJobAndHistory(String host, int port, Callback<ReadOnlyJob<Long>> callback, Long jobId) throws Exception {
 		// Send a GET request
 		client.get(port, host, "/jobs/"+jobId)
 		.send(ar -> {
@@ -142,13 +170,13 @@ public class WerkRESTClient {
 				} else
 					throw ar.cause();
 			} catch(Throwable e) {
-				logger.error("getJobAndHistory Exception ", ar.cause());
-				callback.error(ar.cause());
+				logger.error("getServerInfo Exception ", e);
+				callback.error(e);
 			}
 		});
 	}
 
-	public void getJobs(Callback<JobCollection<Long>> callback,
+	public void getJobs(String host, int port, Callback<JobCollection<Long>> callback,
 			Optional<Timestamp> from, Optional<Timestamp> to, 
 			Optional<Timestamp> fromExec, Optional<Timestamp> toExec, 
 			Optional<Map<String, Long>> jobTypesAndVersions,
@@ -186,13 +214,13 @@ public class WerkRESTClient {
 				} else
 					throw ar.cause();
 			} catch(Throwable e) {
-				logger.error("getJobs Exception ", ar.cause());
-				callback.error(ar.cause());
+				logger.error("getServerInfo Exception ", e);
+				callback.error(e);
 			}
 		});
 	}
 
-	public void getJobTypes(Callback<Collection<JobType>> callback) {
+	public void getJobTypes(String host, int port, Callback<Collection<JobType>> callback) {
 		// Send a GET request
 		HttpRequest<Buffer> r = client.get(port, host, "/jobTypes");
 		
@@ -219,13 +247,13 @@ public class WerkRESTClient {
 				} else
 					throw ar.cause();
 			} catch(Throwable e) {
-				logger.error("getJobTypes Exception ", ar.cause());
-				callback.error(ar.cause());
+				logger.error("getServerInfo Exception ", e);
+				callback.error(e);
 			}
 		});
 	}
 
-	public void getJobType(Callback<JobType> callback, String jobTypeName, Optional<Long> version) {
+	public void getJobType(String host, int port, Callback<JobType> callback, String jobTypeName, Optional<Long> version) {
 		// Send a GET request
 		String path = "/jobTypes/" + jobTypeName;
 		if (version.isPresent())
@@ -249,13 +277,13 @@ public class WerkRESTClient {
 				} else
 					throw ar.cause();
 			} catch(Throwable e) {
-				logger.error("getJobType Exception ", ar.cause());
-				callback.error(ar.cause());
+				logger.error("getServerInfo Exception ", e);
+				callback.error(e);
 			}
 		});
 	}
 
-	public void getAllStepTypes(Callback<Collection<StepType<Long>>> callback) {
+	public void getAllStepTypes(String host, int port, Callback<Collection<StepType<Long>>> callback) {
 		// Send a GET request
 		client.get(port, host, "/stepTypes")
 		.send(ar -> {
@@ -281,13 +309,14 @@ public class WerkRESTClient {
 				} else
 					throw ar.cause();
 			} catch(Throwable e) {
-				logger.error("getAllStepTypes Exception ", ar.cause());
-				callback.error(ar.cause());
+				logger.error("getServerInfo Exception ", e);
+				callback.error(e);
 			}
 		});
 	}
 
-	public void getStepTypesForJob(Callback<Collection<StepType<Long>>> callback, String jobTypeName, Optional<Long> version) {
+	public void getStepTypesForJob(String host, int port, Callback<Collection<StepType<Long>>> callback, 
+			String jobTypeName, Optional<Long> version) {
 		// Send a GET request
 		String path = "/stepTypesForJob/" + jobTypeName;
 		if (version.isPresent())
@@ -317,13 +346,13 @@ public class WerkRESTClient {
 				} else
 					throw ar.cause();
 			} catch(Throwable e) {
-				logger.error("getStepTypesForJob Exception ", ar.cause());
-				callback.error(ar.cause());
+				logger.error("getServerInfo Exception ", e);
+				callback.error(e);
 			}
 		});
 	}
 
-	public void getStepType(Callback<StepType<Long>> callback, String stepTypeName) {
+	public void getStepType(String host, int port, Callback<StepType<Long>> callback, String stepTypeName) {
 		// Send a GET request
 		client.get(port, host, "/stepTypes/" + stepTypeName)
 		.send(ar -> {
@@ -342,13 +371,13 @@ public class WerkRESTClient {
 				} else
 					throw ar.cause();
 			} catch(Throwable e) {
-				logger.error("getStepType Exception ", ar.cause());
-				callback.error(ar.cause());
+				logger.error("getServerInfo Exception ", e);
+				callback.error(e);
 			}
 		});
 	}
 
-	public void jobsAdded(Callback<Object> callback) {
+	public void jobsAdded(String host, int port, Callback<Object> callback) {
 		// Send a GET request
 		client.get(port, host, "/jobsAdded")
 		.send(ar -> {
@@ -362,13 +391,13 @@ public class WerkRESTClient {
 				} else
 					throw ar.cause();
 			} catch(Throwable e) {
-				logger.error("jobsAdded Exception ", ar.cause());
-				callback.error(ar.cause());
+				logger.error("getServerInfo Exception ", e);
+				callback.error(e);
 			}
 		});
 	}
 	
-	public void getServerInfo(Callback<JSONObject> callback) {
+	public void getServerInfo(String host, int port, Callback<JSONObject> callback) {
 		// Send a GET request
 		client.get(port, host, "/serverInfo")
 		.send(ar -> {
@@ -386,8 +415,8 @@ public class WerkRESTClient {
 				} else
 					throw ar.cause();
 			} catch(Throwable e) {
-				logger.error("getServerInfo Exception ", ar.cause());
-				callback.error(ar.cause());
+				logger.error("getServerInfo Exception ", e);
+				callback.error(e);
 			}
 		});
 	}
