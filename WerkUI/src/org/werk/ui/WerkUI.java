@@ -1,6 +1,6 @@
 package org.werk.ui;
 
-import org.werk.ui.controls.mainapp.MainAppControl;
+import org.werk.ui.controls.mainapp.MainApp;
 import org.werk.ui.guice.FXMLLoaderFactory;
 import org.werk.ui.guice.LoaderFactory;
 
@@ -25,7 +25,7 @@ public class WerkUI extends Application {
 			WerkUIModule werkUIModule = new WerkUIModule();
 			Injector injector = Guice.createInjector(werkUIModule);
 			((LoaderFactory)injector.getInstance(FXMLLoaderFactory.class)).setInjector(injector);
-			MainAppControl mainApp = injector.getInstance(MainAppControl.class);
+			MainApp mainApp = injector.getInstance(MainApp.class);
 			TabCreator tabCreator = injector.getInstance(TabCreator.class);
 			mainApp.setTabCreator(tabCreator);
 			

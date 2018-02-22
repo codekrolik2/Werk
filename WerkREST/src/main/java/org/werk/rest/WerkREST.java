@@ -52,9 +52,9 @@ public class WerkREST extends AbstractVerticle {
 		
 		PageInfoSerializer pageInfoSerializer = new PageInfoSerializer();
 		
-		jobStepTypeRESTSerializer = new JobStepTypeRESTSerializer<Long>();
-		
 		ParameterContextSerializer contextSerializer = new ParameterContextSerializer();
+		jobStepTypeRESTSerializer = new JobStepTypeRESTSerializer<Long>(contextSerializer);
+		
 		JoinResultSerializer<Long> joinResultSerializer = new JoinResultSerializer<>(jobIdSerializer);
 		StepProcessingHistorySerializer stepProcessingHistorySerializer = 
 				new StepProcessingHistorySerializer(timeProvider);

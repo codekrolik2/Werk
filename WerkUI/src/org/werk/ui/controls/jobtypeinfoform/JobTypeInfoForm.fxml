@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+
+
+<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="617.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <AnchorPane prefHeight="30.0" prefWidth="200.0" VBox.vgrow="NEVER">
+         <children>
+            <Button layoutY="1.0" mnemonicParsing="false" text="Show JSON" AnchorPane.bottomAnchor="2.0" AnchorPane.leftAnchor="5.0" AnchorPane.topAnchor="2.0" />
+            <Button layoutX="68.0" layoutY="1.0" mnemonicParsing="false" text="Show Jobs" AnchorPane.bottomAnchor="2.0" AnchorPane.leftAnchor="100.0" AnchorPane.topAnchor="2.0" />
+         </children>
+      </AnchorPane>
+      <GridPane>
+        <columnConstraints>
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+        </columnConstraints>
+        <rowConstraints>
+          <RowConstraints minHeight="10.0" prefHeight="20.0" vgrow="NEVER" />
+          <RowConstraints minHeight="10.0" prefHeight="20.0" vgrow="NEVER" />
+          <RowConstraints minHeight="10.0" prefHeight="20.0" vgrow="NEVER" />
+            <RowConstraints minHeight="10.0" prefHeight="20.0" vgrow="NEVER" />
+        </rowConstraints>
+         <children>
+            <Label text="JobType:">
+               <GridPane.margin>
+                  <Insets left="10.0" />
+               </GridPane.margin>
+            </Label>
+            <Label text="Acyclic:" GridPane.rowIndex="1">
+               <GridPane.margin>
+                  <Insets left="10.0" />
+               </GridPane.margin>
+            </Label>
+            <Label text="History Limit:" GridPane.rowIndex="2">
+               <GridPane.margin>
+                  <Insets left="10.0" />
+               </GridPane.margin>
+            </Label>
+            <Label text="History Overflow Action:" GridPane.rowIndex="3">
+               <GridPane.margin>
+                  <Insets left="10.0" />
+               </GridPane.margin>
+            </Label>
+         </children>
+      </GridPane>
+      <Separator prefWidth="200.0" />
+      <VBox prefHeight="133.0" prefWidth="600.0">
+         <children>
+            <AnchorPane prefHeight="20.0" prefWidth="200.0">
+               <children>
+                  <Label layoutX="14.0" layoutY="8.0" text="Steps:" AnchorPane.bottomAnchor="2.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="2.0">
+                     <padding>
+                        <Insets left="10.0" />
+                     </padding>
+                  </Label>
+               </children>
+            </AnchorPane>
+            <ListView prefHeight="200.0" prefWidth="200.0">
+               <VBox.margin>
+                  <Insets bottom="5.0" left="5.0" right="5.0" />
+               </VBox.margin>
+            </ListView>
+         </children>
+      </VBox>
+      <Separator prefWidth="200.0" />
+      <VBox layoutX="10.0" layoutY="123.0" prefHeight="135.0" prefWidth="600.0">
+         <children>
+            <AnchorPane prefHeight="20.0" prefWidth="200.0">
+               <children>
+                  <Label layoutX="14.0" layoutY="8.0" text="Init Signatures:" AnchorPane.bottomAnchor="2.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="2.0">
+                     <padding>
+                        <Insets left="10.0" />
+                     </padding>
+                  </Label>
+               </children>
+            </AnchorPane>
+            <ListView prefHeight="200.0" prefWidth="590.0">
+               <VBox.margin>
+                  <Insets bottom="5.0" left="5.0" right="5.0" />
+               </VBox.margin>
+            </ListView>
+         </children>
+      </VBox>
+      <Separator prefWidth="200.0" />
+      <VBox layoutX="10.0" layoutY="123.0" prefHeight="133.0" prefWidth="600.0">
+         <children>
+            <AnchorPane prefHeight="20.0" prefWidth="200.0">
+               <children>
+                  <Label layoutX="14.0" layoutY="8.0" text="Description:" AnchorPane.bottomAnchor="2.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="2.0">
+                     <padding>
+                        <Insets left="10.0" />
+                     </padding>
+                  </Label>
+               </children>
+            </AnchorPane>
+            <TextArea prefHeight="200.0" prefWidth="200.0">
+               <VBox.margin>
+                  <Insets bottom="5.0" left="5.0" right="5.0" />
+               </VBox.margin>
+            </TextArea>
+         </children>
+      </VBox>
+      <Separator prefWidth="200.0" />
+      <VBox layoutX="10.0" layoutY="397.0" prefHeight="133.0" prefWidth="600.0">
+         <children>
+            <AnchorPane prefHeight="20.0" prefWidth="200.0">
+               <children>
+                  <Label layoutX="14.0" layoutY="8.0" text="Job Config:" AnchorPane.bottomAnchor="2.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="2.0">
+                     <padding>
+                        <Insets left="10.0" />
+                     </padding>
+                  </Label>
+               </children>
+            </AnchorPane>
+            <TextArea prefHeight="200.0" prefWidth="200.0">
+               <VBox.margin>
+                  <Insets bottom="5.0" left="5.0" right="5.0" />
+               </VBox.margin>
+            </TextArea>
+         </children>
+      </VBox>
+   </children>
+</VBox>

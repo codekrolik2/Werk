@@ -1,7 +1,7 @@
 package org.werk.ui;
 
 import org.json.JSONObject;
-import org.werk.ui.controls.mainapp.MainAppControl;
+import org.werk.ui.controls.mainapp.MainApp;
 
 import lombok.Getter;
 
@@ -13,7 +13,13 @@ public class ServerInfoManager {
 	@Getter
 	String serverInfo;
 	
-	public void resetServerInfo(MainAppControl mainApp) {
+	public ServerInfoManager() {
+		host = "";
+		port = -1;
+		serverInfo = "Server not assigned";
+	}
+	
+	public void resetServerInfo(MainApp mainApp) {
 		host = "";
 		port = -1;
 		serverInfo = "Server not assigned";
@@ -21,7 +27,7 @@ public class ServerInfoManager {
 		mainApp.setStatusText("Server not assigned");
 	}
 	
-	public void newServerInfo(MainAppControl mainApp, String host, int port, JSONObject serverInfo) {
+	public void newServerInfo(MainApp mainApp, String host, int port, JSONObject serverInfo) {
 		this.host = host;
 		this.port = port;
 		this.serverInfo = serverInfo.toString(4);

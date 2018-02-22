@@ -48,14 +48,14 @@ public class WerkRESTClient {
 		TimeProvider timeProvider = new LongTimeProvider();
 		JobIdSerializer<Long> jobIdSerializer = new LongJobIdSerializer();
 		JoinResultSerializer<Long> joinResultSerializer = new JoinResultSerializer<>(jobIdSerializer);
-		ParameterContextSerializer contextSerializer = new ParameterContextSerializer();
+		ParameterContextSerializer parameterContextSerializer = new ParameterContextSerializer();
 		PageInfoSerializer pageInfoSerializer = new PageInfoSerializer();
 		StepProcessingHistorySerializer stepProcessingHistorySerializer = new StepProcessingHistorySerializer(timeProvider);
 		
-		JobStepSerializer<Long> jobStepSerializer = new JobStepSerializer<Long>(contextSerializer, joinResultSerializer, 
+		JobStepSerializer<Long> jobStepSerializer = new JobStepSerializer<Long>(parameterContextSerializer, joinResultSerializer, 
 				jobIdSerializer, stepProcessingHistorySerializer, pageInfoSerializer, timeProvider);
-		JobInitInfoSerializer jobInitInfoSerializer = new JobInitInfoSerializer(contextSerializer, timeProvider);
-		JobStepTypeRESTSerializer<Long> jobStepTypeRESTSerializer = new JobStepTypeRESTSerializer<Long>();
+		JobInitInfoSerializer jobInitInfoSerializer = new JobInitInfoSerializer(parameterContextSerializer, timeProvider);
+		JobStepTypeRESTSerializer<Long> jobStepTypeRESTSerializer = new JobStepTypeRESTSerializer<Long>(parameterContextSerializer);
 		
 		JobFiltersSerializer<Long> jobFiltersSerializer =
 				new JobFiltersSerializer<>(timeProvider, jobIdSerializer, pageInfoSerializer);

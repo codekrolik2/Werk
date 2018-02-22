@@ -4,7 +4,8 @@ import java.io.IOException;
 
 import org.werk.ui.TabCreator;
 import org.werk.ui.controls.connectform.ConnectFormController;
-import org.werk.ui.controls.serverinfoform.ServerInfoController;
+import org.werk.ui.controls.jobtypesform.JobTypesFormControl;
+import org.werk.ui.controls.serverinfoform.ServerInfo;
 import org.werk.ui.guice.FXMLLoaderFactory;
 import org.werk.ui.util.ModalWindow;
 
@@ -17,7 +18,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import lombok.Setter;
 
-public class MainAppControl extends VBox {
+public class MainApp extends VBox {
 	@Setter
 	TabCreator tabCreator;
 	
@@ -30,7 +31,7 @@ public class MainAppControl extends VBox {
 	@FXML
 	TabPane tabs;
 	
-    public MainAppControl(FXMLLoaderFactory loaderFactory) {
+    public MainApp(FXMLLoaderFactory loaderFactory) {
         FXMLLoader fxmlLoader = loaderFactory.loader(getClass().getResource("MainApp.fxml"));
         fxmlLoader.setRoot(this);
         fxmlLoader.setController(this);
@@ -54,7 +55,7 @@ public class MainAppControl extends VBox {
 	}
 	
 	public void createServerInfoTab() {
-		ServerInfoController serverInfoController = tabCreator.getServerInfoController();
+		ServerInfo serverInfoController = tabCreator.getServerInfoController();
 		final Tab tab = new Tab("Server Info", serverInfoController);
 		tab.setClosable(true);
         
@@ -64,7 +65,22 @@ public class MainAppControl extends VBox {
         serverInfoController.setServerInfo();
     }
 	
+	public void createJobTypesForm() {
+		JobTypesFormControl jobTypesFormControl = tabCreator.getJobTypesFormControl();
+		final Tab tab = new Tab("Job Types", jobTypesFormControl);
+		tab.setClosable(true);
+        
+		tabs.getTabs().add(tab);
+        tabs.getSelectionModel().select(tab);
+        
+        jobTypesFormControl.refresh();
+    }
+	
 	public void quit() {
 		main.close();
+	}
+	
+	public void closeAllTabs() {
+		tabs.getTabs().clear();
 	}
 }

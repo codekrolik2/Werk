@@ -6,7 +6,7 @@ import org.json.JSONObject;
 import org.werk.restclient.Callback;
 import org.werk.restclient.WerkRESTClient;
 import org.werk.ui.ServerInfoManager;
-import org.werk.ui.controls.mainapp.MainAppControl;
+import org.werk.ui.controls.mainapp.MainApp;
 import org.werk.ui.guice.FXMLLoaderFactory;
 import org.werk.ui.util.MessageBox;
 
@@ -36,7 +36,7 @@ public class ConnectFormController extends GridPane {
 	@Inject
 	WerkRESTClient werkClient;
 	@Inject
-	MainAppControl mainApp;
+	MainApp mainApp;
 	@Inject
 	ServerInfoManager serverInfoManager;
 	

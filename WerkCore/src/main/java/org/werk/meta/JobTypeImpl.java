@@ -66,4 +66,8 @@ public class JobTypeImpl implements JobType {
 		
 		return sb.toString();
 	}
+	
+	public String getFullName() {
+		return String.format("%s [v%d]", jobTypeName, version);
+	}
 }

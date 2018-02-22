@@ -41,6 +41,10 @@ import org.werk.util.ParameterContextSerializer;
 public class JobStepTypeRESTSerializer<J> {
 	ParameterContextSerializer parameterContextSerializer;
 	
+	public JobStepTypeRESTSerializer(ParameterContextSerializer parameterContextSerializer) {
+		this.parameterContextSerializer = parameterContextSerializer;
+	}
+	
 	public JobType deserializeJobType(JSONObject jobTypeJSON) {
 		String jobTypeName = jobTypeJSON.getString("jobTypeName");
 		long version = jobTypeJSON.getLong("version");
@@ -65,7 +69,7 @@ public class JobStepTypeRESTSerializer<J> {
 		Iterator<?> keys = parameterSets.keys();
 		while (keys.hasNext()) {
 		    String parameterSetName = (String)keys.next();
-		    JSONArray prms = parameterSets.getJSONArray(jobTypeName);
+		    JSONArray prms = parameterSets.getJSONArray(parameterSetName);
 		    
 		    List<JobInputParameter> jips = new ArrayList<>();
 		    for (int i = 0; i < prms.length(); i++) {
@@ -204,7 +208,7 @@ public class JobStepTypeRESTSerializer<J> {
 			JSONArray valuesJSON = param.getJSONArray("values");
 			List<Parameter> values = new ArrayList<>();
 			for (int i = 0; i < valuesJSON.length(); i++) {
-				JSONObject obj = valuesJSON.getJSONObject(i);
+				Object obj = valuesJSON.get(i);
 				Parameter defaultValue = parameterContextSerializer.createParameterFromJSONGet(obj);
 				values.add(defaultValue);
 			}

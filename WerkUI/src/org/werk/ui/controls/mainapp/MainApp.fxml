@@ -18,13 +18,15 @@
 						<MenuItem mnemonicParsing="false" onAction="#showConnectDialog" text="Connect" /> 
 						<MenuItem mnemonicParsing="false" text="Server Info" onAction="#createServerInfoTab" /> 
 						<SeparatorMenuItem mnemonicParsing="false" /> 
+						<MenuItem mnemonicParsing="false" onAction="#closeAllTabs" text="Close All Tabs" /> 
+						<SeparatorMenuItem mnemonicParsing="false" /> 
 						<MenuItem mnemonicParsing="false" onAction="#quit" text="Quit" /> 
 					</items>
 				</Menu>
 				<Menu mnemonicParsing="false" text="Werk"> 
 					<items>
 						<MenuItem mnemonicParsing="false" text="Jobs" /> 
-						<MenuItem mnemonicParsing="false" text="Job Types" /> 
+						<MenuItem mnemonicParsing="false" text="Job Types" onAction="#createJobTypesForm"/> 
 						<MenuItem mnemonicParsing="false" text="Step Types" /> 
 						<SeparatorMenuItem mnemonicParsing="false" /> 
 						<MenuItem mnemonicParsing="false" text="Job Details" /> 

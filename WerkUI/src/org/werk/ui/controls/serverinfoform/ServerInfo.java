@@ -18,7 +18,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.VBox;
 
-public class ServerInfoController extends VBox {
+public class ServerInfo extends VBox {
 	@FXML
     Button refreshButton;
 	@FXML
@@ -30,7 +30,7 @@ public class ServerInfoController extends VBox {
 	ServerInfoManager serverInfoManager;
 	
 	@Inject
-	public ServerInfoController(FXMLLoaderFactory loaderFactory) {
+	public ServerInfo(FXMLLoaderFactory loaderFactory) {
         FXMLLoader fxmlLoader = loaderFactory.loader(getClass().getResource("ServerInfoForm.fxml"));
         fxmlLoader.setRoot(this);
         fxmlLoader.setController(this);
@@ -62,7 +62,7 @@ public class ServerInfoController extends VBox {
 					Platform.runLater( () -> {
 						refreshButton.setDisable(false);
 						MessageBox.show(
-							String.format("Error connecting to server %s:%d [%s]", host, port, cause.toString())
+							String.format("Error processing request %s:%d [%s]", host, port, cause.toString())
 						);
 					});
 				}

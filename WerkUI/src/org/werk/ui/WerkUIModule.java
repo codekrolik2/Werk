@@ -1,7 +1,7 @@
 package org.werk.ui;
 
 import org.werk.restclient.WerkRESTClient;
-import org.werk.ui.controls.mainapp.MainAppControl;
+import org.werk.ui.controls.mainapp.MainApp;
 import org.werk.ui.guice.FXMLLoaderFactory;
 import org.werk.ui.guice.LoaderFactory;
 
@@ -24,11 +24,11 @@ public class WerkUIModule extends AbstractModule {
 		WerkRESTClient werkClient = WerkRESTClient.create(vertx);
 		bind(WerkRESTClient.class).toInstance(werkClient);
 		
-		LoaderFactory loaderFactory = new LoaderFactory();
+		LoaderFactory loaderFactory = LoaderFactory.getInstance();
 		bind(FXMLLoaderFactory.class).toInstance(loaderFactory);
 		
-		MainAppControl mainAppControl = new MainAppControl(loaderFactory);
-		bind(MainAppControl.class).toInstance(mainAppControl);
+		MainApp mainAppControl = new MainApp(loaderFactory);
+		bind(MainApp.class).toInstance(mainAppControl);
 		
 		ServerInfoManager serverInfoManager = new ServerInfoManager(); 
 		bind(ServerInfoManager.class).toInstance(serverInfoManager);
