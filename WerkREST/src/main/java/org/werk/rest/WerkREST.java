@@ -76,11 +76,15 @@ public class WerkREST extends AbstractVerticle {
 		router.get("/jobTypes/:jobTypeName/:version").handler(this::handleGetJobType);
 		router.get("/jobTypes/:jobTypeName").handler(this::handleGetJobType);
 		router.get("/jobTypes").handler(this::handleListJobTypes);
+		router.get("/jobTypesForStep/:stepTypeName").handler(this::handleListJobTypesForStep);
 		
 		router.get("/stepTypes").handler(this::handleGetAllStepTypes);
 		router.get("/stepTypes/:stepTypeName").handler(this::handleGetStepType);
 		router.get("/stepTypesForJob/:jobTypeName/:version").handler(this::handleListStepTypes);
 		router.get("/stepTypesForJob/:jobTypeName").handler(this::handleListStepTypes);
+		
+		router.get("/stepTransitions/:stepTypeName").handler(this::handleListStepTransitions);
+		router.get("/stepRollbackTransitions/:stepTypeName").handler(this::handleListStepRollbackTransitions);
 		
 		router.get("/jobsAndHistory/:jobId").handler(this::handleJobsAndHistory);
 		
@@ -271,6 +275,19 @@ public class WerkREST extends AbstractVerticle {
 		routingContext.response().putHeader("content-type", "application/json").end(obj.toString());
 	}
 
+	private void handleListJobTypesForStep(RoutingContext routingContext) {
+		String stepTypeName = routingContext.request().getParam("stepTypeName");
+		
+		JSONArray arr = new JSONArray();
+		for (JobType jobType : werkService.getJobTypesForStep(stepTypeName))
+			arr.put(jobStepTypeRESTSerializer.serializeJobType(jobType));
+		
+		JSONObject obj = new JSONObject();
+		obj.put("jobTypes", arr);
+		
+		routingContext.response().putHeader("content-type", "application/json").end(obj.toString());
+	}
+	
 	private void handleGetStepType(RoutingContext routingContext) {
 		String stepTypeName = routingContext.request().getParam("stepTypeName");
 		
@@ -285,6 +302,51 @@ public class WerkREST extends AbstractVerticle {
 		}
 	}
 
+	//
+	private void handleListStepTransitions(RoutingContext routingContext) {
+		String stepTypeName = routingContext.request().getParam("stepTypeName");
+		
+		HttpServerResponse response = routingContext.response();
+		if (stepTypeName == null) {
+			sendStatus(400, response);
+		} else {
+			JSONArray arr = new JSONArray();
+			
+			StepType<?> mainStepType = werkService.getStepType(stepTypeName);
+			for (String transition : mainStepType.getAllowedTransitions()) {
+				StepType<?> stepType = werkService.getStepType(transition);
+				arr.put(jobStepTypeRESTSerializer.serializeStepType(stepType));
+			}
+			
+			JSONObject obj = new JSONObject();
+			obj.put("stepTypes", arr);
+			
+			routingContext.response().putHeader("content-type", "application/json").end(obj.toString());
+		}
+	}
+
+	private void handleListStepRollbackTransitions(RoutingContext routingContext) {
+		String stepTypeName = routingContext.request().getParam("stepTypeName");
+		
+		HttpServerResponse response = routingContext.response();
+		if (stepTypeName == null) {
+			sendStatus(400, response);
+		} else {
+			JSONArray arr = new JSONArray();
+			
+			StepType<?> mainStepType = werkService.getStepType(stepTypeName);
+			for (String transition : mainStepType.getAllowedRollbackTransitions()) {
+				StepType<?> stepType = werkService.getStepType(transition);
+				arr.put(jobStepTypeRESTSerializer.serializeStepType(stepType));
+			}
+			
+			JSONObject obj = new JSONObject();
+			obj.put("stepTypes", arr);
+			
+			routingContext.response().putHeader("content-type", "application/json").end(obj.toString());
+		}
+	}
+	
 	private void handleListStepTypes(RoutingContext routingContext) {
 		String jobTypeName = routingContext.request().getParam("jobTypeName");
 		String versionStr = routingContext.request().getParam("version");

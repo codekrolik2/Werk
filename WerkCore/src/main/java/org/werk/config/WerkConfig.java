@@ -5,11 +5,12 @@ import java.util.Map;
 
 import org.werk.exceptions.WerkConfigException;
 import org.werk.meta.JobType;
+import org.werk.meta.JobTypeForStepGetter;
 import org.werk.meta.StepType;
 import org.werk.processing.steps.StepExec;
 import org.werk.processing.steps.Transitioner;
 
-public interface WerkConfig<J> {
+public interface WerkConfig<J> extends JobTypeForStepGetter {
 	Collection<JobType> getAllJobTypes();
 	Collection<String> getAllJobTypeNames();
 	Collection<Long> getJobTypeVersions(String jobTypeName);

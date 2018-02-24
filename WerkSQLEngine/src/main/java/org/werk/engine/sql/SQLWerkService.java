@@ -186,4 +186,9 @@ public class SQLWerkService implements WerkService<Long> {
 		
 		return info;
 	}
+
+	@Override
+	public Collection<JobType> getJobTypesForStep(String stepTypeName) {
+		return werkConfig.getAllJobTypes();
+	}
 }

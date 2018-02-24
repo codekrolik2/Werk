@@ -88,21 +88,21 @@ public class WerkRESTClient {
 		client = WebClient.create(vertx);
 	}
 	
-	public void createJob(String host, int port, Callback<Long> callback, JobInitInfo init) throws Exception {
+	public void createJob(String host, int port, WerkCallback<Long> callback, JobInitInfo init) throws Exception {
 		String str = jobInitInfoSerializer.deserializeJobInitInfo(init).toString();
 		Buffer buffer = Buffer.buffer(str);
 		
 		sendCreateJobRequest(host, port, callback, buffer);
 	}
 	
-	public void createJobOfVersion(String host, int port, Callback<Long> callback, VersionJobInitInfo init) throws Exception {
+	public void createJobOfVersion(String host, int port, WerkCallback<Long> callback, VersionJobInitInfo init) throws Exception {
 		String str = jobInitInfoSerializer.deserializeVersionJobInitInfo(init).toString();
 		Buffer buffer = Buffer.buffer(str);
 		
 		sendCreateJobRequest(host, port, callback, buffer);
 	}
 	
-	public void sendCreateJobRequest(String host, int port, Callback<Long> callback, Buffer buffer) throws Exception {
+	public void sendCreateJobRequest(String host, int port, WerkCallback<Long> callback, Buffer buffer) throws Exception {
 		client.post(port, host, "/jobs").sendBuffer(buffer, ar -> {
 			try {
 				if (ar.succeeded()) {
@@ -119,13 +119,13 @@ public class WerkRESTClient {
 				} else
 					throw ar.cause();
 			} catch(Throwable e) {
-				logger.error("getServerInfo Exception ", e);
+				logger.error("createJob Exception ", e);
 				callback.error(e);
 			}
 		});
 	}
 
-	public void restartJob(String host, int port, Callback<Long> callback, JobRestartInfo<Long> jobRestartInfo) throws Exception {
+	public void restartJob(String host, int port, WerkCallback<Long> callback, JobRestartInfo<Long> jobRestartInfo) throws Exception {
 		String str = jobStepSerializer.serializeJobRestartInfo(jobRestartInfo).toString();
 		Buffer buffer = Buffer.buffer(str);
 		
@@ -145,13 +145,13 @@ public class WerkRESTClient {
 				} else
 					throw ar.cause();
 			} catch(Throwable e) {
-				logger.error("getServerInfo Exception ", e);
+				logger.error("restartJob Exception ", e);
 				callback.error(e);
 			}
 		});
 	}
 
-	public void getJobAndHistory(String host, int port, Callback<ReadOnlyJob<Long>> callback, Long jobId) throws Exception {
+	public void getJobAndHistory(String host, int port, WerkCallback<ReadOnlyJob<Long>> callback, Long jobId) throws Exception {
 		// Send a GET request
 		client.get(port, host, "/jobs/"+jobId)
 		.send(ar -> {
@@ -170,13 +170,13 @@ public class WerkRESTClient {
 				} else
 					throw ar.cause();
 			} catch(Throwable e) {
-				logger.error("getServerInfo Exception ", e);
+				logger.error("getJobAndHistory Exception ", e);
 				callback.error(e);
 			}
 		});
 	}
 
-	public void getJobs(String host, int port, Callback<JobCollection<Long>> callback,
+	public void getJobs(String host, int port, WerkCallback<JobCollection<Long>> callback,
 			Optional<Timestamp> from, Optional<Timestamp> to, 
 			Optional<Timestamp> fromExec, Optional<Timestamp> toExec, 
 			Optional<Map<String, Long>> jobTypesAndVersions,
@@ -214,13 +214,13 @@ public class WerkRESTClient {
 				} else
 					throw ar.cause();
 			} catch(Throwable e) {
-				logger.error("getServerInfo Exception ", e);
+				logger.error("getJobs Exception ", e);
 				callback.error(e);
 			}
 		});
 	}
 
-	public void getJobTypes(String host, int port, Callback<Collection<JobType>> callback) {
+	public void getJobTypes(String host, int port, WerkCallback<Collection<JobType>> callback) {
 		// Send a GET request
 		HttpRequest<Buffer> r = client.get(port, host, "/jobTypes");
 		
@@ -247,13 +247,46 @@ public class WerkRESTClient {
 				} else
 					throw ar.cause();
 			} catch(Throwable e) {
-				logger.error("getServerInfo Exception ", e);
+				logger.error("getJobTypes Exception ", e);
 				callback.error(e);
 			}
 		});
 	}
 
-	public void getJobType(String host, int port, Callback<JobType> callback, String jobTypeName, Optional<Long> version) {
+	public void getJobTypesForStep(String host, int port, WerkCallback<Collection<JobType>> callback, String stepType) {
+		// Send a GET request
+		HttpRequest<Buffer> r = client.get(port, host, "/jobTypesForStep/" + stepType);
+		
+		r.send(ar -> {
+			try {
+				if (ar.succeeded()) {
+					// Obtain response
+					HttpResponse<Buffer> response = ar.result();
+					
+					logger.info("getJobTypesForStep: received response with status code" + response.statusCode());
+					
+					String bodyStr = response.bodyAsString();
+					JSONObject bodyJSON = new JSONObject(bodyStr);
+					
+					List<JobType> jobTypes = new ArrayList<>();
+					JSONArray jobTypesArray = bodyJSON.getJSONArray("jobTypes");
+					for (int i = 0; i < jobTypesArray.length(); i++) {
+						JSONObject jobTypeObject = jobTypesArray.getJSONObject(i);
+						JobType jobType = jobStepTypeRESTSerializer.deserializeJobType(jobTypeObject);
+						jobTypes.add(jobType);
+					}
+					
+					callback.done(jobTypes);
+				} else
+					throw ar.cause();
+			} catch(Throwable e) {
+				logger.error("getJobTypesForStep Exception ", e);
+				callback.error(e);
+			}
+		});
+	}
+
+	public void getJobType(String host, int port, WerkCallback<JobType> callback, String jobTypeName, Optional<Long> version) {
 		// Send a GET request
 		String path = "/jobTypes/" + jobTypeName;
 		if (version.isPresent())
@@ -277,13 +310,77 @@ public class WerkRESTClient {
 				} else
 					throw ar.cause();
 			} catch(Throwable e) {
-				logger.error("getServerInfo Exception ", e);
+				logger.error("getJobType Exception ", e);
 				callback.error(e);
 			}
 		});
 	}
 
-	public void getAllStepTypes(String host, int port, Callback<Collection<StepType<Long>>> callback) {
+	public void getStepTransitions(String host, int port, WerkCallback<Collection<StepType<Long>>> callback, String stepTypeName) {
+		// Send a GET request
+		client.get(port, host, "/stepTransitions/"+stepTypeName)
+		.send(ar -> {
+			try {
+				if (ar.succeeded()) {
+					// Obtain response
+					HttpResponse<Buffer> response = ar.result();
+					
+					logger.info("getAllStepTypes: received response with status code" + response.statusCode());
+					
+					String bodyStr = response.bodyAsString();
+					JSONObject bodyJSON = new JSONObject(bodyStr);
+					
+					List<StepType<Long>> stepTypes = new ArrayList<>();
+					JSONArray stepTypesArr = bodyJSON.getJSONArray("stepTypes");
+					for (int i = 0; i < stepTypesArr.length(); i++) {
+						JSONObject stepTypeObject = stepTypesArr.getJSONObject(i);
+						StepType<Long> stepType = jobStepTypeRESTSerializer.deserializeStepType(stepTypeObject);
+						stepTypes.add(stepType);
+					}
+					
+					callback.done(stepTypes);
+				} else
+					throw ar.cause();
+			} catch(Throwable e) {
+				logger.error("getAllStepTypes Exception ", e);
+				callback.error(e);
+			}
+		});
+	}
+
+	public void getStepRollbackTransitions(String host, int port, WerkCallback<Collection<StepType<Long>>> callback, String stepTypeName) {
+		// Send a GET request
+		client.get(port, host, "/stepRollbackTransitions/" + stepTypeName)
+		.send(ar -> {
+			try {
+				if (ar.succeeded()) {
+					// Obtain response
+					HttpResponse<Buffer> response = ar.result();
+					
+					logger.info("getAllStepTypes: received response with status code" + response.statusCode());
+					
+					String bodyStr = response.bodyAsString();
+					JSONObject bodyJSON = new JSONObject(bodyStr);
+					
+					List<StepType<Long>> stepTypes = new ArrayList<>();
+					JSONArray stepTypesArr = bodyJSON.getJSONArray("stepTypes");
+					for (int i = 0; i < stepTypesArr.length(); i++) {
+						JSONObject stepTypeObject = stepTypesArr.getJSONObject(i);
+						StepType<Long> stepType = jobStepTypeRESTSerializer.deserializeStepType(stepTypeObject);
+						stepTypes.add(stepType);
+					}
+					
+					callback.done(stepTypes);
+				} else
+					throw ar.cause();
+			} catch(Throwable e) {
+				logger.error("getAllStepTypes Exception ", e);
+				callback.error(e);
+			}
+		});
+	}
+
+	public void getAllStepTypes(String host, int port, WerkCallback<Collection<StepType<Long>>> callback) {
 		// Send a GET request
 		client.get(port, host, "/stepTypes")
 		.send(ar -> {
@@ -309,13 +406,13 @@ public class WerkRESTClient {
 				} else
 					throw ar.cause();
 			} catch(Throwable e) {
-				logger.error("getServerInfo Exception ", e);
+				logger.error("getAllStepTypes Exception ", e);
 				callback.error(e);
 			}
 		});
 	}
 
-	public void getStepTypesForJob(String host, int port, Callback<Collection<StepType<Long>>> callback, 
+	public void getStepTypesForJob(String host, int port, WerkCallback<Collection<StepType<Long>>> callback, 
 			String jobTypeName, Optional<Long> version) {
 		// Send a GET request
 		String path = "/stepTypesForJob/" + jobTypeName;
@@ -346,13 +443,13 @@ public class WerkRESTClient {
 				} else
 					throw ar.cause();
 			} catch(Throwable e) {
-				logger.error("getServerInfo Exception ", e);
+				logger.error("getStepTypesForJob Exception ", e);
 				callback.error(e);
 			}
 		});
 	}
 
-	public void getStepType(String host, int port, Callback<StepType<Long>> callback, String stepTypeName) {
+	public void getStepType(String host, int port, WerkCallback<StepType<Long>> callback, String stepTypeName) {
 		// Send a GET request
 		client.get(port, host, "/stepTypes/" + stepTypeName)
 		.send(ar -> {
@@ -371,13 +468,13 @@ public class WerkRESTClient {
 				} else
 					throw ar.cause();
 			} catch(Throwable e) {
-				logger.error("getServerInfo Exception ", e);
+				logger.error("getStepType Exception ", e);
 				callback.error(e);
 			}
 		});
 	}
 
-	public void jobsAdded(String host, int port, Callback<Object> callback) {
+	public void jobsAdded(String host, int port, WerkCallback<Object> callback) {
 		// Send a GET request
 		client.get(port, host, "/jobsAdded")
 		.send(ar -> {
@@ -391,13 +488,13 @@ public class WerkRESTClient {
 				} else
 					throw ar.cause();
 			} catch(Throwable e) {
-				logger.error("getServerInfo Exception ", e);
+				logger.error("jobsAdded Exception ", e);
 				callback.error(e);
 			}
 		});
 	}
 	
-	public void getServerInfo(String host, int port, Callback<JSONObject> callback) {
+	public void getServerInfo(String host, int port, WerkCallback<JSONObject> callback) {
 		// Send a GET request
 		client.get(port, host, "/serverInfo")
 		.send(ar -> {

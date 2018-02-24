@@ -3,7 +3,9 @@ package org.werk.config;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.werk.exceptions.WerkConfigException;
@@ -19,6 +21,8 @@ public class WerkConfigImpl<J> implements WerkConfig<J> {
 	protected Map<String, JobTypeRegistry> jobTypes;
 	@Getter
 	protected Map<String, StepType<J>> stepTypes;
+	@Getter
+	protected Map<String, Set<JobType>> jobTypesForStep;
 	
 	class JobTypeRegistry {
 		@Getter
@@ -47,6 +51,7 @@ public class WerkConfigImpl<J> implements WerkConfig<J> {
 	public WerkConfigImpl() {
 		jobTypes = new HashMap<>();
 		stepTypes = new HashMap<>();
+		jobTypesForStep = new HashMap<>();
 	}
 
 	@Override
@@ -122,6 +127,16 @@ public class WerkConfigImpl<J> implements WerkConfig<J> {
 		}
 		
 		registry.addJobType(jobType);
+
+		for (String stepType : jobType.getStepTypes()) {
+			Set<JobType> jobTypes = jobTypesForStep.get(stepType);
+			if (jobTypes == null) {
+				jobTypes = new HashSet<>();
+				jobTypesForStep.put(stepType, jobTypes);
+			}
+			
+			jobTypes.add(jobType);
+		}
 	}
 	
 	@Override
@@ -150,5 +165,10 @@ public class WerkConfigImpl<J> implements WerkConfig<J> {
 		Transitioner<J> stepTransitioner = stepTypeObj.getStepTransitionerFactory().createStepTransitioner();
 		
 		return stepTransitioner;
+	}
+
+	@Override
+	public Collection<JobType> getJobTypesForStep(String stepTypeName) {
+		return jobTypesForStep.get(stepTypeName);
 	}
 }

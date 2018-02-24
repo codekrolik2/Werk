@@ -1,5 +1,5 @@
 package org.werk.ui.controls.jobsform;
 
-public class JobsFormController {
+public class JobsForm {
 
 }

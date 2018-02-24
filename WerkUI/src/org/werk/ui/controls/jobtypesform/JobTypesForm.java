@@ -4,9 +4,10 @@ import java.io.IOException;
 import java.util.Collection;
 
 import org.werk.meta.JobType;
-import org.werk.restclient.Callback;
+import org.werk.restclient.WerkCallback;
 import org.werk.restclient.WerkRESTClient;
 import org.werk.ui.ServerInfoManager;
+import org.werk.ui.controls.mainapp.MainApp;
 import org.werk.ui.guice.LoaderFactory;
 import org.werk.ui.util.MessageBox;
 
@@ -17,10 +18,9 @@ import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
-import javafx.scene.control.TableView;
 import javafx.scene.layout.VBox;
 
-public class JobTypesFormControl extends VBox {
+public class JobTypesForm extends VBox {
 	@Inject
 	WerkRESTClient werkClient;
 	@Inject
@@ -28,9 +28,12 @@ public class JobTypesFormControl extends VBox {
 	@FXML
     Button refreshButton;
 	@FXML
-	TableView<JobType> table;
+	JobTypesTable table;
 	
-	public JobTypesFormControl() {
+	@Inject
+	MainApp mainApp;
+	
+	public JobTypesForm() {
         FXMLLoader fxmlLoader = LoaderFactory.getInstance().loader(getClass().getResource("JobTypesForm.fxml"));
         fxmlLoader.setRoot(this);
         fxmlLoader.setController(this);
@@ -42,17 +45,21 @@ public class JobTypesFormControl extends VBox {
         }
 	}
 	
+	public void initTable() {
+		table.setMainApp(mainApp);
+	}
+	
 	@FXML
     public void refresh() {
 		if (serverInfoManager.getPort() < 0)
-			MessageBox.show(String.format("Server not assigned. Please connect."));
+			MessageBox.show(String.format("Server not assigned. Please set server."));
 		else {
 			String host = serverInfoManager.getHost();
 			int port = serverInfoManager.getPort();
 			
 			refreshButton.setDisable(true);
 			
-			Callback<Collection<JobType>> callback = new Callback<Collection<JobType>>() {
+			WerkCallback<Collection<JobType>> callback = new WerkCallback<Collection<JobType>>() {
 				@Override
 				public void error(Throwable cause) {
 					Platform.runLater( () -> {
@@ -76,3 +83,4 @@ public class JobTypesFormControl extends VBox {
 		}
 	}
 }
+

@@ -1,6 +1,6 @@
 package org.werk.restclient;
 
-public interface Callback<R> {
+public interface WerkCallback<R> {
 	void done(R result);
 	void error(Throwable cause);
 }

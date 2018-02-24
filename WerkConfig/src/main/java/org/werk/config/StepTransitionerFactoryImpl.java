@@ -26,4 +26,9 @@ public class StepTransitionerFactoryImpl<J> implements StepTransitionerFactory<J
 	public Class getTransitionerClass() {
 		return stepTransitioner;
 	}
+
+	@Override
+	public String getTransitionerClassName() {
+		return stepTransitioner.getName();
+	}
 }

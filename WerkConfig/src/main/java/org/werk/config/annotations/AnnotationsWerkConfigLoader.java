@@ -83,14 +83,14 @@ public class AnnotationsWerkConfigLoader<J> implements WerkConfigLoader<J> {
 			Set<String> stepsClassesSet = db.getAnnotationIndex().get(StepType.class.getName());
 			if (stepsClassesSet != null)
 			for (String className : stepsClassesSet) {
-				org.werk.meta.StepType<J> stepTypeObj = loadStepType(className);
+				org.werk.meta.StepType<J> stepTypeObj = loadStepType(config, className);
 				config.addStepType(stepTypeObj);
 			}
 			
 			Set<String> stepsClassesSetF = db.getAnnotationIndex().get(StepTypeFactories.class.getName());
 			if (stepsClassesSetF != null)
 			for (String className : stepsClassesSetF) {
-				org.werk.meta.StepType<J> stepTypeObj = loadStepTypeF(className);
+				org.werk.meta.StepType<J> stepTypeObj = loadStepTypeFactories(config, className);
 				config.addStepType(stepTypeObj);
 			}
 			
@@ -114,7 +114,7 @@ public class AnnotationsWerkConfigLoader<J> implements WerkConfigLoader<J> {
 		
 		String jobTypeName = jobType.name();
 		String firstStepTypeName = jobType.firstStepTypeName();
-		List<String> stepTypes = Arrays.asList(jobType.stepTypeNames());
+		Set<String> stepTypes = new HashSet<>(Arrays.asList(jobType.stepTypeNames()));
 		String description = jobType.description();
 		String jobConfig = jobType.jobConfig();
 		boolean forceAcyclic = jobType.forceAcyclic();
@@ -192,7 +192,7 @@ public class AnnotationsWerkConfigLoader<J> implements WerkConfigLoader<J> {
 		}
 	}
 	
-	protected org.werk.meta.StepType<J> loadStepType(String className) throws ClassNotFoundException, WerkConfigException {
+	protected org.werk.meta.StepType<J> loadStepType(WerkConfigImpl<J> config, String className) throws ClassNotFoundException, WerkConfigException {
 		@SuppressWarnings("rawtypes")
 		Class classObj = Class.forName(className);
 		
@@ -224,13 +224,13 @@ public class AnnotationsWerkConfigLoader<J> implements WerkConfigLoader<J> {
 		OverflowAction logOverflowAction = stepType.logOverflowAction();
 		boolean shortTransaction = stepType.shortTransaction();
 		
-		return new StepTypeImpl<J>(stepTypeName, allowedTransitions, allowedRollbackTransitions, stepExecFactory, 
+		return new StepTypeImpl<J>(stepTypeName, config, allowedTransitions, allowedRollbackTransitions, stepExecFactory, 
 				stepTransitionerFactory, processingDescription, rollbackDescription, execConfig, transitionerConfig,
 				logLimit, logOverflowAction, shortTransaction);
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	protected org.werk.meta.StepType<J> loadStepTypeF(String className) throws ClassNotFoundException, 
+	protected org.werk.meta.StepType<J> loadStepTypeFactories(WerkConfigImpl<J> config, String className) throws ClassNotFoundException, 
 			NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, 
 			IllegalArgumentException, InvocationTargetException, WerkConfigException {
 		Class classObj = Class.forName(className);
@@ -264,7 +264,7 @@ public class AnnotationsWerkConfigLoader<J> implements WerkConfigLoader<J> {
 		OverflowAction logOverflowAction = stepType.logOverflowAction();
 		boolean shortTransaction = stepType.shortTransaction();
 		
-		return new StepTypeImpl<J>(stepTypeName, allowedTransitions, allowedRollbackTransitions, stepExecFactory, 
+		return new StepTypeImpl<J>(stepTypeName, config, allowedTransitions, allowedRollbackTransitions, stepExecFactory,
 				stepTransitionerFactory, processingDescription, rollbackDescription, execConfig, transitionerConfig,
 				logLimit, logOverflowAction, shortTransaction);
 	}

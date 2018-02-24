@@ -6,4 +6,5 @@ public interface StepExecFactory<J> {
 	StepExec<J> createStepExec() throws Exception;
 	@SuppressWarnings("rawtypes")
 	Class getStepExecClass();
+	String getStepExecClassName();
 }

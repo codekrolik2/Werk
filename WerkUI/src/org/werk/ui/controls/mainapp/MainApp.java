@@ -2,11 +2,17 @@ package org.werk.ui.controls.mainapp;
 
 import java.io.IOException;
 
+import org.werk.meta.JobType;
+import org.werk.meta.StepType;
+import org.werk.rest.pojo.RESTJobType;
 import org.werk.ui.TabCreator;
-import org.werk.ui.controls.connectform.ConnectFormController;
-import org.werk.ui.controls.jobtypesform.JobTypesFormControl;
-import org.werk.ui.controls.serverinfoform.ServerInfo;
-import org.werk.ui.guice.FXMLLoaderFactory;
+import org.werk.ui.controls.jobtypeinfoform.JobTypeInfoForm;
+import org.werk.ui.controls.jobtypesform.JobTypesForm;
+import org.werk.ui.controls.serverinfoform.ServerInfoForm;
+import org.werk.ui.controls.setserverform.SetServerForm;
+import org.werk.ui.controls.steptypeinfoform.StepTypeInfoForm;
+import org.werk.ui.controls.steptypesform.StepTypesForm;
+import org.werk.ui.guice.LoaderFactory;
 import org.werk.ui.util.ModalWindow;
 
 import javafx.fxml.FXML;
@@ -31,8 +37,8 @@ public class MainApp extends VBox {
 	@FXML
 	TabPane tabs;
 	
-    public MainApp(FXMLLoaderFactory loaderFactory) {
-        FXMLLoader fxmlLoader = loaderFactory.loader(getClass().getResource("MainApp.fxml"));
+    public MainApp() {
+        FXMLLoader fxmlLoader = LoaderFactory.getInstance().loader(getClass().getResource("MainApp.fxml"));
         fxmlLoader.setRoot(this);
         fxmlLoader.setController(this);
 
@@ -43,11 +49,11 @@ public class MainApp extends VBox {
         }
     }
 	
-	public void showConnectDialog() {
-		ConnectFormController connectForm = tabCreator.getConnectFormController();
-		ModalWindow window = new ModalWindow(connectForm, "Connect");
+	public void showSetServerDialog() {
+		SetServerForm setServerForm = tabCreator.getSetServerForm();
+		ModalWindow window = new ModalWindow(setServerForm, "Set Server");
 		Stage dialogStage = window.showModal(main, this.getScene().getWindow());
-		connectForm.setDialogStage(dialogStage);
+		setServerForm.setDialogStage(dialogStage);
 	}
 	
 	public void setStatusText(String text) {
@@ -55,7 +61,7 @@ public class MainApp extends VBox {
 	}
 	
 	public void createServerInfoTab() {
-		ServerInfo serverInfoController = tabCreator.getServerInfoController();
+		ServerInfoForm serverInfoController = tabCreator.getServerInfoForm();
 		final Tab tab = new Tab("Server Info", serverInfoController);
 		tab.setClosable(true);
         
@@ -65,8 +71,8 @@ public class MainApp extends VBox {
         serverInfoController.setServerInfo();
     }
 	
-	public void createJobTypesForm() {
-		JobTypesFormControl jobTypesFormControl = tabCreator.getJobTypesFormControl();
+	public void createJobTypesTab() {
+		JobTypesForm jobTypesFormControl = tabCreator.getJobTypesForm();
 		final Tab tab = new Tab("Job Types", jobTypesFormControl);
 		tab.setClosable(true);
         
@@ -74,6 +80,35 @@ public class MainApp extends VBox {
         tabs.getSelectionModel().select(tab);
         
         jobTypesFormControl.refresh();
+    }
+	
+	public void createStepTypesTab() {
+		StepTypesForm stepTypesFormControl = tabCreator.getStepTypesForm();
+		final Tab tab = new Tab("Step Types", stepTypesFormControl);
+		tab.setClosable(true);
+        
+		tabs.getTabs().add(tab);
+        tabs.getSelectionModel().select(tab);
+        
+        stepTypesFormControl.refresh();
+    }
+	
+	public void createJobTypeTab(JobType jobType) {
+		JobTypeInfoForm jobTypeInfoForm = tabCreator.getJobTypeInfoForm(jobType);
+		final Tab tab = new Tab("JobType: " + ((RESTJobType)jobType).getFullName(), jobTypeInfoForm);
+		tab.setClosable(true);
+        
+		tabs.getTabs().add(tab);
+        tabs.getSelectionModel().select(tab);
+    }
+	
+	public void createStepTypeTab(StepType<Long> stepType) {
+		StepTypeInfoForm stepTypeInfoForm = tabCreator.getStepTypeInfoForm(stepType);
+		final Tab tab = new Tab("StepType: " + stepType.getStepTypeName(), stepTypeInfoForm);
+		tab.setClosable(true);
+        
+		tabs.getTabs().add(tab);
+        tabs.getSelectionModel().select(tab);
     }
 	
 	public void quit() {

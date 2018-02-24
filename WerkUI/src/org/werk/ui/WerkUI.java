@@ -31,7 +31,7 @@ public class WerkUI extends Application {
 			
 			//------------------------------
 			
-			Scene scene = new Scene(mainApp, 800, 600);
+			Scene scene = new Scene(mainApp, 1024, 768);
 			
 			stage.setTitle("Werk UI");
 			stage.setScene(scene);
@@ -46,7 +46,7 @@ public class WerkUI extends Application {
 			});
 			
 			mainApp.setMain(stage);
-			mainApp.showConnectDialog();
+			mainApp.showSetServerDialog();
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw e;

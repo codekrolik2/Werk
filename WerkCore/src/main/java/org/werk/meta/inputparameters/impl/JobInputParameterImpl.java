@@ -43,7 +43,7 @@ public class JobInputParameterImpl implements JobInputParameter {
 	@Override
 	public String toString() {
 		return String.format(
-			"%s: %s %s", name, type.toString(), isOptional() ? "[Optional]" : "" 
+			"%s%s %s", isOptional() ? "Optional " : "", type.toString(), name 
 		);
 	}
 }

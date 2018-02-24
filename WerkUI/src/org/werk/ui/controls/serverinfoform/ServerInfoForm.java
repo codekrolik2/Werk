@@ -3,10 +3,10 @@ package org.werk.ui.controls.serverinfoform;
 import java.io.IOException;
 
 import org.json.JSONObject;
-import org.werk.restclient.Callback;
+import org.werk.restclient.WerkCallback;
 import org.werk.restclient.WerkRESTClient;
 import org.werk.ui.ServerInfoManager;
-import org.werk.ui.guice.FXMLLoaderFactory;
+import org.werk.ui.guice.LoaderFactory;
 import org.werk.ui.util.MessageBox;
 
 import com.google.inject.Inject;
@@ -18,7 +18,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.VBox;
 
-public class ServerInfo extends VBox {
+public class ServerInfoForm extends VBox {
 	@FXML
     Button refreshButton;
 	@FXML
@@ -29,9 +29,8 @@ public class ServerInfo extends VBox {
 	@Inject
 	ServerInfoManager serverInfoManager;
 	
-	@Inject
-	public ServerInfo(FXMLLoaderFactory loaderFactory) {
-        FXMLLoader fxmlLoader = loaderFactory.loader(getClass().getResource("ServerInfoForm.fxml"));
+	public ServerInfoForm() {
+        FXMLLoader fxmlLoader = LoaderFactory.getInstance().loader(getClass().getResource("ServerInfoForm.fxml"));
         fxmlLoader.setRoot(this);
         fxmlLoader.setController(this);
 
@@ -49,14 +48,14 @@ public class ServerInfo extends VBox {
 	@FXML
     private void refresh() {
 		if (serverInfoManager.getPort() < 0)
-			MessageBox.show(String.format("Server not assigned. Please connect."));
+			MessageBox.show(String.format("Server not assigned. Please set server."));
 		else {
 			String host = serverInfoManager.getHost();
 			int port = serverInfoManager.getPort();
 			
 			refreshButton.setDisable(true);
 			
-			Callback<JSONObject> callback = new Callback<JSONObject>() {
+			WerkCallback<JSONObject> callback = new WerkCallback<JSONObject>() {
 				@Override
 				public void error(Throwable cause) {
 					Platform.runLater( () -> {

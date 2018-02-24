@@ -160,4 +160,9 @@ public class LocalWerkService implements WerkService<Long> {
 		info.put("server", "In-Process");
 		return info;
 	}
+
+	@Override
+	public Collection<JobType> getJobTypesForStep(String stepTypeName) {
+		return werkConfig.getAllJobTypes();
+	}
 }

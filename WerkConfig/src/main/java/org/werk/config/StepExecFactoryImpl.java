@@ -26,4 +26,9 @@ public class StepExecFactoryImpl<J> implements StepExecFactory<J> {
 	public Class getStepExecClass() {
 		return stepExec;
 	}
+
+	@Override
+	public String getStepExecClassName() {
+		return stepExec.getName();
+	}
 }

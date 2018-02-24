@@ -6,4 +6,5 @@ public interface StepTransitionerFactory<J> {
 	Transitioner<J> createStepTransitioner() throws Exception;
 	@SuppressWarnings("rawtypes")
 	Class getTransitionerClass();
+	String getTransitionerClassName();
 }

@@ -1,13 +1,13 @@
-package org.werk.ui.controls.connectform;
+package org.werk.ui.controls.setserverform;
 
 import java.io.IOException;
 
 import org.json.JSONObject;
-import org.werk.restclient.Callback;
+import org.werk.restclient.WerkCallback;
 import org.werk.restclient.WerkRESTClient;
 import org.werk.ui.ServerInfoManager;
 import org.werk.ui.controls.mainapp.MainApp;
-import org.werk.ui.guice.FXMLLoaderFactory;
+import org.werk.ui.guice.LoaderFactory;
 import org.werk.ui.util.MessageBox;
 
 import com.google.inject.Inject;
@@ -23,13 +23,13 @@ import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import lombok.Setter;
 
-public class ConnectFormController extends GridPane {
+public class SetServerForm extends GridPane {
 	@FXML
     private TextField hostTextField;
 	@FXML
     private TextField portTextField;
 	@FXML
-    private Button connectButton;
+    private Button setServerButton;
 	@Setter
 	private Stage dialogStage;
 	
@@ -40,9 +40,8 @@ public class ConnectFormController extends GridPane {
 	@Inject
 	ServerInfoManager serverInfoManager;
 	
-	@Inject
-	public ConnectFormController(FXMLLoaderFactory loaderFactory) {
-        FXMLLoader fxmlLoader = loaderFactory.loader(getClass().getResource("ConnectForm.fxml"));
+	public SetServerForm() {
+        FXMLLoader fxmlLoader = LoaderFactory.getInstance().loader(getClass().getResource("SetServer.fxml"));
         fxmlLoader.setRoot(this);
         fxmlLoader.setController(this);
 
@@ -65,20 +64,20 @@ public class ConnectFormController extends GridPane {
 	}
 	
 	@FXML
-    private void connect() {
+    private void setServer() {
 		String host = hostTextField.getText();
 		int port = Integer.parseInt(portTextField.getText());
 		
-		connectButton.setDisable(true);
+		setServerButton.setDisable(true);
 		serverInfoManager.resetServerInfo(mainApp);
 		
-		Callback<JSONObject> callback = new Callback<JSONObject>() {
+		WerkCallback<JSONObject> callback = new WerkCallback<JSONObject>() {
 			@Override
 			public void error(Throwable cause) {
 				Platform.runLater( () -> {
-						connectButton.setDisable(false);
+					setServerButton.setDisable(false);
 						MessageBox.show(
-							String.format("Error connecting to server %s:%d [%s]", host, port, cause.toString())
+							String.format("Error setting to server %s:%d [%s]", host, port, cause.toString())
 						);
 					}
 				);

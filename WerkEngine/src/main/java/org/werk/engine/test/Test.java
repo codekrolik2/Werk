@@ -70,7 +70,7 @@ public class Test {
 		
 		JobContext<Long> jobContext = new JobContext<>(new HashMap<>());
 		
-		StepType<Long> st = new StepTypeImpl<>(null, null, null, null, null, null, null, null, 
+		StepType<Long> st = new StepTypeImpl<>(null, null, null, null, null, null, null, null, null, 
 				null, 50, OverflowAction.DELETE_FIRST, false);
 		StepContext<Long> stepContext = new StepContext<>(st, tp, 0, new HashMap<>(), new ArrayList<>());
 		

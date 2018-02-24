@@ -27,7 +27,7 @@ public class WerkUIModule extends AbstractModule {
 		LoaderFactory loaderFactory = LoaderFactory.getInstance();
 		bind(FXMLLoaderFactory.class).toInstance(loaderFactory);
 		
-		MainApp mainAppControl = new MainApp(loaderFactory);
+		MainApp mainAppControl = new MainApp();
 		bind(MainApp.class).toInstance(mainAppControl);
 		
 		ServerInfoManager serverInfoManager = new ServerInfoManager(); 

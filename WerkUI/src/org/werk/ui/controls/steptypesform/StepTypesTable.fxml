@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.cell.PropertyValueFactory?>
+
+<fx:root prefHeight="558.0" prefWidth="766.0" type="TableView" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1">
+	<columns>
+		<TableColumn editable="false" prefWidth="95.0" text="Step Type">
+			<cellValueFactory>
+				<PropertyValueFactory property="stepTypeName" />
+			</cellValueFactory>
+		</TableColumn>
+		<TableColumn fx:id="jobTypesColumn" prefWidth="100.0" text="Job Types">
+			<cellValueFactory>
+				<PropertyValueFactory property="jobTypesStr" />
+			</cellValueFactory>
+		</TableColumn>
+		<TableColumn prefWidth="100.0" text="Transitions">
+			<cellValueFactory>
+				<PropertyValueFactory property="transitions" />
+			</cellValueFactory>
+		</TableColumn>
+		<TableColumn prefWidth="100.0" text="Rollback Transitions">
+			<cellValueFactory>
+				<PropertyValueFactory property="rollbackTransitions" />
+			</cellValueFactory>
+		</TableColumn>
+		<TableColumn editable="false" prefWidth="60.0" text="Exec">
+			<cellValueFactory>
+				<PropertyValueFactory property="stepExecShortName" />
+			</cellValueFactory>
+		</TableColumn>
+		<TableColumn editable="false" prefWidth="108.0" text="Transitioner">
+			<cellValueFactory>
+				<PropertyValueFactory property="transitionerShortName" />
+			</cellValueFactory>
+		</TableColumn>
+		<TableColumn editable="false" prefWidth="151.0" text="Short Transaction">
+			<cellValueFactory>
+				<PropertyValueFactory property="shortTransaction" />
+			</cellValueFactory>
+		</TableColumn>
+		<TableColumn editable="false" prefWidth="90.0" text="Log Limit">
+			<cellValueFactory>
+				<PropertyValueFactory property="logLimit" />
+			</cellValueFactory>
+		</TableColumn>
+		<TableColumn editable="false" prefWidth="120.0" text="Log Overflow Action">
+			<cellValueFactory>
+				<PropertyValueFactory property="logOverflowAction" />
+			</cellValueFactory>
+		</TableColumn>
+		<TableColumn fx:id="detailsColumn" editable="false" prefWidth="73.0" text="Details" />
+	</columns>
+</fx:root>

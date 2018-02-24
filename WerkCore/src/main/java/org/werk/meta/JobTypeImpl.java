@@ -3,6 +3,7 @@ package org.werk.meta;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.werk.meta.inputparameters.JobInputParameter;
 
@@ -14,7 +15,7 @@ public class JobTypeImpl implements JobType {
 	@Getter
 	protected String jobTypeName;
 	@Getter
-	List<String> stepTypes;
+	Set<String> stepTypes;
 	@Getter
 	protected Map<String, List<JobInputParameter>> initParameters;
 	@Getter
@@ -65,9 +66,5 @@ public class JobTypeImpl implements JobType {
 		}
 		
 		return sb.toString();
-	}
-	
-	public String getFullName() {
-		return String.format("%s [v%d]", jobTypeName, version);
 	}
 }

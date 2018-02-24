@@ -40,7 +40,8 @@ public class Job1 {
 	stepExecClass=SysoutExec.class,
 	transitions={"Step2"},
 	rollbackTransitions={},
-	transitionerConfig="Step2"
+	execConfig="execConfig Step1",
+	transitionerConfig="transitionerConfig Step1"
 )
 class Step1 { }
 
@@ -48,7 +49,8 @@ class Step1 { }
 	stepExecClass=SysoutExec.class,
 	transitions={"Step3"},
 	rollbackTransitions={"Step1"},
-	transitionerConfig="Step3"
+	execConfig="execConfig Step2",
+	transitionerConfig="transitionerConfig Step2"
 )
 class Step2 { }
 
@@ -56,13 +58,16 @@ class Step2 { }
 	stepExecClass=SysoutExec.class,
 	transitions={"Step4"},
 	rollbackTransitions={"Step2"},
-	transitionerConfig="Step4"
+	execConfig="execConfig Step3",
+	transitionerConfig="transitionerConfig Step3"
 )
 class Step3 { }
 
 @StepType(name="Step4",
 	stepExecClass=SysoutExec.class,
 	transitions={},
-	rollbackTransitions={"Step3"}
+	rollbackTransitions={"Step3"},
+	execConfig="execConfig Step4",
+	transitionerConfig="transitionerConfig Step4"
 )
 class Step4 { }

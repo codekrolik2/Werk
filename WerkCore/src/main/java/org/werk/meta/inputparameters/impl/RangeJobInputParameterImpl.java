@@ -31,11 +31,12 @@ public class RangeJobInputParameterImpl extends JobInputParameterImpl implements
 	@Override
 	public String toString() {
 		return String.format(
-				"%s: %s [Range: %s %s - %s %s] [Prohibit: %s]", 
-					name, type.toString(),
-					getParameterValue(start), startInclusive ? "IN" : "EX",
-					getParameterValue(end), endInclusive ? "IN" : "EX", 
-					prohibitRange
-			);
+			"%s%s %s [%sRange: %s %s - %s %s]",
+			isOptional() ? "Optional " : "",
+			type.toString(), name,
+			prohibitRange ? "Prohibit " : "",
+			startInclusive ? "IN" : "EX", getParameterValue(start),
+			endInclusive ? "IN" : "EX", getParameterValue(end)
+		);
 	}
 }

@@ -31,6 +31,7 @@ public interface WerkService<J> {
 	//JOB METADATA RETRIEVAL
 	Collection<JobType> getJobTypes();
 	JobType getJobType(String jobTypeName, Optional<Long> version);
+	Collection<JobType> getJobTypesForStep(String stepTypeName);
 	
 	Collection<StepType<J>> getAllStepTypes();
 	Collection<StepType<J>> getStepTypesForJob(String jobTypeName, Optional<Long> version);
@@ -39,9 +40,5 @@ public interface WerkService<J> {
 	//NOTIFICATION
 	void jobsAdded();
 	
-	/**
-	 * JSONObject json = new JSONObject(jsonString); // Convert text to object
-	 * System.out.println(json.toString(4)); // Print it with specified indentation
-	 */
 	JSONObject getServerInfo();
 }

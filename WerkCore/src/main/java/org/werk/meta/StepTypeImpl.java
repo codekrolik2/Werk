@@ -1,34 +1,44 @@
 package org.werk.meta;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 
 @AllArgsConstructor
 public class StepTypeImpl<J> implements StepType<J> {
 	@Getter
-	String stepTypeName;
+	protected String stepTypeName;
+	@Getter @Setter
+	protected JobTypeForStepGetter config;
 	@Getter
-	Set<String> allowedTransitions;
+	protected Set<String> allowedTransitions;
 	@Getter
-	Set<String> allowedRollbackTransitions;
+	protected Set<String> allowedRollbackTransitions;
 	@Getter
-	StepExecFactory<J> stepExecFactory;
+	protected StepExecFactory<J> stepExecFactory;
 	@Getter
-	StepTransitionerFactory<J> stepTransitionerFactory;
+	protected StepTransitionerFactory<J> stepTransitionerFactory;
 	@Getter
-	String processingDescription;
+	protected String processingDescription;
 	@Getter
-	String rollbackDescription;
+	protected String rollbackDescription;
 	@Getter
-	String execConfig;
+	protected String execConfig;
 	@Getter
-	String transitionerConfig;
+	protected String transitionerConfig;
 	@Getter
-	long logLimit;
+	protected long logLimit;
 	@Getter
-	OverflowAction logOverflowAction;
+	protected OverflowAction logOverflowAction;
 	@Getter
-	boolean shortTransaction;
+	protected boolean shortTransaction;
+	@Override
+	public Set<String> getJobTypes() {
+		return config.getJobTypesForStep(stepTypeName).
+			stream().map(a -> a.getJobTypeName()).
+			collect(Collectors.toSet());
+	}
 }

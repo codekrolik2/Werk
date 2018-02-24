@@ -12,12 +12,10 @@ import java.util.Set;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.werk.meta.JobType;
-import org.werk.meta.JobTypeImpl;
 import org.werk.meta.OverflowAction;
 import org.werk.meta.StepExecFactory;
 import org.werk.meta.StepTransitionerFactory;
 import org.werk.meta.StepType;
-import org.werk.meta.StepTypeImpl;
 import org.werk.meta.inputparameters.DefaultValueJobInputParameter;
 import org.werk.meta.inputparameters.EnumJobInputParameter;
 import org.werk.meta.inputparameters.JobInputParameter;
@@ -36,6 +34,8 @@ import org.werk.processing.parameters.ParameterType;
 import org.werk.processing.parameters.StringParameter;
 import org.werk.processing.steps.StepExec;
 import org.werk.processing.steps.Transitioner;
+import org.werk.rest.pojo.RESTJobType;
+import org.werk.rest.pojo.RESTStepType;
 import org.werk.util.ParameterContextSerializer;
 
 public class JobStepTypeRESTSerializer<J> {
@@ -51,7 +51,7 @@ public class JobStepTypeRESTSerializer<J> {
 		
 		String firstStepTypeName = jobTypeJSON.getString("firstStepTypeName");
 		
-		List<String> stepTypes = new ArrayList<>();
+		Set<String> stepTypes = new HashSet<>();
 		JSONArray stepTypesArray = jobTypeJSON.getJSONArray("stepTypes");
 		for (int i = 0; i < stepTypesArray.length(); i++)
 			stepTypes.add(stepTypesArray.getString(i));
@@ -80,7 +80,7 @@ public class JobStepTypeRESTSerializer<J> {
 		    initParameters.put(parameterSetName, jips);
 		}
 		
-		return new JobTypeImpl(jobTypeName, stepTypes, initParameters, firstStepTypeName, description,
+		return new RESTJobType(jobTypeJSON, jobTypeName, stepTypes, initParameters, firstStepTypeName, description,
 				jobConfig, isForceAcyclic, version, historyLimit, historyOverflowAction);
 	}
 	
@@ -129,6 +129,11 @@ public class JobStepTypeRESTSerializer<J> {
 		OverflowAction logOverflowAction = OverflowAction.valueOf(stepType.getString("logOverflowAction"));
 		boolean shortTransaction = stepType.getBoolean("shortTransaction");
 		
+		JSONArray jobTypesJSON = stepType.getJSONArray("jobTypes");
+		Set<String> jobTypes = new HashSet<>();
+		for (int i = 0; i < jobTypesJSON.length(); i++)
+			jobTypes.add(jobTypesJSON.getString(i));
+		
 		JSONArray allowedTransitionsJSON = stepType.getJSONArray("allowedTransitions");
 		Set<String> allowedTransitions = new HashSet<>();
 		for (int i = 0; i < allowedTransitionsJSON.length(); i++)
@@ -146,19 +151,17 @@ public class JobStepTypeRESTSerializer<J> {
 			@Override public StepExec<J> createStepExec() throws Exception { return null; }
 			@SuppressWarnings("rawtypes")
 			@Override public Class getStepExecClass() { return null; }
-			@SuppressWarnings("unused")
-			public String getStepExecClassName() { return stepExecClassName; }
+			@Override public String getStepExecClassName() { return stepExecClassName; }
 		};
 		StepTransitionerFactory<J> stepTransitionerFactory = new StepTransitionerFactory<J>() {
 			@Override public Transitioner<J> createStepTransitioner() throws Exception { return null; }
 			@SuppressWarnings("rawtypes")
 			@Override public Class getTransitionerClass() { return null; }
-			@SuppressWarnings("unused")
-			public String getTransitionerClassName() { return stepTransitionerName; }
+			@Override public String getTransitionerClassName() { return stepTransitionerName; }
 		};
 		
-		return new StepTypeImpl<>(stepTypeName, allowedTransitions, allowedRollbackTransitions, stepExecFactory,
-				stepTransitionerFactory, processingDescription, rollbackDescription, execConfig,
+		return new RESTStepType<>(stepType, stepTypeName, jobTypes, allowedTransitions, allowedRollbackTransitions, 
+				stepExecFactory, stepTransitionerFactory, processingDescription, rollbackDescription, execConfig,
 				transitionerConfig, logLimit, logOverflowAction, shortTransaction);
 	}
 	
@@ -167,6 +170,7 @@ public class JobStepTypeRESTSerializer<J> {
 		
 		stepTypeJSON.put("stepTypeName", stepType.getStepTypeName());
 		
+		stepTypeJSON.put("jobTypes", stepType.getJobTypes());
 		stepTypeJSON.put("allowedTransitions", stepType.getAllowedTransitions());
 		stepTypeJSON.put("allowedRollbackTransitions", stepType.getAllowedRollbackTransitions());
 		
