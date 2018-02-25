@@ -17,6 +17,10 @@ public class JobRestartInfoImpl<J> implements JobRestartInfo<J> {
 	@Getter
 	J jobId;
 	@Getter
+	Map<String, Parameter> jobInitParametersUpdate;
+	@Getter
+	List<String> jobInitParametersToRemove;
+	@Getter
 	Map<String, Parameter> jobParametersUpdate;
 	@Getter
 	List<String> jobParametersToRemove;

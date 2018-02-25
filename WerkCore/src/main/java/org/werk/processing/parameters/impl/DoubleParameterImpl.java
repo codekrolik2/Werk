@@ -4,11 +4,12 @@ import org.werk.processing.parameters.DoubleParameter;
 import org.werk.processing.parameters.ParameterType;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 
 @ToString
 public class DoubleParameterImpl implements DoubleParameter {
-	@Getter
+	@Getter @Setter
 	protected Double value;
 	
 	public DoubleParameterImpl(double value) {

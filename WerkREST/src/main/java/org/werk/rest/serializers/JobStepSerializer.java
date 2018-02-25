@@ -246,6 +246,17 @@ public class JobStepSerializer<J> {
 	public JobRestartInfo<J> deserializeJobRestartInfo(JSONObject jobRestartInfoJSON) {
 		J jobId = jobIdSerializer.deSerializeJobId(jobRestartInfoJSON.getString("jobId"));
 		//-------------------------------
+		Map<String, Parameter> jobInitParametersUpdate = new HashMap<>();
+		if (jobRestartInfoJSON.has("jobInitParametersUpdate"))
+			jobInitParametersUpdate = contextSerializer.deserializeParameters(jobRestartInfoJSON.getJSONObject("jobInitParametersUpdate"));
+		//-------------------------------
+		List<String> jobInitParametersToRemove = new ArrayList<String>();
+		if (jobRestartInfoJSON.has("jobInitParametersToRemove")) {
+			JSONArray arr = jobRestartInfoJSON.getJSONArray("jobInitParametersToRemove");
+			for (int i = 0; i < arr.length(); i++)
+				jobInitParametersToRemove.add(arr.getString(i));
+		}
+		//-------------------------------
 		Map<String, Parameter> jobParametersUpdate = new HashMap<>();
 		if (jobRestartInfoJSON.has("jobParametersUpdate"))
 			jobParametersUpdate = contextSerializer.deserializeParameters(jobRestartInfoJSON.getJSONObject("jobParametersUpdate"));
@@ -276,8 +287,8 @@ public class JobStepSerializer<J> {
 		if (jobRestartInfoJSON.has("joinStatusRecord"))
 			joinStatusRecord = Optional.of(deserializeJoinStatusRecord(jobRestartInfoJSON.getJSONObject("joinStatusRecord")));
 		
-		return new JobRestartInfoImpl<J>(jobId, jobParametersUpdate, jobParametersToRemove, stepParametersUpdate,
-				stepParametersToRemove, newStepInfo, joinStatusRecord);
+		return new JobRestartInfoImpl<J>(jobId, jobInitParametersUpdate, jobInitParametersToRemove, jobParametersUpdate, 
+				jobParametersToRemove, stepParametersUpdate, stepParametersToRemove, newStepInfo, joinStatusRecord);
 	}
 	
 	public JoinStatusRecord<J> deserializeJoinStatusRecord(JSONObject joinStatusRecordObj) {

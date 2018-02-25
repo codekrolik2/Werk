@@ -4,11 +4,12 @@ import org.werk.processing.parameters.ParameterType;
 import org.werk.processing.parameters.StringParameter;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 
 @ToString
 public class StringParameterImpl implements StringParameter {
-	@Getter
+	@Getter @Setter
 	protected String value;
 	
 	public StringParameterImpl(String value) {

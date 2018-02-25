@@ -326,6 +326,22 @@ public class LocalJobManager<J> {
 			LocalWerkJob<J> restartedJob = (LocalWerkJob<J>)jobStepFactory.createJob(jobToRestart);
 			restartedJob.setStepCount(((LocalWerkJob<J>)jobToRestart).getStepCount());
 			
+			//Update job init Parameters
+			Map<String, Parameter> newInitParameters = new HashMap<>();
+			newInitParameters.putAll(restartedJob.getJobInitialParameters());
+			
+			for (Entry<String, Parameter> jobPrmEntry : init.getJobInitParametersUpdate().entrySet()) {
+				String key = jobPrmEntry.getKey();
+				Parameter prm = jobPrmEntry.getValue();
+				
+				newInitParameters.put(key, prm);
+			}
+			
+			for (String jobInitParametersToRemove : init.getJobInitParametersToRemove())
+				newInitParameters.remove(jobInitParametersToRemove);
+			
+			restartedJob.setJobInitialParameters(newInitParameters);
+			
 			//Update job Parameters
 			for (Entry<String, Parameter> jobPrmEntry : init.getJobParametersUpdate().entrySet()) {
 				String key = jobPrmEntry.getKey();

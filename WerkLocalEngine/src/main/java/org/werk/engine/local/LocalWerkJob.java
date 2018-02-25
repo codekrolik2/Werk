@@ -44,6 +44,10 @@ public class LocalWerkJob<J> extends WerkJob<J> {
 		this.joinResultSerializer = joinResultSerializer;
 	}
 	
+	public void setJobInitialParameters(Map<String, Parameter> jobInitialParameters) {
+		this.jobInitialParameters = jobInitialParameters;
+	}
+	
 	@Override
 	public Collection<StepPOJO> getProcessingHistory() {
 		return processingHistory;

@@ -8,6 +8,7 @@ import org.werk.rest.pojo.RESTJobType;
 import org.werk.ui.TabCreator;
 import org.werk.ui.controls.jobtypeinfoform.JobTypeInfoForm;
 import org.werk.ui.controls.jobtypesform.JobTypesForm;
+import org.werk.ui.controls.parameters.DictionaryParameterInput;
 import org.werk.ui.controls.serverinfoform.ServerInfoForm;
 import org.werk.ui.controls.setserverform.SetServerForm;
 import org.werk.ui.controls.steptypeinfoform.StepTypeInfoForm;
@@ -110,6 +111,15 @@ public class MainApp extends VBox {
 		tabs.getTabs().add(tab);
         tabs.getSelectionModel().select(tab);
     }
+	
+	public void test() {
+		DictionaryParameterInput dictionaryParameterInput = tabCreator.getDictionaryParameterInput();
+		final Tab tab = new Tab("DictionaryParameterInput", dictionaryParameterInput);
+		tab.setClosable(true);
+        
+		tabs.getTabs().add(tab);
+        tabs.getSelectionModel().select(tab);
+	}
 	
 	public void quit() {
 		main.close();

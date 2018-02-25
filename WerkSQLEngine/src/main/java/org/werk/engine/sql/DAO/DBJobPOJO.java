@@ -22,8 +22,8 @@ public class DBJobPOJO extends JobPOJOImpl<Long> {
 			int stepCount, String currentStepTypeName, Map<String, Parameter> jobInitialParameters, JobStatus status,
 			Timestamp creationTime, Timestamp nextExecutionTime, Map<String, Parameter> jobParameters,
 			Optional<JoinStatusRecord<Long>> joinStatusRecord, long currentStepId, Optional<Long> idLocker) {
-		super(jobTypeName, version, jobId, jobName, parentJobId, stepCount, currentStepTypeName, jobInitialParameters, status,
-				creationTime, nextExecutionTime, jobParameters, joinStatusRecord);
+		super(jobTypeName, version, jobId, jobName, parentJobId, stepCount, currentStepTypeName, jobInitialParameters, 
+				status, creationTime, nextExecutionTime, jobParameters, joinStatusRecord);
 		
 		this.currentStepId = currentStepId;
 		this.idLocker = idLocker;
@@ -31,5 +31,9 @@ public class DBJobPOJO extends JobPOJOImpl<Long> {
 	
 	public void setJoinStatusRecord(Optional<JoinStatusRecord<Long>> joinStatusRecord) {
 		this.joinStatusRecord = joinStatusRecord;
+	}
+	
+	public void setJobInitialParameters(Map<String, Parameter> jobInitialParameters) {
+		this.jobInitialParameters = jobInitialParameters;
 	}
 }

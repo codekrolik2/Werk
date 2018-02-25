@@ -4,11 +4,12 @@ import org.werk.processing.parameters.BoolParameter;
 import org.werk.processing.parameters.ParameterType;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 
 @ToString
 public class BoolParameterImpl implements BoolParameter {
-	@Getter
+	@Getter @Setter
 	protected Boolean value;
 	
 	public BoolParameterImpl(boolean value) {

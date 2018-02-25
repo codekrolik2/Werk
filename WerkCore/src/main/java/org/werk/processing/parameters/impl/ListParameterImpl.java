@@ -8,11 +8,12 @@ import org.werk.processing.parameters.Parameter;
 import org.werk.processing.parameters.ParameterType;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 
 @ToString
 public class ListParameterImpl implements ListParameter {
-	@Getter
+	@Getter @Setter
 	protected List<Parameter> value;
 	
 	public ListParameterImpl(List<Parameter> value) {

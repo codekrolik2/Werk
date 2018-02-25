@@ -279,7 +279,18 @@ public class JobDAO {
 						String.format("Job can't be restarted: not in final state: [%d] [%s]", jobId, job.getStatus())
 					);
 			
-			//2. Set updated job parameters
+			//2.1. Set updated job init parameters
+			Map<String, Parameter> newInitParameters = new HashMap<>();
+			newInitParameters.putAll(job.getJobInitialParameters());
+			
+			for (Map.Entry<String, Parameter> ent : init.getJobInitParametersUpdate().entrySet())
+				newInitParameters.put(ent.getKey(), ent.getValue());
+			for (String jobInitParameterToRemove : init.getJobInitParametersToRemove())
+				newInitParameters.remove(jobInitParameterToRemove);
+			
+			job.setJobInitialParameters(newInitParameters);
+			
+			//2.2. Set updated job parameters
 			Map<String, Parameter> jobParameters = job.getJobParameters();
 			
 			for (Map.Entry<String, Parameter> ent : init.getJobParametersUpdate().entrySet())

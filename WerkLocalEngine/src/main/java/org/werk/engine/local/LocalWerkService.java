@@ -23,14 +23,12 @@ import org.werk.service.JobCollection;
 import org.werk.service.PageInfo;
 import org.werk.service.WerkService;
 
+import lombok.AllArgsConstructor;
+
+@AllArgsConstructor
 public class LocalWerkService implements WerkService<Long> {
 	protected LocalJobManager<Long> localJobManager;
 	protected WerkConfig<Long> werkConfig;
-	
-	public LocalWerkService(LocalJobManager<Long> localJobManager, WerkConfig<Long> werkConfig) {
-		this.localJobManager = localJobManager;
-		this.werkConfig = werkConfig;
-	}
 	
 	@Override
 	public Long createJob(JobInitInfo init) throws Exception {

@@ -10,6 +10,9 @@ import org.werk.processing.parameters.Parameter;
 public interface JobRestartInfo<J> {
 	J getJobId();
 	
+	Map<String, Parameter> getJobInitParametersUpdate();
+	List<String> getJobInitParametersToRemove();
+	
 	Map<String, Parameter> getJobParametersUpdate();
 	List<String> getJobParametersToRemove();
 	
