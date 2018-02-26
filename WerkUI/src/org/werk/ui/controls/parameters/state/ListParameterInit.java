@@ -1,5 +1,6 @@
 package org.werk.ui.controls.parameters.state;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -13,7 +14,7 @@ import lombok.Setter;
 
 public class ListParameterInit extends ParameterInit {
 	@Getter @Setter
-	List<ParameterInit> listParametersState;
+	List<ParameterInit> listParametersState = new ArrayList<>();
 	
 	public ListParameterInit(JobInputParameter jobInputPrm) {
 		super(jobInputPrm);
@@ -23,8 +24,8 @@ public class ListParameterInit extends ParameterInit {
 		super(oldPrm);
 	}
 
-	public ListParameterInit(ParameterType type) {
-		super(type);
+	public ListParameterInit() {
+		super(ParameterType.LIST);
 	}
 	
 	public Parameter getState() {

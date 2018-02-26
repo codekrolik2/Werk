@@ -1,5 +1,6 @@
 package org.werk.ui.controls.parameters.state;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -8,21 +9,12 @@ import org.werk.processing.parameters.Parameter;
 import org.werk.processing.parameters.ParameterType;
 import org.werk.processing.parameters.impl.DictionaryParameterImpl;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
 public class DictionaryParameterInit extends ParameterInit {
-	@AllArgsConstructor
-	public static class ParameterInitTuple {
-		@Getter @Setter
-		String name;
-		@Getter @Setter
-		ParameterInit init;
-	}
-	
 	@Getter @Setter
-	List<ParameterInitTuple> mapParametersState;
+	List<DictionaryParameterAndName> mapParametersState = new ArrayList<>();
 	
 	public DictionaryParameterInit(JobInputParameter jobInputPrm) {
 		super(jobInputPrm);
@@ -32,8 +24,8 @@ public class DictionaryParameterInit extends ParameterInit {
 		super(oldPrm);
 	}
 
-	public DictionaryParameterInit(ParameterType type) {
-		super(type);
+	public DictionaryParameterInit() {
+		super(ParameterType.DICTIONARY);
 	}
 
 	public Parameter getState() {

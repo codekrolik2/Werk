@@ -3,6 +3,7 @@ package org.werk.ui.controls.table;
 import org.werk.processing.parameters.Parameter;
 import org.werk.ui.controls.parameters.ParameterInput;
 import org.werk.ui.controls.parameters.ParameterInputFactory;
+import org.werk.ui.controls.parameters.state.DictionaryParameterAndName;
 import org.werk.ui.controls.parameters.state.ParameterInit;
 
 import javafx.scene.control.TableCell;
@@ -10,9 +11,14 @@ import javafx.scene.control.TableCell;
 public class ParameterInputCell<T> extends TableCell<ParameterInit, T> {
 	protected ParameterInput paramInput;
 	protected ParameterInit parameterInit;
+	protected boolean isImmutable;
 	
-	public ParameterInputCell() {
-		System.out.println("NEW");
+	public ParameterInputCell(boolean isImmutable) {
+		this.isImmutable = isImmutable;
+	}
+	
+	public ParameterInputCell() { 
+		this.isImmutable = false;
 	}
 	
 	public Parameter getParameter() {
@@ -26,8 +32,14 @@ public class ParameterInputCell<T> extends TableCell<ParameterInit, T> {
 			setGraphic(null);
 			setText(null);
 		} else {
-			parameterInit = getTableView().getItems().get(getIndex());
+			Object o = getTableView().getItems().get(getIndex());
+			if (o instanceof DictionaryParameterAndName)
+				parameterInit = ((DictionaryParameterAndName)o).getInit();
+			else
+				parameterInit = (ParameterInit)o;
 			paramInput = ParameterInputFactory.createParameterInput(parameterInit);
+			if (isImmutable)
+				paramInput.setImmutable();
 			
 			setGraphic(paramInput);
 			setText(null);

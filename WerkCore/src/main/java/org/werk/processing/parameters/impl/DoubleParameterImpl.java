@@ -12,7 +12,7 @@ public class DoubleParameterImpl implements DoubleParameter {
 	@Getter @Setter
 	protected Double value;
 	
-	public DoubleParameterImpl(double value) {
+	public DoubleParameterImpl(Double value) {
 		this.value = value;
 	}
 	

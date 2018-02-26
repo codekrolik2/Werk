@@ -1,15 +1,30 @@
 package org.werk.ui.controls.parameters;
 
 import java.io.IOException;
+import java.util.function.UnaryOperator;
+import java.util.regex.Pattern;
 
+import org.werk.meta.inputparameters.DefaultValueJobInputParameter;
+import org.werk.meta.inputparameters.JobInputParameter;
+import org.werk.processing.parameters.DoubleParameter;
 import org.werk.processing.parameters.Parameter;
+import org.werk.processing.parameters.impl.DoubleParameterImpl;
 import org.werk.ui.controls.parameters.state.PrimitiveParameterInit;
 import org.werk.ui.guice.LoaderFactory;
 
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
 
 public class DoubleParameterInput extends ParameterInput {
 	PrimitiveParameterInit parameterInit;
+	@FXML
+	TextField textField;
+	
+	Pattern pattern = Pattern.compile("\\d*|\\d+\\.\\d*");
 	
 	public DoubleParameterInput(PrimitiveParameterInit parameterInit) {
         this.parameterInit = parameterInit;
@@ -23,6 +38,54 @@ public class DoubleParameterInput extends ParameterInput {
         } catch (IOException exception) {
             throw new RuntimeException(exception);
         }
+	}
+	
+	public void initialize() {
+		@SuppressWarnings({ "unchecked", "rawtypes" })
+		TextFormatter formatter = new TextFormatter((UnaryOperator<TextFormatter.Change>) change -> {
+		    return pattern.matcher(change.getControlNewText()).matches() ? change : null;
+		});
+
+		textField.setTextFormatter(formatter);
+		
+		textField.textProperty().addListener(new ChangeListener<String>() {
+		    @Override
+		    public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+		        try {
+		        	Double d = Double.parseDouble(textField.getText());
+		        	if (parameterInit.getState() == null)
+		        		parameterInit.setState(new DoubleParameterImpl(d));
+		        	else
+		        		((DoubleParameterImpl)parameterInit.getState()).setValue(d);
+		        } catch(Exception e) { }
+		    }
+		});
+		
+		if (parameterInit.getState() != null) {
+			restoreState((DoubleParameter)parameterInit.getState());
+		} else {
+			if (parameterInit.getOldParameter().isPresent()) {
+				restoreState((DoubleParameter)parameterInit.getOldParameter().get());
+			} else if (parameterInit.getJobInputParameter().isPresent()) {
+				JobInputParameter jip = parameterInit.getJobInputParameter().get();
+				if (jip instanceof DefaultValueJobInputParameter) {
+					DefaultValueJobInputParameter defaultPrm = (DefaultValueJobInputParameter)jip;
+					restoreState((DoubleParameter)defaultPrm.getDefaultValue());
+					if (defaultPrm.isDefaultValueImmutable())
+						setImmutable();
+				}
+			} else
+				parameterInit.setState(new DoubleParameterImpl(null));
+		}
+	}
+	
+	protected void restoreState(DoubleParameter prm) {
+		if (prm.getValue() != null)
+			textField.setText(prm.getValue().toString());
+	}
+	
+	public void setImmutable() {
+		textField.setDisable(true);
 	}
 	
 	@Override

@@ -13,7 +13,7 @@
    <children>
       <AnchorPane prefHeight="29.0" prefWidth="600.0">
          <children>
-            <Label layoutX="14.0" layoutY="6.0" text="DICTIONARY" AnchorPane.bottomAnchor="6.0" AnchorPane.leftAnchor="6.0" AnchorPane.topAnchor="6.0" />
+            <Label layoutX="14.0" layoutY="6.0" text="LIST" AnchorPane.bottomAnchor="6.0" AnchorPane.leftAnchor="6.0" AnchorPane.topAnchor="6.0" />
             <Button fx:id="addButton" layoutX="96.0" layoutY="2.0" mnemonicParsing="false" onAction="#showParameterMenu" text="Add Parameter">
                <contextMenu>
                   <ContextMenu fx:id="contextMenu">
@@ -33,8 +33,6 @@
       <TableView fx:id="parametersTable" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
         <columns>
           <TableColumn fx:id="disableRemoveParameter" prefWidth="31.0" text="" />
-          <TableColumn fx:id="parameterName" prefWidth="147.0" text="Parameter Name" />
-          <TableColumn fx:id="constraints" prefWidth="113.0" text="Constraints" />
           <TableColumn fx:id="parameterValue" prefWidth="306.0" text="Parameter Value" />
         </columns>
       </TableView>

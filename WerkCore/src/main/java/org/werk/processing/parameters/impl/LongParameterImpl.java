@@ -12,7 +12,7 @@ public class LongParameterImpl implements LongParameter {
 	@Getter @Setter
 	protected Long value;
 	
-	public LongParameterImpl(long value) {
+	public LongParameterImpl(Long value) {
 		this.value = value;
 	}
 	

@@ -9,7 +9,7 @@
    <children>
       <AnchorPane prefHeight="29.0" prefWidth="600.0">
          <children>
-            <Label layoutX="14.0" layoutY="6.0" text="LONG" AnchorPane.bottomAnchor="6.0" AnchorPane.leftAnchor="6.0" AnchorPane.topAnchor="6.0" />
+            <Label layoutX="14.0" layoutY="6.0" text="DOUBLE" AnchorPane.bottomAnchor="6.0" AnchorPane.leftAnchor="6.0" AnchorPane.topAnchor="6.0" />
             <TextField fx:id="textField" layoutX="61.0" layoutY="1.0" prefHeight="26.0" prefWidth="400.0" AnchorPane.bottomAnchor="2.0" AnchorPane.leftAnchor="65.0" AnchorPane.rightAnchor="6.0" AnchorPane.topAnchor="2.0" />
          </children>
       </AnchorPane>

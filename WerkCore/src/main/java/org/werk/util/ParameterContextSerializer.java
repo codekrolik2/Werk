@@ -60,11 +60,11 @@ public class ParameterContextSerializer {
 			return null;
 		
 	    if (value instanceof Integer) {
-	    	return new LongParameterImpl((Integer)value);
+	    	return new LongParameterImpl((long)(Integer)value);
 	    } else if (value instanceof Long) {
 	    	return new LongParameterImpl((Long)value);
 	    } else if (value instanceof Float) {
-	    	return new DoubleParameterImpl((Float)value);
+	    	return new DoubleParameterImpl((double)((Float)value));
 	    } else if (value instanceof Double) {
 	    	return new DoubleParameterImpl((Double)value);
 	    } else if (value instanceof String) {

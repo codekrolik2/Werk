@@ -6,4 +6,5 @@ import javafx.scene.layout.VBox;
 
 public abstract class ParameterInput extends VBox {
 	public abstract Parameter getParameter();
+	public abstract void setImmutable();
 }

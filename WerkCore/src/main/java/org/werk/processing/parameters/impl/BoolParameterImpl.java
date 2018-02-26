@@ -12,7 +12,7 @@ public class BoolParameterImpl implements BoolParameter {
 	@Getter @Setter
 	protected Boolean value;
 	
-	public BoolParameterImpl(boolean value) {
+	public BoolParameterImpl(Boolean value) {
 		this.value = value;
 	}
 	

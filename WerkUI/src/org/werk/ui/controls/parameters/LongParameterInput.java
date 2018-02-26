@@ -2,6 +2,8 @@ package org.werk.ui.controls.parameters;
 
 import java.io.IOException;
 
+import org.werk.meta.inputparameters.DefaultValueJobInputParameter;
+import org.werk.meta.inputparameters.JobInputParameter;
 import org.werk.processing.parameters.LongParameter;
 import org.werk.processing.parameters.Parameter;
 import org.werk.processing.parameters.impl.LongParameterImpl;
@@ -46,13 +48,35 @@ public class LongParameterInput extends ParameterInput {
 		        		parameterInit.setState(new LongParameterImpl(l));
 		        	else
 		        		((LongParameterImpl)parameterInit.getState()).setValue(l);
-		        } catch(Exception e) {
-		        	parameterInit.setState(null);
-		        }
+		        } catch(Exception e) { }
 		    }
 		});
-		if (parameterInit.getState() != null)
-			textField.setText(((LongParameter)parameterInit.getState()).getValue().toString()); 
+		
+		if (parameterInit.getState() != null) {
+			restoreState((LongParameter)parameterInit.getState());
+		} else {
+			if (parameterInit.getOldParameter().isPresent()) {
+				restoreState((LongParameter)parameterInit.getOldParameter().get());
+			} else if (parameterInit.getJobInputParameter().isPresent()) {
+				JobInputParameter jip = parameterInit.getJobInputParameter().get();
+				if (jip instanceof DefaultValueJobInputParameter) {
+					DefaultValueJobInputParameter defaultPrm = (DefaultValueJobInputParameter)jip;
+					restoreState((LongParameter)defaultPrm.getDefaultValue());
+					if (defaultPrm.isDefaultValueImmutable())
+						setImmutable();
+				}
+			} else
+				parameterInit.setState(new LongParameterImpl(null));
+		}
+	}
+	
+	protected void restoreState(LongParameter prm) {
+		if (prm.getValue() != null)
+			textField.setText(prm.getValue().toString());
+	}
+	
+	public void setImmutable() {
+		textField.setDisable(true);
 	}
 	
 	@Override
