@@ -5,8 +5,10 @@ import java.util.Optional;
 import org.werk.meta.inputparameters.JobInputParameter;
 import org.werk.processing.parameters.Parameter;
 import org.werk.processing.parameters.ParameterType;
+import org.werk.ui.controls.parameters.ParameterInput;
 
 import lombok.Getter;
+import lombok.Setter;
 
 public abstract class ParameterInit {
 	@Getter
@@ -14,6 +16,8 @@ public abstract class ParameterInit {
 	@Getter
 	protected Optional<Parameter> oldParameter;
 	protected ParameterType type;
+	@Getter @Setter
+	protected ParameterInput parameterInput;
 	
 	public ParameterInit(ParameterType type) {
 		jobInputParameter = Optional.empty();

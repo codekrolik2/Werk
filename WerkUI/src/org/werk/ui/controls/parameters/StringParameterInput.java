@@ -15,8 +15,10 @@ import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.TextField;
+import lombok.Getter;
 
 public class StringParameterInput extends ParameterInput {
+	@Getter
 	PrimitiveParameterInit parameterInit;
 	
 	@FXML
@@ -24,6 +26,7 @@ public class StringParameterInput extends ParameterInput {
 	
 	public StringParameterInput(PrimitiveParameterInit parameterInit) {
         this.parameterInit = parameterInit;
+        parameterInit.setParameterInput(this);
         
         FXMLLoader fxmlLoader = LoaderFactory.getInstance().loader(getClass().getResource("StringParameterInput.fxml"));
         fxmlLoader.setRoot(this);
@@ -50,31 +53,31 @@ public class StringParameterInput extends ParameterInput {
 		    }
 		});
 		
-		if (parameterInit.getState() != null) {
+		if (((StringParameter)parameterInit.getState()).getValue() != null) {
 			restoreState((StringParameter)parameterInit.getState());
 		} else {
-			if (parameterInit.getOldParameter().isPresent()) {
-				restoreState((StringParameter)parameterInit.getOldParameter().get());
-			} else if (parameterInit.getJobInputParameter().isPresent()) {
-				JobInputParameter jip = parameterInit.getJobInputParameter().get();
-				if (jip instanceof DefaultValueJobInputParameter) {
-					DefaultValueJobInputParameter defaultPrm = (DefaultValueJobInputParameter)jip;
-					restoreState((StringParameter)defaultPrm.getDefaultValue());
-					if (defaultPrm.isDefaultValueImmutable())
-						setImmutable();
-				}
-			} else
-				parameterInit.setState(new StringParameterImpl(null));
+			resetValue();
 		}
 	}
 	
 	protected void restoreState(StringParameter prm) {
+		updateDisabled();
 		if (prm.getValue() != null)
 			textField.setText(prm.getValue());
 	}
 	
-	public void setImmutable() {
-		textField.setDisable(true);
+	public void resetValue() {
+		updateDisabled();
+		if (parameterInit.getOldParameter().isPresent()) {
+			restoreState((StringParameter)parameterInit.getOldParameter().get());
+		} else if (parameterInit.getJobInputParameter().isPresent()) {
+			JobInputParameter jip = parameterInit.getJobInputParameter().get();
+			if (jip instanceof DefaultValueJobInputParameter) {
+				DefaultValueJobInputParameter defaultPrm = (DefaultValueJobInputParameter)jip;
+				restoreState((StringParameter)defaultPrm.getDefaultValue());
+			}
+		} else
+			parameterInit.setState(new StringParameterImpl(null));
 	}
 	
 	@Override

@@ -8,6 +8,7 @@ import org.werk.meta.inputparameters.JobInputParameter;
 import org.werk.processing.parameters.Parameter;
 import org.werk.processing.parameters.ParameterType;
 import org.werk.processing.parameters.impl.ListParameterImpl;
+import org.werk.ui.controls.parameters.ParameterInputFactory;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -18,14 +19,20 @@ public class ListParameterInit extends ParameterInit {
 	
 	public ListParameterInit(JobInputParameter jobInputPrm) {
 		super(jobInputPrm);
+		
+		parameterInput = ParameterInputFactory.createListParameterInput(this);
 	}
 
 	public ListParameterInit(Parameter oldPrm) {
 		super(oldPrm);
+		
+		parameterInput = ParameterInputFactory.createListParameterInput(this);
 	}
 
 	public ListParameterInit() {
 		super(ParameterType.LIST);
+		
+		parameterInput = ParameterInputFactory.createListParameterInput(this);
 	}
 	
 	public Parameter getState() {

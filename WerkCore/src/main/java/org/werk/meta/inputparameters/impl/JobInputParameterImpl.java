@@ -41,6 +41,11 @@ public class JobInputParameterImpl implements JobInputParameter {
 	}
 	
 	@Override
+	public String getConstraints() {
+		return isOptional() ? "Optional " : "";
+	}
+	
+	@Override
 	public String toString() {
 		return String.format(
 			"%s%s %s", isOptional() ? "Optional " : "", type.toString(), name 

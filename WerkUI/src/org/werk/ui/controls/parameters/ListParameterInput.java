@@ -27,6 +27,7 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.util.Callback;
+import lombok.Getter;
 
 public class ListParameterInput extends ParameterInput {
 	@FXML
@@ -43,12 +44,12 @@ public class ListParameterInput extends ParameterInput {
 	
 	protected final ObservableList<ParameterInit> data = FXCollections.observableArrayList();
 	
+	@Getter
 	ListParameterInit parameterInit;
-	
-	protected boolean isImmutable = false;
 	
 	public ListParameterInput(ListParameterInit parameterInit) {
         this.parameterInit = parameterInit;
+        parameterInit.setParameterInput(this);
         
         FXMLLoader fxmlLoader = LoaderFactory.getInstance().loader(getClass().getResource("ListParameterInput.fxml"));
         fxmlLoader.setRoot(this);
@@ -80,53 +81,46 @@ public class ListParameterInput extends ParameterInput {
 		parameterValue.setCellFactory(new Callback<TableColumn<ParameterInit,String>, TableCell<ParameterInit,String>>() {
 			@Override
 			public TableCell<ParameterInit, String> call(TableColumn<ParameterInit, String> param) {
-				return new ParameterInputCell<String>(isImmutable());
+				return new ParameterInputCell<String>();
 			}
 		});
 		
-		if (parameterInit.getListParametersState() != null) {
+		if (!parameterInit.getListParametersState().isEmpty()) {
 			restoreState();
 		} else {
-			if (parameterInit.getOldParameter().isPresent()) {
-				restoreState((ListParameter)parameterInit.getOldParameter().get());
-			} else if (parameterInit.getJobInputParameter().isPresent()) {
-				JobInputParameter jip = parameterInit.getJobInputParameter().get();
-				if (jip instanceof DefaultValueJobInputParameter) {
-					DefaultValueJobInputParameter defaultPrm = (DefaultValueJobInputParameter)jip;
-					restoreState((ListParameter)defaultPrm.getDefaultValue());
-				}
-			}
+			resetValue();
 		}
-		
-		if (isImmutable())
-			addButton.setDisable(true);
 		
 		parametersTable.setItems(data);
 	}
 	
-	protected boolean isImmutable() {
-		if (isImmutable)
-			return true;
-		if (parameterInit.getJobInputParameter().isPresent()) {
+	public void resetValue() {
+		parameterInit.getListParametersState().clear();
+		data.clear();
+		updateDisabled();
+		if (parameterInit.getOldParameter().isPresent()) {
+			restoreState((ListParameter)parameterInit.getOldParameter().get());
+		} else if (parameterInit.getJobInputParameter().isPresent()) {
 			JobInputParameter jip = parameterInit.getJobInputParameter().get();
-			DefaultValueJobInputParameter defaultPrm = (DefaultValueJobInputParameter)jip;
-			if (defaultPrm.isDefaultValueImmutable())
-				isImmutable = true;
-			return defaultPrm.isDefaultValueImmutable();
+			if (jip instanceof DefaultValueJobInputParameter) {
+				DefaultValueJobInputParameter defaultPrm = (DefaultValueJobInputParameter)jip;
+				restoreState((ListParameter)defaultPrm.getDefaultValue());
+			}
 		}
-		return false;
 	}
 	
 	protected void restoreState() {
+		updateDisabled();
 		for (ParameterInit pi : parameterInit.getListParametersState())
 			data.add(pi);
 	}
 	
 	protected void restoreState(ListParameter prm) {
+		updateDisabled();
 		if (prm.getValue() != null) {
 			for (Parameter param : prm.getValue()) {
 				if (param.getType() == ParameterType.DICTIONARY) {
-					addParam(new DictionaryParameterInit(param));				
+					addParam(new DictionaryParameterInit(param, false));				
 				} else if (param.getType() == ParameterType.LIST) {
 					addParam(new ListParameterInit(param));
 				} else
@@ -157,7 +151,7 @@ public class ListParameterInput extends ParameterInput {
 	}
 	
 	public void addNewDictionaryParameter() {
-		DictionaryParameterInit prm = new DictionaryParameterInit();
+		DictionaryParameterInit prm = new DictionaryParameterInit(false);
 		addParam(prm);
 	}
 	
@@ -181,11 +175,5 @@ public class ListParameterInput extends ParameterInput {
 	@Override
 	public Parameter getParameter() {
 		return parameterInit.getState();
-	}
-	
-	@Override
-	public void setImmutable() {
-		isImmutable = true;
-		//TODO: call setImmutable recursive
 	}
 }

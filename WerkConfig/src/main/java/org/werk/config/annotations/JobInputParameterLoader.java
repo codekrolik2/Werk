@@ -408,12 +408,11 @@ public class JobInputParameterLoader {
 		if ((name == null) || (name.equals("")))
 			name = param.getName();
 		ParameterType type = ParameterType.LONG;
-		boolean isOptional = false;
 		String description = defaultLongParameter.description();
 		boolean isDefaultValueImmutable = defaultLongParameter.isDefaultValueImmutable();
 		LongParameter defaultValue = new LongParameterImpl(defaultLongParameter.defaultValue());
 
-		return new DefaultValueJobInputParameterImpl(name, type, isOptional, description, isDefaultValueImmutable,
+		return new DefaultValueJobInputParameterImpl(name, type, description, isDefaultValueImmutable,
 				defaultValue);
 	}
 
@@ -436,12 +435,11 @@ public class JobInputParameterLoader {
 		if ((name == null) || (name.equals("")))
 			name = param.getName();
 		ParameterType type = ParameterType.DOUBLE;
-		boolean isOptional = false;
 		String description = defaultDoubleParameter.description();
 		boolean isDefaultValueImmutable = defaultDoubleParameter.isDefaultValueImmutable();
 		DoubleParameter defaultValue = new DoubleParameterImpl(defaultDoubleParameter.defaultValue());
 
-		return new DefaultValueJobInputParameterImpl(name, type, isOptional, description, isDefaultValueImmutable,
+		return new DefaultValueJobInputParameterImpl(name, type, description, isDefaultValueImmutable,
 				defaultValue);
 	}
 
@@ -464,12 +462,11 @@ public class JobInputParameterLoader {
 		if ((name == null) || (name.equals("")))
 			name = param.getName();
 		ParameterType type = ParameterType.BOOL;
-		boolean isOptional = false;
 		String description = defaultBoolParameter.description();
 		boolean isDefaultValueImmutable = defaultBoolParameter.isDefaultValueImmutable();
 		BoolParameter defaultValue = new BoolParameterImpl(defaultBoolParameter.defaultValue());
 
-		return new DefaultValueJobInputParameterImpl(name, type, isOptional, description, isDefaultValueImmutable,
+		return new DefaultValueJobInputParameterImpl(name, type, description, isDefaultValueImmutable,
 				defaultValue);
 	}
 
@@ -486,12 +483,11 @@ public class JobInputParameterLoader {
 		if ((name == null) || (name.equals("")))
 			name = param.getName();
 		ParameterType type = ParameterType.STRING;
-		boolean isOptional = false;
 		String description = defaultStringParameter.description();
 		boolean isDefaultValueImmutable = defaultStringParameter.isDefaultValueImmutable();
 		StringParameter defaultValue = new StringParameterImpl(defaultStringParameter.defaultValue());
 
-		return new DefaultValueJobInputParameterImpl(name, type, isOptional, description, isDefaultValueImmutable,
+		return new DefaultValueJobInputParameterImpl(name, type, description, isDefaultValueImmutable,
 				defaultValue);
 	}
 
@@ -510,7 +506,6 @@ public class JobInputParameterLoader {
 		if ((name == null) || (name.equals("")))
 			name = param.getName();
 		ParameterType type = ParameterType.LIST;
-		boolean isOptional = false;
 		String description = defaultListParameter.description();
 		boolean isDefaultValueImmutable = defaultListParameter.isDefaultValueImmutable();
 
@@ -526,7 +521,7 @@ public class JobInputParameterLoader {
 				.invoke(null);
 		ListParameter defaultValue = new ListParameterImpl(list);
 
-		return new DefaultValueJobInputParameterImpl(name, type, isOptional, description, isDefaultValueImmutable,
+		return new DefaultValueJobInputParameterImpl(name, type, description, isDefaultValueImmutable,
 				defaultValue);
 	}
 
@@ -545,7 +540,6 @@ public class JobInputParameterLoader {
 		if ((name == null) || (name.equals("")))
 			name = param.getName();
 		ParameterType type = ParameterType.DICTIONARY;
-		boolean isOptional = false;
 		String description = defaultDictionaryParameter.description();
 		boolean isDefaultValueImmutable = defaultDictionaryParameter.isDefaultValueImmutable();
 
@@ -561,7 +555,7 @@ public class JobInputParameterLoader {
 				(Map<String, org.werk.processing.parameters.Parameter>) dictGetter.invoke(null);
 		DictionaryParameter defaultValue = new DictionaryParameterImpl(dictionary);
 
-		return new DefaultValueJobInputParameterImpl(name, type, isOptional, description, isDefaultValueImmutable,
+		return new DefaultValueJobInputParameterImpl(name, type, description, isDefaultValueImmutable,
 				defaultValue);
 	}
 }

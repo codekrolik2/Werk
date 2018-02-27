@@ -18,8 +18,10 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
+import lombok.Getter;
 
 public class DoubleParameterInput extends ParameterInput {
+	@Getter
 	PrimitiveParameterInit parameterInit;
 	@FXML
 	TextField textField;
@@ -28,6 +30,7 @@ public class DoubleParameterInput extends ParameterInput {
 	
 	public DoubleParameterInput(PrimitiveParameterInit parameterInit) {
         this.parameterInit = parameterInit;
+        parameterInit.setParameterInput(this);
         
         FXMLLoader fxmlLoader = LoaderFactory.getInstance().loader(getClass().getResource("DoubleParameterInput.fxml"));
         fxmlLoader.setRoot(this);
@@ -61,31 +64,31 @@ public class DoubleParameterInput extends ParameterInput {
 		    }
 		});
 		
-		if (parameterInit.getState() != null) {
+		if (((DoubleParameter)parameterInit.getState()).getValue() != null) {
 			restoreState((DoubleParameter)parameterInit.getState());
 		} else {
-			if (parameterInit.getOldParameter().isPresent()) {
-				restoreState((DoubleParameter)parameterInit.getOldParameter().get());
-			} else if (parameterInit.getJobInputParameter().isPresent()) {
-				JobInputParameter jip = parameterInit.getJobInputParameter().get();
-				if (jip instanceof DefaultValueJobInputParameter) {
-					DefaultValueJobInputParameter defaultPrm = (DefaultValueJobInputParameter)jip;
-					restoreState((DoubleParameter)defaultPrm.getDefaultValue());
-					if (defaultPrm.isDefaultValueImmutable())
-						setImmutable();
-				}
-			} else
-				parameterInit.setState(new DoubleParameterImpl(null));
+			resetValue();
 		}
 	}
 	
-	protected void restoreState(DoubleParameter prm) {
-		if (prm.getValue() != null)
-			textField.setText(prm.getValue().toString());
+	public void resetValue() {
+		updateDisabled();
+		if (parameterInit.getOldParameter().isPresent()) {
+			restoreState((DoubleParameter)parameterInit.getOldParameter().get());
+		} else if (parameterInit.getJobInputParameter().isPresent()) {
+			JobInputParameter jip = parameterInit.getJobInputParameter().get();
+			if (jip instanceof DefaultValueJobInputParameter) {
+				DefaultValueJobInputParameter defaultPrm = (DefaultValueJobInputParameter)jip;
+				restoreState((DoubleParameter)defaultPrm.getDefaultValue());
+			}
+		} else
+			parameterInit.setState(new DoubleParameterImpl(null));
 	}
 	
-	public void setImmutable() {
-		textField.setDisable(true);
+	protected void restoreState(DoubleParameter prm) {
+		updateDisabled();
+		if (prm.getValue() != null)
+			textField.setText(prm.getValue().toString());
 	}
 	
 	@Override

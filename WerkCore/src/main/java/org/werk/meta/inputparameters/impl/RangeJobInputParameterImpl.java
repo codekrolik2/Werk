@@ -29,6 +29,17 @@ public class RangeJobInputParameterImpl extends JobInputParameterImpl implements
 	}
 
 	@Override
+	public String getConstraints() {
+		return String.format(
+				"%s%sRange: [%s %s - %s %s]",
+				isOptional() ? "Optional " : "",
+				prohibitRange ? "Prohibit " : "",
+				startInclusive ? "IN" : "EX", getParameterValue(start),
+				endInclusive ? "IN" : "EX", getParameterValue(end)
+			);
+	}
+	
+	@Override
 	public String toString() {
 		return String.format(
 			"%s%s %s [%sRange: %s %s - %s %s]",

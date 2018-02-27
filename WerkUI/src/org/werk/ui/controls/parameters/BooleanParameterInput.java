@@ -17,8 +17,10 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.ChoiceBox;
+import lombok.Getter;
 
 public class BooleanParameterInput extends ParameterInput {
+	@Getter
 	PrimitiveParameterInit parameterInit;
 	
 	@FXML
@@ -26,6 +28,7 @@ public class BooleanParameterInput extends ParameterInput {
 	
 	public BooleanParameterInput(PrimitiveParameterInit parameterInit) {
         this.parameterInit = parameterInit;
+        parameterInit.setParameterInput(this);
         
         FXMLLoader fxmlLoader = LoaderFactory.getInstance().loader(getClass().getResource("BooleanParameterInput.fxml"));
         fxmlLoader.setRoot(this);
@@ -55,31 +58,31 @@ public class BooleanParameterInput extends ParameterInput {
 		    }
 		});
 		
-		if (parameterInit.getState() != null) {
+		if (((BoolParameter)parameterInit.getState()).getValue() != null) {
 			restoreState((BoolParameter)parameterInit.getState());
 		} else {
-			if (parameterInit.getOldParameter().isPresent()) {
-				restoreState((BoolParameter)parameterInit.getOldParameter().get());
-			} else if (parameterInit.getJobInputParameter().isPresent()) {
-				JobInputParameter jip = parameterInit.getJobInputParameter().get();
-				if (jip instanceof DefaultValueJobInputParameter) {
-					DefaultValueJobInputParameter defaultPrm = (DefaultValueJobInputParameter)jip;
-					restoreState((BoolParameter)defaultPrm.getDefaultValue());
-					if (defaultPrm.isDefaultValueImmutable())
-						setImmutable();
-				}
-			} else
-				parameterInit.setState(new BoolParameterImpl(null));
+			resetValue();
 		}
 	}
 	
-	protected void restoreState(BoolParameter prm) {
-		if (prm.getValue() != null)
-			choice.setValue(prm.getValue());
+	public void resetValue() {
+		updateDisabled();
+		if (parameterInit.getOldParameter().isPresent()) {
+			restoreState((BoolParameter)parameterInit.getOldParameter().get());
+		} else if (parameterInit.getJobInputParameter().isPresent()) {
+			JobInputParameter jip = parameterInit.getJobInputParameter().get();
+			if (jip instanceof DefaultValueJobInputParameter) {
+				DefaultValueJobInputParameter defaultPrm = (DefaultValueJobInputParameter)jip;
+				restoreState((BoolParameter)defaultPrm.getDefaultValue());
+			}
+		} else
+			parameterInit.setState(new BoolParameterImpl(null));
 	}
 	
-	public void setImmutable() {
-		choice.setDisable(true);
+	protected void restoreState(BoolParameter prm) {
+		updateDisabled();
+		if (prm.getValue() != null)
+			choice.setValue(prm.getValue());
 	}
 	
 	@Override

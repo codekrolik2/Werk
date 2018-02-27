@@ -34,6 +34,7 @@
         <columns>
           <TableColumn fx:id="disableRemoveParameter" prefWidth="31.0" text="" />
           <TableColumn fx:id="parameterName" prefWidth="147.0" text="Parameter Name" />
+          <TableColumn fx:id="reset" prefWidth="64.0" text="Reset" />
           <TableColumn fx:id="constraints" prefWidth="113.0" text="Constraints" />
           <TableColumn fx:id="parameterValue" prefWidth="306.0" text="Parameter Value" />
         </columns>

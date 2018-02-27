@@ -7,6 +7,7 @@ import org.werk.processing.parameters.impl.BoolParameterImpl;
 import org.werk.processing.parameters.impl.DoubleParameterImpl;
 import org.werk.processing.parameters.impl.LongParameterImpl;
 import org.werk.processing.parameters.impl.StringParameterImpl;
+import org.werk.ui.controls.parameters.ParameterInputFactory;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -15,16 +16,22 @@ public class PrimitiveParameterInit extends ParameterInit {
 	public PrimitiveParameterInit(JobInputParameter jobInputPrm) {
 		super(jobInputPrm);
 		setDefaultState(jobInputPrm.getType());
+		
+		parameterInput = ParameterInputFactory.createParameterInput(this);
 	}
 
 	public PrimitiveParameterInit(Parameter oldPrm) {
 		super(oldPrm);
 		setDefaultState(oldPrm.getType());
+		
+		parameterInput = ParameterInputFactory.createParameterInput(this);
 	}
 
 	public PrimitiveParameterInit(ParameterType type) {
 		super(type);
 		setDefaultState(type);
+		
+		parameterInput = ParameterInputFactory.createParameterInput(this);
 	}
 	
 	public void setDefaultState(ParameterType type) {

@@ -196,7 +196,6 @@ public class JobStepTypeRESTSerializer<J> {
 	public JobInputParameter deserializeJobInputParameter(JSONObject param) {
 		String name = param.getString("name");
 		ParameterType type = ParameterType.valueOf(param.getString("type"));
-		boolean isOptional = param.getBoolean("isOptional");
 		String description = param.getString("description");
 		
 		if (param.has("isDefaultValueImmutable")) {
@@ -204,7 +203,7 @@ public class JobStepTypeRESTSerializer<J> {
 			Object obj = param.get("defaultValue");
 			Parameter defaultValue = parameterContextSerializer.createParameterFromJSONGet(obj);
 			
-			return new DefaultValueJobInputParameterImpl(name, type, isOptional, description, 
+			return new DefaultValueJobInputParameterImpl(name, type, description, 
 					isDefaultValueImmutable, defaultValue);
 		} else if (param.has("isProhibitValues")) {
 			boolean isProhibitValues = param.getBoolean("isProhibitValues");
@@ -217,6 +216,7 @@ public class JobStepTypeRESTSerializer<J> {
 				values.add(defaultValue);
 			}
 			
+			boolean isOptional = param.getBoolean("isOptional");
 			return new EnumJobInputParameterImpl(name, type, isOptional, description,
 					values, isProhibitValues);
 		} else if (param.has("isProhibitRange")) {
@@ -230,10 +230,13 @@ public class JobStepTypeRESTSerializer<J> {
 			boolean isEndInclusive = param.getBoolean("isEndInclusive");
 			boolean isProhibitRange = param.getBoolean("isProhibitRange");
 			
+			boolean isOptional = param.getBoolean("isOptional");
 			return new RangeJobInputParameterImpl(name, type, isOptional, description,
 					start, end, isStartInclusive, isEndInclusive, isProhibitRange);
-		} else
+		} else {
+			boolean isOptional = param.getBoolean("isOptional");
 			return new JobInputParameterImpl(name, type, isOptional, description);
+		}
 	}
 	
 	public JSONObject serializeJobInputParameter(JobInputParameter jip) {
@@ -241,7 +244,6 @@ public class JobStepTypeRESTSerializer<J> {
 		
 		param.put("name", jip.getName());
 		param.put("type", jip.getType().toString());
-		param.put("isOptional", jip.isOptional());
 		param.put("description", jip.getDescription());
 		
 		if (jip instanceof DefaultValueJobInputParameter) {
@@ -249,6 +251,8 @@ public class JobStepTypeRESTSerializer<J> {
 			param.put("isDefaultValueImmutable", dvp.isDefaultValueImmutable());
 			addParameterValue(param, "defaultValue", dvp.getDefaultValue());
 		} else if (jip instanceof EnumJobInputParameter) {
+			param.put("isOptional", jip.isOptional());
+			
 			EnumJobInputParameter ejip = (EnumJobInputParameter)jip;
 			param.put("isProhibitValues", ejip.isProhibitValues());
 			
@@ -257,6 +261,8 @@ public class JobStepTypeRESTSerializer<J> {
 				addParameterValueToArray(valuesJSON, prm);
 			param.put("values", valuesJSON);
 		} else if (jip instanceof RangeJobInputParameter) {
+			param.put("isOptional", jip.isOptional());
+			
 			RangeJobInputParameter rjip = (RangeJobInputParameter)jip;
 			param.put("isProhibitRange", rjip.isProhibitRange());
 			
@@ -265,7 +271,8 @@ public class JobStepTypeRESTSerializer<J> {
 			
 			param.put("isEndInclusive", rjip.isEndInclusive());
 			addParameterValue(param, "end", rjip.getEnd());
-		}
+		} else
+			param.put("isOptional", jip.isOptional());
 		
 		return param;
 	}

@@ -12,12 +12,19 @@ public class DefaultValueJobInputParameterImpl extends JobInputParameterImpl imp
 	@Getter
 	protected Parameter defaultValue;
 
-	public DefaultValueJobInputParameterImpl(String name, ParameterType type, boolean isOptional, String description,
+	public DefaultValueJobInputParameterImpl(String name, ParameterType type, String description,
 			boolean isDefaultValueImmutable, Parameter defaultValue) {
-		super(name, type, isOptional, description);
+		super(name, type, false, description);
 		
 		this.isDefaultValueImmutable = isDefaultValueImmutable;
 		this.defaultValue = defaultValue;
+	}
+	
+	@Override
+	public String getConstraints() {
+		return String.format(
+				"%sDefault", isDefaultValueImmutable() ? "Immutable " : ""
+			);
 	}
 	
 	@Override

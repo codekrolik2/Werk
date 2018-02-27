@@ -9,7 +9,10 @@ import javafx.scene.control.TextField;
 public abstract class TextFieldCell<T> extends TableCell<DictionaryParameterAndName, T> {
 	protected final TextField txt;
 	
-	public TextFieldCell() {
+	protected boolean topLevel;
+
+	public TextFieldCell(boolean topLevel) {
+		this.topLevel = topLevel;
 		txt = new TextField();
 	}
 	
@@ -31,8 +34,10 @@ public abstract class TextFieldCell<T> extends TableCell<DictionaryParameterAndN
 			DictionaryParameterAndName dpn = getTableView().getItems().get(getIndex());
 			txt.setText(dpn.getName());
 			
-			if (dpn.getInit().getJobInputParameter().isPresent() || dpn.getInit().getOldParameter().isPresent())
+			if (topLevel && (dpn.getInit().getJobInputParameter().isPresent() || dpn.getInit().getOldParameter().isPresent()))
 				txt.setDisable(true);
+			else
+				txt.setDisable(false);
 			
 			setGraphic(txt);
 			setText(null);

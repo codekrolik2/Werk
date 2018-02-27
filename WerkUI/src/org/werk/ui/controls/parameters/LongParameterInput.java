@@ -15,15 +15,17 @@ import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.TextField;
+import lombok.Getter;
 
 public class LongParameterInput extends ParameterInput {
 	@FXML
 	protected TextField textField;
-	
+	@Getter
 	PrimitiveParameterInit parameterInit;
 	
 	public LongParameterInput(PrimitiveParameterInit parameterInit) {
         this.parameterInit = parameterInit;
+        parameterInit.setParameterInput(this);
         
         FXMLLoader fxmlLoader = LoaderFactory.getInstance().loader(getClass().getResource("LongParameterInput.fxml"));
         fxmlLoader.setRoot(this);
@@ -52,31 +54,31 @@ public class LongParameterInput extends ParameterInput {
 		    }
 		});
 		
-		if (parameterInit.getState() != null) {
+		if (((LongParameter)parameterInit.getState()).getValue() != null) {
 			restoreState((LongParameter)parameterInit.getState());
 		} else {
-			if (parameterInit.getOldParameter().isPresent()) {
-				restoreState((LongParameter)parameterInit.getOldParameter().get());
-			} else if (parameterInit.getJobInputParameter().isPresent()) {
-				JobInputParameter jip = parameterInit.getJobInputParameter().get();
-				if (jip instanceof DefaultValueJobInputParameter) {
-					DefaultValueJobInputParameter defaultPrm = (DefaultValueJobInputParameter)jip;
-					restoreState((LongParameter)defaultPrm.getDefaultValue());
-					if (defaultPrm.isDefaultValueImmutable())
-						setImmutable();
-				}
-			} else
-				parameterInit.setState(new LongParameterImpl(null));
+			resetValue();
 		}
 	}
-	
+
+	public void resetValue() {
+		updateDisabled();
+		if (parameterInit.getOldParameter().isPresent()) {
+			restoreState((LongParameter)parameterInit.getOldParameter().get());
+		} else if (parameterInit.getJobInputParameter().isPresent()) {
+			JobInputParameter jip = parameterInit.getJobInputParameter().get();
+			if (jip instanceof DefaultValueJobInputParameter) {
+				DefaultValueJobInputParameter defaultPrm = (DefaultValueJobInputParameter)jip;
+				restoreState((LongParameter)defaultPrm.getDefaultValue());
+			}
+		} else
+			parameterInit.setState(new LongParameterImpl(null));
+	}
+
 	protected void restoreState(LongParameter prm) {
+		updateDisabled();
 		if (prm.getValue() != null)
 			textField.setText(prm.getValue().toString());
-	}
-	
-	public void setImmutable() {
-		textField.setDisable(true);
 	}
 	
 	@Override
