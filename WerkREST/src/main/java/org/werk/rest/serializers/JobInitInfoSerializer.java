@@ -15,14 +15,10 @@ import org.werk.util.ParameterContextSerializer;
 
 import lombok.AllArgsConstructor;
 
+@AllArgsConstructor
 public class JobInitInfoSerializer {
 	ParameterContextSerializer parameterSerializer;
 	TimeProvider timeProvider;
-	
-	public JobInitInfoSerializer(ParameterContextSerializer parameterSerializer, TimeProvider timeProvider) {
-		this.parameterSerializer = parameterSerializer;
-		this.timeProvider = timeProvider;
-	}
 	
 	public JobInitInfo deserializeJobInitInfo(JSONObject jobInitInfoJSON) {
 		String jobTypeName = jobInitInfoJSON.getString("jobTypeName");
@@ -31,7 +27,7 @@ public class JobInitInfoSerializer {
 		if (jobInitInfoJSON.has("initSignatureName"))
 			initSignatureName = Optional.of(jobInitInfoJSON.getString("initSignatureName"));
 		Map<String, Parameter> initParameters = null;
-		if (jobInitInfoJSON.has("initParameters")) {
+		if (jobInitInfoJSON.has("initParameters"))
 			initParameters = parameterSerializer.deserializeParameters(jobInitInfoJSON.getJSONObject("initParameters"));
 		
 		Optional<String> jobName = jobInitInfoJSON.has("jobName") ? 
@@ -68,10 +64,10 @@ public class JobInitInfoSerializer {
 		
 		jobInitInfoJSON.put("jobTypeName", jobInitInfo.getJobTypeName());
 		
-		if (jobInitInfo.getInitSignatureName().isPresent()) {
+		if (jobInitInfo.getInitSignatureName().isPresent())
 			jobInitInfoJSON.put("initSignatureName", jobInitInfo.getInitSignatureName().get());
+		if (jobInitInfo.getInitParameters() != null)
 			jobInitInfoJSON.put("initParameters", parameterSerializer.serializeParameters(jobInitInfo.getInitParameters()));
-		}
 		
 		if (jobInitInfo.getJobName().isPresent())
 			jobInitInfoJSON.put("jobName", jobInitInfo.getJobName().get());
@@ -87,11 +83,10 @@ public class JobInitInfoSerializer {
 		jobInitInfoJSON.put("jobTypeName", versionJobInitInfo.getJobTypeName());
 		jobInitInfoJSON.put("jobVersion", versionJobInitInfo.getJobVersion());
 
-		if (versionJobInitInfo.getInitSignatureName().isPresent()) {
+		if (versionJobInitInfo.getInitSignatureName().isPresent())
 			jobInitInfoJSON.put("initSignatureName", versionJobInitInfo.getInitSignatureName().get());
+		if (versionJobInitInfo.getInitParameters() != null)
 			jobInitInfoJSON.put("initParameters", parameterSerializer.serializeParameters(versionJobInitInfo.getInitParameters()));
-		}
-		
 		if (versionJobInitInfo.getJobName().isPresent())
 			jobInitInfoJSON.put("jobName", versionJobInitInfo.getJobName().get());
 		if (versionJobInitInfo.getNextExecutionTime().isPresent())
