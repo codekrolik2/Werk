@@ -1,6 +1,5 @@
 package org.werk.ui.controls.table;
 
-import org.werk.processing.parameters.Parameter;
 import org.werk.ui.controls.parameters.ParameterInput;
 import org.werk.ui.controls.parameters.state.DictionaryParameterAndName;
 import org.werk.ui.controls.parameters.state.ParameterInit;
@@ -10,10 +9,6 @@ import javafx.scene.control.TableCell;
 public class ParameterInputCell<T> extends TableCell<ParameterInit, T> {
 	protected ParameterInput paramInput;
 	protected ParameterInit parameterInit;
-	
-	public Parameter getParameter() {
-		return paramInput.getParameter();
-	}
 	
 	@Override
 	public void updateItem(T item, boolean empty) {

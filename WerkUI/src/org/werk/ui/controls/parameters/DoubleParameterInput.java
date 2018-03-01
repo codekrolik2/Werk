@@ -60,7 +60,10 @@ public class DoubleParameterInput extends ParameterInput {
 		        		parameterInit.setState(new DoubleParameterImpl(d));
 		        	else
 		        		((DoubleParameterImpl)parameterInit.getState()).setValue(d);
-		        } catch(Exception e) { }
+		        } catch(Exception e) { 
+		        	if (parameterInit.getState() != null)
+		        		((DoubleParameterImpl)parameterInit.getState()).setValue(null);
+		        }
 		    }
 		});
 		

@@ -25,13 +25,13 @@ public class JobTypesForm extends VBox {
 	WerkRESTClient werkClient;
 	@Inject
 	ServerInfoManager serverInfoManager;
+	@Inject
+	MainApp mainApp;
+	
 	@FXML
     Button refreshButton;
 	@FXML
 	JobTypesTable table;
-	
-	@Inject
-	MainApp mainApp;
 	
 	public JobTypesForm() {
         FXMLLoader fxmlLoader = LoaderFactory.getInstance().loader(getClass().getResource("JobTypesForm.fxml"));
@@ -49,37 +49,41 @@ public class JobTypesForm extends VBox {
 		table.setMainApp(mainApp);
 	}
 	
-	@FXML
     public void refresh() {
 		if (serverInfoManager.getPort() < 0)
 			MessageBox.show(String.format("Server not assigned. Please set server."));
 		else {
-			String host = serverInfoManager.getHost();
-			int port = serverInfoManager.getPort();
-			
-			refreshButton.setDisable(true);
-			
-			WerkCallback<Collection<JobType>> callback = new WerkCallback<Collection<JobType>>() {
-				@Override
-				public void error(Throwable cause) {
-					Platform.runLater( () -> {
-						refreshButton.setDisable(false);
-						MessageBox.show(
-							String.format("Error processing request %s:%d [%s]", host, port, cause.toString())
-						);
-					});
-				}
+	    	try {
+				String host = serverInfoManager.getHost();
+				int port = serverInfoManager.getPort();
 				
-				@Override
-				public void done(Collection<JobType> result) {
-					Platform.runLater( () -> {
-						refreshButton.setDisable(false);
-						table.setItems(FXCollections.observableArrayList(result));
-					});
-				}
-			};
-			
-			werkClient.getJobTypes(host, port, callback);
+				refreshButton.setDisable(true);
+				
+				WerkCallback<Collection<JobType>> callback = new WerkCallback<Collection<JobType>>() {
+					@Override
+					public void error(Throwable cause) {
+						Platform.runLater( () -> {
+							refreshButton.setDisable(false);
+							MessageBox.show(
+								String.format("Error processing request %s:%d [%s]", host, port, cause.toString())
+							);
+						});
+					}
+					
+					@Override
+					public void done(Collection<JobType> result) {
+						Platform.runLater( () -> {
+							refreshButton.setDisable(false);
+							table.setItems(FXCollections.observableArrayList(result));
+						});
+					}
+				};
+				
+				werkClient.getJobTypes(host, port, callback);
+	    	} catch(Exception e) {
+				MessageBox.show(String.format("Refresh error: [%s]", e));
+				refreshButton.setDisable(false);
+	    	}
 		}
 	}
 }

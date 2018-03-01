@@ -3,6 +3,7 @@ package org.werk.ui.controls.jobtypesform;
 import java.io.IOException;
 
 import org.werk.meta.JobType;
+import org.werk.rest.pojo.RESTJobType;
 import org.werk.restclient.WerkRESTClient;
 import org.werk.ui.ServerInfoManager;
 import org.werk.ui.controls.mainapp.MainApp;
@@ -65,7 +66,7 @@ public class JobTypesTable extends TableView<JobType> {
 				@Override
 				protected void handle(ActionEvent event) {
 					JobType jobType = getTableView().getItems().get(getIndex());
-					System.out.println("Create Job " + jobType.getJobTypeName());
+					mainApp.createCreateJobTab(((RESTJobType)jobType).getFullName());
 				}
 			};
 		}

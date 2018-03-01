@@ -2,9 +2,9 @@ package org.werk.ui;
 
 import org.werk.meta.JobType;
 import org.werk.meta.StepType;
+import org.werk.ui.controls.createjobform.CreateJobForm;
 import org.werk.ui.controls.jobtypeinfoform.JobTypeInfoForm;
 import org.werk.ui.controls.jobtypesform.JobTypesForm;
-import org.werk.ui.controls.parameters.DictionaryParameterInput;
 import org.werk.ui.controls.serverinfoform.ServerInfoForm;
 import org.werk.ui.controls.setserverform.SetServerForm;
 import org.werk.ui.controls.steptypeinfoform.StepTypeInfoForm;
@@ -20,7 +20,7 @@ public class TabCreator {
 	protected Provider<StepTypesForm> stepTypesFormProvider;
 	protected Provider<JobTypeInfoForm> jobTypeInfoFormProvider;
 	protected Provider<StepTypeInfoForm> stepTypeInfoFormProvider;
-	protected Provider<DictionaryParameterInput> dictionaryParameterInputProvider;
+	protected Provider<CreateJobForm> createJobFormProvider;
 	
 	@Inject
 	public TabCreator(Provider<SetServerForm> setServerFormProvider,
@@ -29,14 +29,14 @@ public class TabCreator {
 			Provider<StepTypesForm> stepTypesFormProvider,
 			Provider<JobTypeInfoForm> jobTypeInfoFormProvider,
 			Provider<StepTypeInfoForm> stepTypeInfoFormProvider,
-			Provider<DictionaryParameterInput> dictionaryParameterInputProvider) {
+			Provider<CreateJobForm> createJobFormProvider) {
 		this.setServerFormProvider = setServerFormProvider;
 		this.serverInfoFormProvider = serverInfoFormProvider;
 		this.jobTypesFormProvider = jobTypesFormProvider;
 		this.stepTypesFormProvider = stepTypesFormProvider;
 		this.jobTypeInfoFormProvider = jobTypeInfoFormProvider;
 		this.stepTypeInfoFormProvider = stepTypeInfoFormProvider;
-		this.dictionaryParameterInputProvider = dictionaryParameterInputProvider;
+		this.createJobFormProvider = createJobFormProvider;
 	}
 	
 	public SetServerForm getSetServerForm() {
@@ -73,7 +73,9 @@ public class TabCreator {
 		return stepTypeInfoForm;
 	}
 	
-	public DictionaryParameterInput getDictionaryParameterInput() {
-		return dictionaryParameterInputProvider.get();
+	public CreateJobForm getCreateJobForm(String jobType) {
+		CreateJobForm createJobForm = createJobFormProvider.get();
+		createJobForm.setJobType(jobType);
+		return createJobForm;
 	}
 }

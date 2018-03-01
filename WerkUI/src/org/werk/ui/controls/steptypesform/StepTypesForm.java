@@ -54,32 +54,37 @@ public class StepTypesForm extends VBox {
 		if (serverInfoManager.getPort() < 0)
 			MessageBox.show(String.format("Server not assigned. Please set server."));
 		else {
-			String host = serverInfoManager.getHost();
-			int port = serverInfoManager.getPort();
-			
-			refreshButton.setDisable(true);
-			
-			WerkCallback<Collection<StepType<Long>>> callback = new WerkCallback<Collection<StepType<Long>>>() {
-				@Override
-				public void error(Throwable cause) {
-					Platform.runLater( () -> {
-						refreshButton.setDisable(false);
-						MessageBox.show(
-							String.format("Error processing request %s:%d [%s]", host, port, cause.toString())
-						);
-					});
-				}
+	    	try {
+				String host = serverInfoManager.getHost();
+				int port = serverInfoManager.getPort();
 				
-				@Override
-				public void done(Collection<StepType<Long>> result) {
-					Platform.runLater( () -> {
-						refreshButton.setDisable(false);
-						table.setItems(FXCollections.observableArrayList(result));
-					});
-				}
-			};
-			
-			werkClient.getAllStepTypes(host, port, callback);
+				refreshButton.setDisable(true);
+				
+				WerkCallback<Collection<StepType<Long>>> callback = new WerkCallback<Collection<StepType<Long>>>() {
+					@Override
+					public void error(Throwable cause) {
+						Platform.runLater( () -> {
+							refreshButton.setDisable(false);
+							MessageBox.show(
+								String.format("Error processing request %s:%d [%s]", host, port, cause.toString())
+							);
+						});
+					}
+					
+					@Override
+					public void done(Collection<StepType<Long>> result) {
+						Platform.runLater( () -> {
+							refreshButton.setDisable(false);
+							table.setItems(FXCollections.observableArrayList(result));
+						});
+					}
+				};
+				
+				werkClient.getAllStepTypes(host, port, callback);
+	    	} catch(Exception e) {
+				MessageBox.show(String.format("Refresh error: [%s]", e));
+				refreshButton.setDisable(false);
+	    	}
 		}
 	}
 }

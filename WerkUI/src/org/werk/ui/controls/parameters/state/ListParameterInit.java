@@ -2,7 +2,6 @@ package org.werk.ui.controls.parameters.state;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.werk.meta.inputparameters.JobInputParameter;
 import org.werk.processing.parameters.Parameter;
@@ -35,13 +34,14 @@ public class ListParameterInit extends ParameterInit {
 		parameterInput = ParameterInputFactory.createListParameterInput(this);
 	}
 	
-	public Parameter getState() {
-		if (listParametersState == null)
-			return null;
-		return new ListParameterImpl(
-				listParametersState.stream().
-				map(a -> a.getState()).
-				collect(Collectors.toList())
-			);
+	public Parameter getState() throws ParameterStateException {
+		if ((listParametersState == null) || (listParametersState.isEmpty()))
+			new ListParameterImpl(null);
+		
+		List<Parameter> listParameters = new ArrayList<>();
+		for (ParameterInit init : listParametersState)
+			listParameters.add(init.getState());
+		
+		return new ListParameterImpl(listParameters);
 	}
 }

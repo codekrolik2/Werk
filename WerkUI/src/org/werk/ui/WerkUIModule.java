@@ -1,5 +1,8 @@
 package org.werk.ui;
 
+import org.pillar.time.LongTimeProvider;
+import org.pillar.time.interfaces.TimeProvider;
+import org.werk.engine.json.JobParameterTool;
 import org.werk.restclient.WerkRESTClient;
 import org.werk.ui.controls.mainapp.MainApp;
 import org.werk.ui.guice.FXMLLoaderFactory;
@@ -32,5 +35,11 @@ public class WerkUIModule extends AbstractModule {
 		
 		ServerInfoManager serverInfoManager = new ServerInfoManager(); 
 		bind(ServerInfoManager.class).toInstance(serverInfoManager);
+		
+		JobParameterTool jpt = new JobParameterTool();
+		bind(JobParameterTool.class).toInstance(jpt);
+		
+		TimeProvider tp = new LongTimeProvider();
+		bind(TimeProvider.class).toInstance(tp);
 	}
 }

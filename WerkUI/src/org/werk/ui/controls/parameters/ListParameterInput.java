@@ -10,6 +10,7 @@ import org.werk.processing.parameters.ParameterType;
 import org.werk.ui.controls.parameters.state.DictionaryParameterInit;
 import org.werk.ui.controls.parameters.state.ListParameterInit;
 import org.werk.ui.controls.parameters.state.ParameterInit;
+import org.werk.ui.controls.parameters.state.ParameterStateException;
 import org.werk.ui.controls.parameters.state.PrimitiveParameterInit;
 import org.werk.ui.controls.table.ButtonCell;
 import org.werk.ui.controls.table.ParameterInputCell;
@@ -173,7 +174,7 @@ public class ListParameterInput extends ParameterInput {
 	//=================================================
 	
 	@Override
-	public Parameter getParameter() {
+	public Parameter getParameter() throws ParameterStateException {
 		return parameterInit.getState();
 	}
 }

@@ -49,6 +49,6 @@ public class PrimitiveParameterInit extends ParameterInit {
 			);
 	}
 	
-	@Getter @Setter
+	@Setter @Getter
 	protected Parameter state;
 }

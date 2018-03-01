@@ -45,11 +45,17 @@ public class StringParameterInput extends ParameterInput {
 		    public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
 		        try {
 		        	String str = textField.getText();
+		        	if (str.trim() == "")
+		        		str = null;
+		        	
 		        	if (parameterInit.getState() == null)
 		        		parameterInit.setState(new StringParameterImpl(str));
 		        	else
 		        		((StringParameterImpl)parameterInit.getState()).setValue(str);
-		        } catch(Exception e) { }
+		        } catch(Exception e) { 
+		        	if (parameterInit.getState() != null)
+		        		((StringParameterImpl)parameterInit.getState()).setValue(null);
+		        }
 		    }
 		});
 		

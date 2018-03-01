@@ -72,6 +72,10 @@ public class JobTypeInfoForm extends VBox {
         }
     }
     
+    public void showCreateJobForm() {
+		mainApp.createCreateJobTab(((RESTJobType)jobType).getFullName());
+    }
+    
 	public void initTable() {
 		stepsTable.hideJobs();
 		stepsTable.setMainApp(mainApp);

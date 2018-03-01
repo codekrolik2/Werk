@@ -2,6 +2,7 @@ package org.werk.ui.controls.parameters.state;
 
 import java.util.Optional;
 
+import org.werk.meta.inputparameters.DefaultValueJobInputParameter;
 import org.werk.meta.inputparameters.JobInputParameter;
 import org.werk.processing.parameters.Parameter;
 import org.werk.processing.parameters.ParameterType;
@@ -18,6 +19,8 @@ public abstract class ParameterInit {
 	protected ParameterType type;
 	@Getter @Setter
 	protected ParameterInput parameterInput;
+	@Setter
+	protected Boolean immutable = null;
 	
 	public ParameterInit(ParameterType type) {
 		jobInputParameter = Optional.empty();
@@ -46,5 +49,18 @@ public abstract class ParameterInit {
 			return type;
 	}
 	
-	public abstract Parameter getState();
+	public boolean isImmutable() {
+		if (immutable != null)
+			return immutable;
+		if (getJobInputParameter().isPresent()) {
+			JobInputParameter jip = getJobInputParameter().get();
+			if (jip instanceof DefaultValueJobInputParameter)
+				return true;
+			else
+				return jip.isOptional();
+		}
+		return false;
+	}
+	
+	public abstract Parameter getState() throws ParameterStateException;
 }

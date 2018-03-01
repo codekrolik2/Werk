@@ -134,7 +134,7 @@ public class AnnotationsWerkConfigLoader<J> implements WerkConfigLoader<J> {
 				List<org.werk.meta.inputparameters.JobInputParameter> methodParams = new ArrayList<>(); 
 				for (Parameter param : method.getParameters())
 					methodParams.add(loader.loadInputParameter(param, className, method.getName()));
-				initInfo.put(jobInit.parameterSetName(), methodParams);
+				initInfo.put(jobInit.initSignatureName(), methodParams);
 			}
 		}
 		

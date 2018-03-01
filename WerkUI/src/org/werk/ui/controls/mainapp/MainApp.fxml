@@ -13,29 +13,32 @@
 	<children>
 		<MenuBar VBox.vgrow="NEVER"> 
 			<menus>
-				<Menu mnemonicParsing="false" text="Werk"> 
+				<Menu mnemonicParsing="false" text="Server"> 
 					<items>
-						<MenuItem mnemonicParsing="false" text="Jobs" /> 
-						<SeparatorMenuItem mnemonicParsing="false" /> 
-						<MenuItem mnemonicParsing="false" text="Job Types" onAction="#createJobTypesTab"/> 
-						<MenuItem mnemonicParsing="false" text="Step Types" onAction="#createStepTypesTab"/> 
+						<MenuItem mnemonicParsing="false" onAction="#showSetServerDialog" text="Set Server" /> 
+						<MenuItem mnemonicParsing="false" text="Server Info" onAction="#createServerInfoTab" /> 
 						<SeparatorMenuItem mnemonicParsing="false" /> 
 						<MenuItem mnemonicParsing="false" onAction="#closeAllTabs" text="Close All Tabs" /> 
 						<SeparatorMenuItem mnemonicParsing="false" /> 
 						<MenuItem mnemonicParsing="false" onAction="#quit" text="Quit" /> 
 					</items>
 				</Menu>
-				<Menu mnemonicParsing="false" text="Server"> 
+				<Menu mnemonicParsing="false" text="Jobs"> 
 					<items>
-						<MenuItem mnemonicParsing="false" onAction="#showSetServerDialog" text="Set Server" /> 
-						<MenuItem mnemonicParsing="false" text="Server Info" onAction="#createServerInfoTab" /> 
+						<MenuItem mnemonicParsing="false" text="Jobs" /> 
+						<SeparatorMenuItem mnemonicParsing="false" /> 
+						<MenuItem mnemonicParsing="false" text="Job Details"/> 
+						<SeparatorMenuItem mnemonicParsing="false" /> 
+						<MenuItem mnemonicParsing="false" text="Create Job" onAction="#createCreateJobTab"/> 
+						<MenuItem mnemonicParsing="false" text="Restart Job"/> 
 					</items>
 				</Menu>
-				<Menu mnemonicParsing="false" text="Test">
+				<Menu mnemonicParsing="false" text="Meta"> 
 					<items>
-						<MenuItem mnemonicParsing="false" onAction="#test" text="Test" /> 
+						<MenuItem mnemonicParsing="false" text="Job Types" onAction="#createJobTypesTab"/> 
+						<MenuItem mnemonicParsing="false" text="Step Types" onAction="#createStepTypesTab"/> 
 					</items>
-				</Menu> 
+				</Menu>
 			</menus>
 		</MenuBar>
 		<AnchorPane maxHeight="-1.0" maxWidth="-1.0" prefHeight="-1.0" prefWidth="-1.0" VBox.vgrow="ALWAYS"> 

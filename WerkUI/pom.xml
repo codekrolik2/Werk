@@ -14,9 +14,18 @@
   	</dependency>
     <dependency>
       <groupId>org.werk</groupId>
+      <artifactId>WerkEngine</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.werk</groupId>
       <artifactId>WerkREST</artifactId>
     </dependency>
   	
+	<dependency>
+      <groupId>org.jfxtras</groupId>
+      <artifactId>jfxtras-labs</artifactId>
+      <version>8.0-r5</version>
+	</dependency>
 	<dependency>
 	    <groupId>com.google.inject</groupId>
 	    <artifactId>guice</artifactId>

@@ -428,7 +428,8 @@ public class LocalJobManager<J> {
 	//JOB CREATION
 	
 	public J createJob(JobInitInfo init, Optional<J> parentJob) throws Exception {
-		LocalWerkJob<J> job = (LocalWerkJob<J>)jobStepFactory.createNewJob(init.getJobTypeName(), init.getInitParameters(),
+		LocalWerkJob<J> job = (LocalWerkJob<J>)jobStepFactory.createNewJob(init.getJobTypeName(), 
+				init.getInitSignatureName(), init.getInitParameters(),
 				init.getJobName(), init.getNextExecutionTime(), parentJob);
 		
 		lock.lock();
@@ -442,7 +443,8 @@ public class LocalJobManager<J> {
 	}
 	
 	public J createJobOfVersion(VersionJobInitInfo init, Optional<J> parentJob) throws Exception {
-		LocalWerkJob<J> job = (LocalWerkJob<J>)jobStepFactory.createJobOfVersion(init.getJobTypeName(), init.getJobVersion(), 
+		LocalWerkJob<J> job = (LocalWerkJob<J>)jobStepFactory.createJobOfVersion(init.getJobTypeName(), init.getJobVersion(),
+				init.getInitSignatureName(),
 				init.getInitParameters(), init.getJobName(), init.getNextExecutionTime(), parentJob);
 		
 		lock.lock();

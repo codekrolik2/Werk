@@ -54,7 +54,10 @@ public class BooleanParameterInput extends ParameterInput {
 		        		parameterInit.setState(new BoolParameterImpl(b));
 		        	else
 		        		((BoolParameterImpl)parameterInit.getState()).setValue(b);
-		        } catch(Exception e) { }
+		        } catch(Exception e) { 
+		        	if (parameterInit.getState() != null)
+		        		((BoolParameterImpl)parameterInit.getState()).setValue(null);		        	
+		        }
 		    }
 		});
 		

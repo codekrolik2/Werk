@@ -48,7 +48,7 @@ public abstract class MultiCell<S, T> extends TableCell<S, T> {
 				if (jip instanceof DefaultValueJobInputParameter) {
 					if (!((DefaultValueJobInputParameter)jip).isDefaultValueImmutable()) {
 						checkbox = new CheckBox();
-						checkbox.selectedProperty().set(!parameterInit.getParameterInput().isImmutable());
+						checkbox.selectedProperty().set(!parameterInit.isImmutable());
 						checkbox.selectedProperty().addListener(new ChangeListener<Boolean>() {
 						    @Override
 						    public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
@@ -60,7 +60,7 @@ public abstract class MultiCell<S, T> extends TableCell<S, T> {
 						setGraphic(null);
 				} else if (jip.isOptional()) {
 					checkbox = new CheckBox();
-					checkbox.selectedProperty().set(!parameterInit.getParameterInput().isImmutable());
+					checkbox.selectedProperty().set(!parameterInit.isImmutable());
 					checkbox.selectedProperty().addListener(new ChangeListener<Boolean>() {
 					    @Override
 					    public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
@@ -72,7 +72,7 @@ public abstract class MultiCell<S, T> extends TableCell<S, T> {
 					setGraphic(null);
 			} else if ((topLevel) && (parameterInit.getOldParameter().isPresent())) {
 				checkbox = new CheckBox();
-				checkbox.selectedProperty().set(!parameterInit.getParameterInput().isImmutable());
+				checkbox.selectedProperty().set(!parameterInit.isImmutable());
 				checkbox.selectedProperty().addListener(new ChangeListener<Boolean>() {
 				    @Override
 				    public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {

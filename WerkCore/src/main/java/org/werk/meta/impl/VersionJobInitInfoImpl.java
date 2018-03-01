@@ -15,6 +15,8 @@ public class VersionJobInitInfoImpl implements VersionJobInitInfo {
 	@Getter
 	String jobTypeName;
 	@Getter
+	Optional<String> initSignatureName;
+	@Getter
 	Map<String, Parameter> initParameters;
 	@Getter
 	long jobVersion;

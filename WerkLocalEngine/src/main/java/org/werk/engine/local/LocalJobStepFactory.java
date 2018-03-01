@@ -43,7 +43,7 @@ public abstract class LocalJobStepFactory<J> {
 	
 	protected abstract J getNextJobId();
 	
-	public LocalWerkJob<J> createNewJob(String jobTypeName, Map<String, Parameter> jobInitialParameters, 
+	public LocalWerkJob<J> createNewJob(String jobTypeName, Optional<String> initSignatureName, Map<String, Parameter> jobInitialParameters, 
 			Optional<String> jobName, Optional<Timestamp> nextExecutionTimeOpt, Optional<J> parentJob) throws Exception {
 		JobType jobType = werkConfig.getJobTypeLatestVersion(jobTypeName);
 		if (jobType == null)
@@ -51,14 +51,27 @@ public abstract class LocalJobStepFactory<J> {
 				String.format("JobType not found [%s]", jobTypeName)
 			);
 		
-		//Check initial parameters
-		List<JobInputParameter> parameterSet = jobParameterTool.findMatchingParameterSet(jobType, jobInitialParameters);
-		
-		//Check enum and range parameters
-		jobParameterTool.checkRangeAndEnumParameters(parameterSet, jobInitialParameters);
-		
-		//Fill default parameters
-		jobParameterTool.fillParameters(parameterSet, jobInitialParameters);
+		if (!initSignatureName.isPresent()) {
+			if (!jobParameterTool.emptyInitParameterSetAllowed(jobType))
+				throw new WerkConfigException(
+						String.format("Empty init parameter set is not allowed for JobType [%s] version [%d]",
+								jobTypeName, jobType.getVersion())
+					);
+		} else {
+			//Check initial parameters
+			List<JobInputParameter> parameterSet = jobParameterTool.getParameterSet(jobType, initSignatureName.get());
+			if (parameterSet == null)
+				throw new WerkConfigException(
+						String.format("Init signature [%s] is not found for JobType [%s] version [%d]", 
+								initSignatureName.get(), jobTypeName, jobType.getVersion())
+					);
+			
+			//Check enum and range parameters
+			jobParameterTool.checkParameters(parameterSet, jobInitialParameters);
+			
+			//Fill default parameters
+			jobParameterTool.fillParameters(parameterSet, jobInitialParameters);
+		}
 		
 		long version = jobType.getVersion();
 		JobStatus status = JobStatus.UNDEFINED;
@@ -72,24 +85,37 @@ public abstract class LocalJobStepFactory<J> {
 				localJobManager, joinResultSerializer);
 	}
 
-	public LocalWerkJob<J> createJobOfVersion(String jobTypeName, long oldVersion, Map<String, Parameter> jobInitialParameters, 
-			Optional<String> jobName, Optional<Timestamp> nextExecutionTimeOpt, Optional<J> parentJob) throws Exception {
-		JobType jobType = werkConfig.getJobTypeForAnyVersion(oldVersion, jobTypeName);
+	public LocalWerkJob<J> createJobOfVersion(String jobTypeName, long version, Optional<String> initSignatureName, 
+			Map<String, Parameter> jobInitialParameters, Optional<String> jobName, Optional<Timestamp> nextExecutionTimeOpt, 
+			Optional<J> parentJob) throws Exception {
+		JobType jobType = werkConfig.getJobTypeForAnyVersion(version, jobTypeName);
 		if (jobType == null)
 			throw new WerkConfigException(
-				String.format("JobType not found [%s] for version [%d]", jobTypeName, oldVersion)
+				String.format("JobType not found [%s] for version [%d]", jobTypeName, version)
 			);
 		
-		//Check initial parameters
-		List<JobInputParameter> parameterSet = jobParameterTool.findMatchingParameterSet(jobType, jobInitialParameters);
+		if (!initSignatureName.isPresent()) {
+			if (!jobParameterTool.emptyInitParameterSetAllowed(jobType))
+				throw new WerkConfigException(
+						String.format("Empty init parameter set is not allowed for JobType [%s] version [%d]",
+								jobTypeName, version)
+					);
+		} else {
+			//Check initial parameters
+			List<JobInputParameter> parameterSet = jobParameterTool.getParameterSet(jobType, initSignatureName.get());
+			if (parameterSet == null)
+				throw new WerkConfigException(
+						String.format("Init signature [%s] is not found for JobType [%s] version [%d]", 
+								initSignatureName.get(), jobTypeName, version)
+					);
 
-		//Check enum and range parameters
-		jobParameterTool.checkRangeAndEnumParameters(parameterSet, jobInitialParameters);
+			//Check enum and range parameters
+			jobParameterTool.checkParameters(parameterSet, jobInitialParameters);
+			
+			//Fill default parameters
+			jobParameterTool.fillParameters(parameterSet, jobInitialParameters);
+		}
 		
-		//Fill default parameters
-		jobParameterTool.fillParameters(parameterSet, jobInitialParameters);
-		
-		long version = jobType.getVersion();
 		JobStatus status = JobStatus.UNDEFINED;
 		Map<String, Parameter> jobParameters = new HashMap<>(jobInitialParameters);
 		Timestamp currentTime = timeProvider.getCurrentTime();

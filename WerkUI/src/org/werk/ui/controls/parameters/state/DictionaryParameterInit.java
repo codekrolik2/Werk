@@ -1,9 +1,10 @@
 package org.werk.ui.controls.parameters.state;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.werk.meta.inputparameters.JobInputParameter;
 import org.werk.processing.parameters.Parameter;
@@ -20,6 +21,8 @@ public class DictionaryParameterInit extends ParameterInit {
 	List<DictionaryParameterAndName> mapParametersState = new ArrayList<>();
 	@Getter
 	Optional<List<JobInputParameter>> inputParameters;
+	
+	boolean topLevel = false;
 	
 	public DictionaryParameterInit(Optional<List<JobInputParameter>> inputParameters, boolean topLevel) {
 		super(ParameterType.DICTIONARY);
@@ -58,22 +61,29 @@ public class DictionaryParameterInit extends ParameterInit {
 	}
 	
 	protected void createInput(boolean topLevel) {
+		this.topLevel = topLevel;
 		if (!topLevel)
 			parameterInput = ParameterInputFactory.createDictionaryParameterInput(this, 
 					DictionaryParameterInputType.INNER);
 	}
 	
-	public Parameter getState() {
-		if (mapParametersState == null)
-			return null;
+	public Parameter getState() throws ParameterStateException {
+		if ((mapParametersState == null) || (mapParametersState.isEmpty()))
+			return new DictionaryParameterImpl(null);
 		
-		return new DictionaryParameterImpl(
-			mapParametersState.stream().
-			collect(Collectors.toMap(
-					a -> a.getName(), 
-					a -> a.getInit().getState()
-				)
-			)
-		);
+		Map<String, Parameter> values = new HashMap<>();
+		for (DictionaryParameterAndName dpn : mapParametersState) {
+			String key = dpn.getName().trim();
+			if (key.equals(""))
+				throw new ParameterStateException("Empty key in DICTIONARY: " + dpn.getName());
+			
+			if (values.containsKey(key))
+				throw new ParameterStateException("Duplicate key in DICTIONARY: " + dpn.getName());
+			
+			if (!dpn.getInit().isImmutable())
+				values.put(key, dpn.getInit().getState());
+		}
+		
+		return new DictionaryParameterImpl(values);
 	}
 }

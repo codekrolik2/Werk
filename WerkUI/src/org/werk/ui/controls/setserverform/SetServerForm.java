@@ -65,33 +65,38 @@ public class SetServerForm extends GridPane {
 	
 	@FXML
     private void setServer() {
-		String host = hostTextField.getText();
-		int port = Integer.parseInt(portTextField.getText());
-		
-		setServerButton.setDisable(true);
-		serverInfoManager.resetServerInfo(mainApp);
-		
-		WerkCallback<JSONObject> callback = new WerkCallback<JSONObject>() {
-			@Override
-			public void error(Throwable cause) {
-				Platform.runLater( () -> {
-					setServerButton.setDisable(false);
-						MessageBox.show(
-							String.format("Error setting to server %s:%d [%s]", host, port, cause.toString())
-						);
-					}
-				);
-			}
+    	try {
+			String host = hostTextField.getText();
+			int port = Integer.parseInt(portTextField.getText());
 			
-			@Override
-			public void done(JSONObject result) {
-				Platform.runLater(() -> {
-					serverInfoManager.newServerInfo(mainApp, host, port, result);
-					dialogStage.close(); 
-				});
-			}
-		};
-		
-		werkClient.getServerInfo(host, port, callback);
+			setServerButton.setDisable(true);
+			serverInfoManager.resetServerInfo(mainApp);
+			
+			WerkCallback<JSONObject> callback = new WerkCallback<JSONObject>() {
+				@Override
+				public void error(Throwable cause) {
+					Platform.runLater( () -> {
+						setServerButton.setDisable(false);
+							MessageBox.show(
+								String.format("Error setting to server %s:%d [%s]", host, port, cause.toString())
+							);
+						}
+					);
+				}
+				
+				@Override
+				public void done(JSONObject result) {
+					Platform.runLater(() -> {
+						serverInfoManager.newServerInfo(mainApp, host, port, result);
+						dialogStage.close(); 
+					});
+				}
+			};
+			
+			werkClient.getServerInfo(host, port, callback);
+    	} catch(Exception e) {
+			MessageBox.show(String.format("Refresh error: [%s]", e));
+			setServerButton.setDisable(false);
+    	}
 	}
 }

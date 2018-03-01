@@ -50,7 +50,10 @@ public class LongParameterInput extends ParameterInput {
 		        		parameterInit.setState(new LongParameterImpl(l));
 		        	else
 		        		((LongParameterImpl)parameterInit.getState()).setValue(l);
-		        } catch(Exception e) { }
+		        } catch(Exception e) { 
+		        	if (parameterInit.getState() != null)
+		        		((LongParameterImpl)parameterInit.getState()).setValue(null);
+		        }
 		    }
 		});
 		

@@ -21,7 +21,7 @@
       <ButtonBar buttonOrder="L_E+U+FBXI_YNOCAH_R" nodeOrientation="RIGHT_TO_LEFT" prefHeight="40.0" prefWidth="200.0">
          <buttons>
             <Button fx:id="showJobsButton" mnemonicParsing="false" text="Show Jobs" />
-            <Button fx:id="createJobButton" mnemonicParsing="false" text="Create Job" />
+            <Button fx:id="createJobButton" onAction="#showCreateJobForm" mnemonicParsing="false" text="Create Job" />
          </buttons>
          <padding>
             <Insets left="5.0" right="5.0" />

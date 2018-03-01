@@ -8,6 +8,7 @@ import org.werk.processing.parameters.Parameter;
 
 public interface VersionJobInitInfo {
 	String getJobTypeName();
+	Optional<String> getInitSignatureName();
 	Map<String, Parameter> getInitParameters();
 	long getJobVersion();
 	Optional<String> getJobName();

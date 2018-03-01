@@ -29,8 +29,12 @@ public class ParameterContextSerializer {
 	public JSONObject serializeParameters(Map<String, Parameter> parameters) {
 		JSONObject parameterContext = new JSONObject();
 		
-		for (Entry<String, Parameter> ent : parameters.entrySet())
-			parameterContext.put(ent.getKey(), serializeParameter(ent.getValue()));
+		if (parameters != null)
+		for (Entry<String, Parameter> ent : parameters.entrySet()) {
+			Object val = serializeParameter(ent.getValue());
+			if (val != null)
+				parameterContext.put(ent.getKey(), val);
+		}
 		
 		return parameterContext;
 	}
@@ -40,8 +44,22 @@ public class ParameterContextSerializer {
 			return serializeParameters(((DictionaryParameter)prm).getValue());
 		} else if (prm.getType() == ParameterType.LIST) {
 			return serializeListParameter((ListParameter)prm);
-		} else
-			return ParameterUtils.getParameterValue(prm);
+		} else {
+			Object parameterValue = ParameterUtils.getParameterValue(prm);
+			if (parameterValue == null)
+				return null;
+			
+			if (prm.getType() == ParameterType.LONG)
+				return "L " + parameterValue.toString();
+			else if (prm.getType() == ParameterType.STRING)
+				return "S " + parameterValue.toString();
+			else if (prm.getType() == ParameterType.DOUBLE)
+				return "D " + parameterValue.toString();
+			else if (prm.getType() == ParameterType.BOOL)
+				return "B " + parameterValue.toString();
+			else
+				throw new IllegalArgumentException("Unknown parameter type " + prm.getType());
+		} 
 	}
 	
 	protected JSONArray serializeListParameter(ListParameter listParameter) {
@@ -59,7 +77,19 @@ public class ParameterContextSerializer {
 		if ((value == null) || (value == JSONObject.NULL))
 			return null;
 		
-	    if (value instanceof Integer) {
+		if (value instanceof String) {
+			String str = (String)value;
+			if (str.startsWith("L ")) {
+				return new LongParameterImpl(Long.parseLong(str.substring(2)));
+			} else if (str.startsWith("S ")) {
+				return new StringParameterImpl(str.substring(2));
+			} else if (str.startsWith("D ")) {
+				return new DoubleParameterImpl(Double.parseDouble(str.substring(2)));
+			} else if (str.startsWith("B ")) {
+				return new BoolParameterImpl(Boolean.parseBoolean(str.substring(2)));
+			} else
+				return new StringParameterImpl(str);
+	    } else if (value instanceof Integer) {
 	    	return new LongParameterImpl((long)(Integer)value);
 	    } else if (value instanceof Long) {
 	    	return new LongParameterImpl((Long)value);
@@ -67,8 +97,6 @@ public class ParameterContextSerializer {
 	    	return new DoubleParameterImpl((double)((Float)value));
 	    } else if (value instanceof Double) {
 	    	return new DoubleParameterImpl((Double)value);
-	    } else if (value instanceof String) {
-	    	return new StringParameterImpl((String)value);
 	    } else if (value instanceof Boolean) {
 	    	return new BoolParameterImpl((Boolean)value);
 	    } else if (value instanceof JSONArray) {

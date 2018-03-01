@@ -89,14 +89,14 @@ public class WerkRESTClient {
 	}
 	
 	public void createJob(String host, int port, WerkCallback<Long> callback, JobInitInfo init) throws Exception {
-		String str = jobInitInfoSerializer.deserializeJobInitInfo(init).toString();
+		String str = jobInitInfoSerializer.serializeJobInitInfo(init).toString();
 		Buffer buffer = Buffer.buffer(str);
 		
 		sendCreateJobRequest(host, port, callback, buffer);
 	}
 	
 	public void createJobOfVersion(String host, int port, WerkCallback<Long> callback, VersionJobInitInfo init) throws Exception {
-		String str = jobInitInfoSerializer.deserializeVersionJobInitInfo(init).toString();
+		String str = jobInitInfoSerializer.serializeVersionJobInitInfo(init).toString();
 		Buffer buffer = Buffer.buffer(str);
 		
 		sendCreateJobRequest(host, port, callback, buffer);

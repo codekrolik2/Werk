@@ -8,6 +8,7 @@ import org.werk.processing.parameters.Parameter;
 
 public interface JobInitInfo {
 	String getJobTypeName();
+	Optional<String> getInitSignatureName();
 	Map<String, Parameter> getInitParameters();
 	Optional<String> getJobName();
 	Optional<Timestamp> getNextExecutionTime();

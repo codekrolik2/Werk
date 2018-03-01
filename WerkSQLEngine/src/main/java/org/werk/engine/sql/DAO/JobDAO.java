@@ -85,14 +85,27 @@ public class JobDAO {
 				String.format("JobType not found [%s]", init.getJobTypeName())
 			);
 		
-		//Check initial parameters
-		List<JobInputParameter> parameterSet = jobParameterTool.findMatchingParameterSet(jobType, init.getInitParameters());
-		
-		//Check enum and range parameters
-		jobParameterTool.checkRangeAndEnumParameters(parameterSet, init.getInitParameters());
-		
-		//Fill default parameters
-		jobParameterTool.fillParameters(parameterSet, init.getInitParameters());
+		if (!init.getInitSignatureName().isPresent()) {
+			if (!jobParameterTool.emptyInitParameterSetAllowed(jobType))
+				throw new WerkConfigException(
+						String.format("Empty init parameter set is not allowed for JobType [%s] version [%d]",
+								init.getJobTypeName(), jobType.getVersion())
+					);
+		} else {
+			//Check initial parameters
+			List<JobInputParameter> parameterSet = jobParameterTool.getParameterSet(jobType, init.getInitSignatureName().get());
+			if (parameterSet == null)
+				throw new WerkConfigException(
+						String.format("Init signature [%s] is not found for JobType [%s] version [%d]", 
+								init.getInitSignatureName().get(), init.getJobTypeName(), jobType.getVersion())
+					);
+			
+			//Check enum and range parameters
+			jobParameterTool.checkParameters(parameterSet, init.getInitParameters());
+			
+			//Fill default parameters
+			jobParameterTool.fillParameters(parameterSet, init.getInitParameters());
+		}
 		
 		LongTimestamp nextExecutionTime = init.getNextExecutionTime().isPresent() ? 
 				(LongTimestamp)init.getNextExecutionTime().get() : ((LongTimestamp)timeProvider.getCurrentTime());
@@ -107,17 +120,30 @@ public class JobDAO {
 		JobType jobType = werkConfig.getJobTypeForAnyVersion(init.getJobVersion(), init.getJobTypeName());
 		if (jobType == null)
 			throw new WerkConfigException(
-				String.format("JobType not found [%s] for version [%d]", init.getJobTypeName(), init.getJobVersion())
+				String.format("JobType not found [%s] version [%d]", init.getJobTypeName(), init.getJobVersion())
 			);
-		
-		//Check initial parameters
-		List<JobInputParameter> parameterSet = jobParameterTool.findMatchingParameterSet(jobType, init.getInitParameters());
-		
-		//Check enum and range parameters
-		jobParameterTool.checkRangeAndEnumParameters(parameterSet, init.getInitParameters());
-		
-		//Fill default parameters
-		jobParameterTool.fillParameters(parameterSet, init.getInitParameters());
+
+		if (!init.getInitSignatureName().isPresent()) {
+			if (!jobParameterTool.emptyInitParameterSetAllowed(jobType))
+				throw new WerkConfigException(
+					String.format("Empty init parameter set is not allowed for JobType [%s] version [%d]",
+							init.getJobTypeName(), init.getJobVersion())
+				);
+		} else {
+			//Check initial parameters
+			List<JobInputParameter> parameterSet = jobParameterTool.getParameterSet(jobType, init.getInitSignatureName().get());
+			if (parameterSet == null)
+				throw new WerkConfigException(
+						String.format("Init signature [%s] is not found for JobType [%s] version [%d]", 
+								init.getInitSignatureName().get(), init.getJobTypeName(), init.getJobVersion())
+					);
+			
+			//Check enum and range parameters
+			jobParameterTool.checkParameters(parameterSet, init.getInitParameters());
+			
+			//Fill default parameters
+			jobParameterTool.fillParameters(parameterSet, init.getInitParameters());
+		}
 		
 		LongTimestamp nextExecutionTime = init.getNextExecutionTime().isPresent() ? 
 				(LongTimestamp)init.getNextExecutionTime().get() : ((LongTimestamp)timeProvider.getCurrentTime());
@@ -473,15 +499,17 @@ public class JobDAO {
 			if (parentJobIds.isPresent())
 				for (long parentJobId : parentJobIds.get())
 					pst.setLong(++count, parentJobId);
-			for (Map.Entry<String, Long> ent : jobTypesAndVersions.get().entrySet()) {
-				String jobType = ent.getKey();
-				long version = ent.getValue();
-				
-				if (version > 0) {
-					pst.setString(++count, jobType);
-					pst.setLong(++count, version);
-				} else
-					pst.setString(++count, jobType);
+			if (jobTypesAndVersions.isPresent()) {
+				for (Map.Entry<String, Long> ent : jobTypesAndVersions.get().entrySet()) {
+					String jobType = ent.getKey();
+					long version = ent.getValue();
+					
+					if (version > 0) {
+						pst.setString(++count, jobType);
+						pst.setLong(++count, version);
+					} else
+						pst.setString(++count, jobType);
+				}
 			}
 			if (currentStepTypes.isPresent() && !currentStepTypes.get().isEmpty())
 				for (String stepType : currentStepTypes.get())
