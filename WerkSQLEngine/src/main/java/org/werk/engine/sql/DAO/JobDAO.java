@@ -209,7 +209,8 @@ public class JobDAO {
 	join_parameter_name
 	*/
 	public int updateJob(TransactionContext tc, long jobId, long currentStepId, JobStatus status, Timestamp nextExecutionTime,
-		Map<String, Parameter> jobParameters, int stepCount, Optional<JoinStatusRecord<Long>> joinStatusRecord) throws Exception {
+		Map<String, Parameter> jobParameters, int stepCount, Optional<JoinStatusRecord<Long>> joinStatusRecord, 
+		boolean disownJob) throws Exception {
 		if (joinStatusRecord.isPresent()) {
 			DBJobPOJO job = loadJob(tc, jobId);
 			if (job == null)
@@ -230,14 +231,16 @@ public class JobDAO {
 			String query;
 			if (joinStatusRecord.isPresent()) {
 				query = "UPDATE jobs SET current_step_id = ?, status = ?, next_execution_time = ?, job_parameter_state = ?, " + 
-						"step_count = ?, wait_for_N_jobs = ?, join_parameter_name = ? " + 
-						"WHERE id_job = ?";
+						"step_count = ?, wait_for_N_jobs = ?, join_parameter_name = ? ";
 			} else {
 				query = "UPDATE jobs SET current_step_id = ?, status = ?, next_execution_time = ?, job_parameter_state = ?, " + 
-						"step_count = ? " + 
-						"WHERE id_job = ?";
+						"step_count = ? ";
 			}
 			
+			if (disownJob)
+				query += ", id_locker = ? ";
+			
+			query += "WHERE id_job = ?";
 			pst = connection.prepareStatement(query);
 			
 			String jobParametersStr = parameterContextSerializer.serializeParameters(jobParameters).toString();
@@ -251,9 +254,18 @@ public class JobDAO {
 			if (joinStatusRecord.isPresent()) {
 				pst.setLong(6, joinStatusRecord.get().getWaitForNJobs());
 				pst.setString(7, joinStatusRecord.get().getJoinParameterName());
-				pst.setLong(8, jobId);
-			} else
-				pst.setLong(6, jobId);
+				if (disownJob) {
+					pst.setNull(8, java.sql.Types.BIGINT);
+					pst.setLong(9, jobId);
+				} else
+					pst.setLong(8, jobId);
+			} else {
+				if (disownJob) {
+					pst.setNull(6, java.sql.Types.BIGINT);
+					pst.setLong(7, jobId);
+				} else
+					pst.setLong(6, jobId);
+			}
 			
 			int recordsUpdated = pst.executeUpdate();
 			
@@ -287,6 +299,7 @@ public class JobDAO {
 	}
 	
 	public void restartJob(TransactionContext tc, JobRestartInfo<Long> init) throws Exception {
+		//TODO: safe restart - only restart jobs that are not owned by any Werk instance
 		PreparedStatement pst = null;
 		
 		try {
@@ -372,7 +385,7 @@ public class JobDAO {
 			}
 			
 			this.updateJob(tc, jobId, newStepId, jobStatus, job.getNextExecutionTime(), 
-					job.getJobParameters(), stepCount, job.getJoinStatusRecord());
+					job.getJobParameters(), stepCount, job.getJoinStatusRecord(), false);
 		} finally {
 			if (pst != null) pst.close();
 		}

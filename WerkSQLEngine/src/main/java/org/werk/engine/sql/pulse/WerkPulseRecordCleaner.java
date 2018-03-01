@@ -14,7 +14,7 @@ public class WerkPulseRecordCleaner implements ServerPulseRecordCleaner<Long> {
 	
 	@Override
 	public void deleteServer(TransactionContext tc, Long serverId) throws Exception {
+		jobLoadDAO.freeOwnedJobs(tc, serverId);
 		serverPulseDAO.deleteServer(tc, serverId);
-		jobLoadDAO.freeOwnedJobs(tc, serverId, System.currentTimeMillis());
 	}
 }

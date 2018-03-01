@@ -32,16 +32,15 @@ public class JobLoadDAO {
 		}
 	}
 	
-	public int freeOwnedJobs(TransactionContext tc, long ownerJobId, long currentTime) throws SQLException {
+	public int freeOwnedJobs(TransactionContext tc, long ownerId) throws SQLException {
 		Connection connection = ((JDBCTransactionContext)tc).getConnection();
 		PreparedStatement pst = null;
 		
 		try {
-			pst = connection.prepareStatement("UPDATE jobs SET id_locker = ?, next_execution_time = ? WHERE id_locker = ?");
+			pst = connection.prepareStatement("UPDATE jobs SET id_locker = ? WHERE id_locker = ?");
 			
 			pst.setNull(1, java.sql.Types.BIGINT);
-			pst.setLong(2, currentTime);
-			pst.setLong(3, ownerJobId);
+			pst.setLong(2, ownerId);
 			
 			return pst.executeUpdate();
 		} finally {
@@ -49,14 +48,30 @@ public class JobLoadDAO {
 		}
 	}
 	
-	public int deleteUnconfirmedForkedChildJobs(TransactionContext tc, long jobId) throws SQLException {
+	public int acquireJobOwnership(TransactionContext tc, long ownerId, long jobId) throws SQLException {
+		Connection connection = ((JDBCTransactionContext)tc).getConnection();
+		PreparedStatement pst = null;
+		
+		try {
+			pst = connection.prepareStatement("UPDATE jobs SET id_locker = ? WHERE id_job = ?");
+			
+			pst.setLong(1, ownerId);
+			pst.setLong(2, jobId);
+			
+			return pst.executeUpdate();
+		} finally {
+			if (pst != null) pst.close();
+		}
+	}
+	
+	public int deleteUnconfirmedForkedChildJobs(TransactionContext tc, long parentJobId) throws SQLException {
 		Connection connection = ((JDBCTransactionContext)tc).getConnection();
 		PreparedStatement pst = null;
 		
 		try {
 			pst = connection.prepareStatement("DELETE FROM jobs WHERE parent_job_id = ? AND status = ?");
 			
-			pst.setLong(1, jobId);
+			pst.setLong(1, parentJobId);
 			pst.setInt(2, JobStatus.UNDEFINED.getCode());
 			
 			return pst.executeUpdate();
@@ -74,7 +89,7 @@ public class JobLoadDAO {
 		
 		try {
 			StringBuilder query = new StringBuilder();
-			query.append("UPDATE jobs SET status = ? WHERE status = ? AND job_id IN (");
+			query.append("UPDATE jobs SET status = ? WHERE status = ? AND id_job IN (");
 			
 			for (int i = 0; i < jobIds.size(); i++)
 				query.append(i == 0 ? "?" : ", ?");
@@ -104,7 +119,7 @@ public class JobLoadDAO {
 			pst = connection.prepareStatement(
 					"SELECT id_job, next_execution_time " + 
 					"FROM jobs " + 
-					"WHERE status IN (?, ?) " 
+					"WHERE status IN (?, ?) AND id_locker IS NULL " 
 				);
 			
 			pst.setInt(1, JobStatus.PROCESSING.getCode());

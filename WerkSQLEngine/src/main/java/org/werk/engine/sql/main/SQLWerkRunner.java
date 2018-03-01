@@ -52,6 +52,9 @@ public class SQLWerkRunner {
 		
 		ServerChecker<Long> serverChecker = new NoOpChecker<>();
 		pulse = new DefaultPulse<>(connectionFactory, serverDAO, serverChecker, heartbeatPeriod);
+		pulse.clearServerRecordCleaners();
+		pulse.addServerRecordCleaner(new WerkPulseRecordCleaner(jobLoadDAO, serverDAO));
+		
 		Supplier<String> serverInfoGetter = new Supplier<String>() {
 			@Override
 			public String get() {

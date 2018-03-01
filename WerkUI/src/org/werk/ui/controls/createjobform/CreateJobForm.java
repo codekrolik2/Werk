@@ -188,7 +188,6 @@ public class CreateJobForm extends VBox {
 					jobName = Optional.of(jobNameTxt);
 				}
 				if (executionTimeCheckBox.isSelected()) {
-					//TODO: check
 					if (this.executionTime.getCalendar() == null)
 						throw new WerkException("ExecutionTime not set");
 					

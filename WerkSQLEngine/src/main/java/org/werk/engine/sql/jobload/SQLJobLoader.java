@@ -97,7 +97,7 @@ public class SQLJobLoader {
 			jobDAO.updateJob(tc, jobId, step.getStepId(),
 					step.isRollback() ? JobStatus.ROLLING_BACK : JobStatus.PROCESSING, 
 					job.getNextExecutionTime(),
-					job.getJobParameters(), job.getStepCount(), Optional.empty());
+					job.getJobParameters(), job.getStepCount(), Optional.empty(), false);
 			
 			tc.commit();
 		} catch (Exception e) {
@@ -125,7 +125,7 @@ public class SQLJobLoader {
 		}
 	}
 	
-	protected void loadJob(TransactionContext tc, long jobId) throws Exception {
+	protected void loadJob(TransactionContext tc, long ownerId, long jobId) throws Exception {
 		try {
 			//Load current job and step
 			DBJobPOJO job = jobDAO.loadJob(tc, jobId);
@@ -173,10 +173,14 @@ public class SQLJobLoader {
 			
 			sqlWerkJob.setCurrentStep(sqlWerkStep);
 			
-			//Add job to WerkEngine
-			werkEngine.addJob(sqlWerkJob);
+			jobLoadDAO.acquireJobOwnership(tc, ownerId, jobId);
 			
 			tc.commit();
+			
+			System.out.println("Adding job " + jobId);
+			
+			//Add job to WerkEngine
+			werkEngine.addJob(sqlWerkJob);
 		} catch (Exception e) {
 			logger.info(String.format("Failed to load job id [%d]", jobId), e);
 			return;
@@ -244,10 +248,10 @@ public class SQLJobLoader {
 				//3. Load jobs
 				//3.1. Load all old jobs and add to WerkEngine
 				for (long jobId : oldJobIds)
-					loadJob(tc, jobId);
+					loadJob(tc, selfFromPulse.getServerId(), jobId);
 				//3.2. Load N new jobs and add to WerkEngine
 				for (int i = 0; i < jobLoadCount; i++)
-					loadJob(tc, newJobIds.get(i));
+					loadJob(tc, selfFromPulse.getServerId(), newJobIds.get(i));
 				
 				//4. Unlock up to jobLimit of joined jobs that can be unlocked
 				//	(Step 1 should work even if pulse has failed)

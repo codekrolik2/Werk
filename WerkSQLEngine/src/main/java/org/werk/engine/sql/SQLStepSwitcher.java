@@ -55,16 +55,17 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 				step.getProcessingLog());
 	}
 	
-	protected void updateJob(SQLWerkJob sqlJob) throws Exception {
+	protected void updateJob(SQLWerkJob sqlJob, boolean disownJob) throws Exception {
 		TransactionContext tc = sqlJob.getStepTransactionContext();
 		
 		long stepId = ((SQLWerkStep)sqlJob.getCurrentStep()).getStepId();
+		
 		jobDAO.updateJob(tc, sqlJob.getJobId(), stepId, sqlJob.getStatus(), sqlJob.getNextExecutionTime(),
-				sqlJob.getJobParameters(), sqlJob.getStepCount(), sqlJob.getJoinStatusRecord());
+				sqlJob.getJobParameters(), sqlJob.getStepCount(), sqlJob.getJoinStatusRecord(), disownJob);
 	}
 
-	public void updateJobAndCurrentStep(SQLWerkJob sqlJob) throws Exception {
-		updateJob(sqlJob);
+	public void updateJobAndCurrentStep(SQLWerkJob sqlJob, boolean disownJob) throws Exception {
+		updateJob(sqlJob, disownJob);
 		updateCurrentStep(sqlJob);
 	}
 	
@@ -79,7 +80,7 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 			
 			sqlJob.setNextExecutionTime(nextExecutionTime);
 			
-			updateJobAndCurrentStep(sqlJob);
+			updateJobAndCurrentStep(sqlJob, false);
 		} catch(Exception e) {
 			logger.error(
 				String.format("Error processing redo. Unloading job [%d]. Losing heartbeat.", job.getJobId()),
@@ -99,7 +100,7 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 			Timestamp nextExecutionTime = timeProvider.getCurrentTime();
 			sqlJob.setNextExecutionTime(nextExecutionTime);
 			
-			updateJobAndCurrentStep(sqlJob);
+			updateJobAndCurrentStep(sqlJob, false);
 		} catch(Exception e) {
 			logger.error(
 				String.format("Error processing callback. Unloading job [%d]. Losing heartbeat.", job.getJobId()), 
@@ -132,7 +133,7 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 			Timestamp nextExecutionTime = timeProvider.getCurrentTime();
 			sqlJob.setNextExecutionTime(nextExecutionTime);
 			
-			updateJobAndCurrentStep(sqlJob);
+			updateJobAndCurrentStep(sqlJob, true);
 		} catch(Exception e) {
 			logger.error(
 				String.format("Error processing join. Unloading job [%d]. Losing heartbeat.", job.getJobId()), 
@@ -182,7 +183,7 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 				sqlJob.setStatus(JobStatus.PROCESSING);
 				sqlJob.setCurrentStep(newStep);
 				
-				updateJob(sqlJob);
+				updateJob(sqlJob, false);
 				
 				return StepSwitchResult.process();
 			} else if (transition.getTransitionStatus() == TransitionStatus.ROLLBACK) {
@@ -229,7 +230,7 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 				sqlJob.setStatus(JobStatus.ROLLING_BACK);
 				sqlJob.setCurrentStep(newStep);
 				
-				updateJob(sqlJob);
+				updateJob(sqlJob, false);
 				
 				return StepSwitchResult.process();
 			} else if (transition.getTransitionStatus() == TransitionStatus.FINISH) {
@@ -238,7 +239,7 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 				
 				((SQLWerkJob)job).setStatus(JobStatus.FINISHED);
 				
-				updateJobAndCurrentStep(sqlJob);
+				updateJobAndCurrentStep(sqlJob, true);
 				
 				return StepSwitchResult.unload();
 			} else if (transition.getTransitionStatus() == TransitionStatus.FINISH_ROLLBACK) {
@@ -247,7 +248,7 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 				
 				((SQLWerkJob)job).setStatus(JobStatus.ROLLED_BACK);
 				
-				updateJobAndCurrentStep(sqlJob);
+				updateJobAndCurrentStep(sqlJob, true);
 				
 				return StepSwitchResult.unload();
 			} else if (transition.getTransitionStatus() == TransitionStatus.FAIL) {
@@ -256,7 +257,7 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 				
 				((SQLWerkJob)job).setStatus(JobStatus.FAILED);
 				
-				updateJobAndCurrentStep(sqlJob);
+				updateJobAndCurrentStep(sqlJob, true);
 				
 				return StepSwitchResult.unload();
 			} else
@@ -295,7 +296,7 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 			
 			((SQLWerkJob)job).setStatus(JobStatus.FAILED);
 			
-			updateJobAndCurrentStep(sqlJob);
+			updateJobAndCurrentStep(sqlJob, true);
 		} catch(Exception e1) {
 			logger.error(
 				String.format("Error processing stepExecError. Unloading job [%d]. Losing heartbeat.", job.getJobId()), 
@@ -329,7 +330,7 @@ public class SQLStepSwitcher implements WerkStepSwitcher<Long> {
 			
 			((SQLWerkJob)job).setStatus(JobStatus.FAILED);
 			
-			updateJobAndCurrentStep(sqlJob);
+			updateJobAndCurrentStep(sqlJob, true);
 		} catch(Exception e1) {
 			logger.error(
 				String.format("Error processing stepTransitionError. Unloading job [%d]. Losing heartbeat.", job.getJobId()), 
