@@ -3,7 +3,6 @@ package org.werk.engine.sql;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -22,6 +21,7 @@ import org.werk.engine.sql.main.SQLWerkRunner;
 import org.werk.meta.JobInitInfo;
 import org.werk.meta.JobRestartInfo;
 import org.werk.meta.JobType;
+import org.werk.meta.JobTypeSignature;
 import org.werk.meta.StepType;
 import org.werk.meta.VersionJobInitInfo;
 import org.werk.processing.jobs.JobStatus;
@@ -105,7 +105,7 @@ public class SQLWerkService implements WerkService<Long> {
 
 	@Override
 	public JobCollection<Long> getJobs(Optional<Timestamp> from, Optional<Timestamp> to, 
-			Optional<Timestamp> fromExec, Optional<Timestamp> toExec, Optional<Map<String, Long>> jobTypesAndVersions,
+			Optional<Timestamp> fromExec, Optional<Timestamp> toExec, Optional<List<JobTypeSignature>> jobTypesAndVersions,
 			Optional<Collection<Long>> parentJobIds, Optional<Collection<Long>> jobIds, Optional<Set<String>> currentStepTypes, 
 			Optional<Set<JobStatus>> jobStatuses, Optional<PageInfo> pageInfo) throws Exception {
 		TransactionContext tc = null;

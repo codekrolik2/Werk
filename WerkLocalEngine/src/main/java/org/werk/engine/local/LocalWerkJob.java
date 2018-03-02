@@ -13,6 +13,7 @@ import org.werk.engine.processing.WerkJob;
 import org.werk.meta.JobInitInfo;
 import org.werk.meta.JobRestartInfo;
 import org.werk.meta.JobType;
+import org.werk.meta.JobTypeSignature;
 import org.werk.meta.VersionJobInitInfo;
 import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.jobs.JoinStatusRecord;
@@ -105,7 +106,7 @@ public class LocalWerkJob<J> extends WerkJob<J> {
 	}
 
 	@Override
-	public Collection<ReadOnlyJob<J>> loadChildJobsOfTypes(Map<String, Long> jobTypesAndVersions) {
+	public Collection<ReadOnlyJob<J>> loadChildJobsOfTypes(List<JobTypeSignature> jobTypesAndVersions) {
 		List<J> jobIds = new ArrayList<>();
 		jobIds.add(getJobId());
 		return jobManager.getChildJobsOfTypes(jobIds, jobTypesAndVersions);

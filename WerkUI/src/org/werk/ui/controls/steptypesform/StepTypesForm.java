@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 
 import org.werk.meta.JobTypeSignature;
 import org.werk.meta.StepType;
-import org.werk.rest.pojo.RESTStepType;
+import org.werk.rest.pojo.RESTJobType;
 import org.werk.restclient.WerkCallback;
 import org.werk.restclient.WerkRESTClient;
 import org.werk.ui.ServerInfoManager;
@@ -80,7 +80,7 @@ public class StepTypesForm extends VBox {
 		if ((jobFilter != null) && (!jobFilter.trim().equals(""))) {
 			pass = false;
 			for (JobTypeSignature jobType : stepType.getJobTypes()) {
-				if (((RESTStepType<Long>)stepType).jobTypeSignatureToStr(jobType).contains(jobFilter)) {
+				if (RESTJobType.jobTypeSignatureToStr(jobType).contains(jobFilter)) {
 					pass = true;
 					break;
 				}

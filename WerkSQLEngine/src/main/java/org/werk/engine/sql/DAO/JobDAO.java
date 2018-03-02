@@ -30,6 +30,7 @@ import org.werk.exceptions.WerkConfigException;
 import org.werk.meta.JobInitInfo;
 import org.werk.meta.JobRestartInfo;
 import org.werk.meta.JobType;
+import org.werk.meta.JobTypeSignature;
 import org.werk.meta.NewStepRestartInfo;
 import org.werk.meta.VersionJobInitInfo;
 import org.werk.meta.inputparameters.JobInputParameter;
@@ -410,7 +411,7 @@ public class JobDAO {
 	public JobCollection<Long> loadJobs(TransactionContext tc, Optional<Timestamp> from, Optional<Timestamp> to,
 			Optional<Timestamp> fromExec, Optional<Timestamp> toExec,
 			Optional<Collection<Long>> jobIds, Optional<Collection<Long>> parentJobIds, 
-			Optional<Map<String, Long>> jobTypesAndVersions, 
+			Optional<List<JobTypeSignature>> jobTypesAndVersions, 
 			Optional<Set<String>> currentStepTypes, Optional<Set<JobStatus>> jobStatuses, Optional<PageInfo> pageInfo) throws SQLException {
 		Connection connection = ((JDBCTransactionContext)tc).getConnection();
 		PreparedStatement pst = null;
@@ -463,10 +464,10 @@ public class JobDAO {
 				sb.append(" AND (");
 				
 				int jobTypeCount = 0;
-				for (Map.Entry<String, Long> ent : jobTypesAndVersions.get().entrySet()) {
+				for (JobTypeSignature ent : jobTypesAndVersions.get()) {
 					if (jobTypeCount++ > 0) sb.append("OR ");
 					
-					long value = ent.getValue();
+					long value = ent.getVersion();
 					if (value > 0)
 						sb.append(" (j.job_type = ? AND j.version = ?) ");
 					else
@@ -525,9 +526,9 @@ public class JobDAO {
 				for (long parentJobId : parentJobIds.get())
 					pst.setLong(++count, parentJobId);
 			if (jobTypesAndVersions.isPresent()) {
-				for (Map.Entry<String, Long> ent : jobTypesAndVersions.get().entrySet()) {
-					String jobType = ent.getKey();
-					long version = ent.getValue();
+				for (JobTypeSignature ent : jobTypesAndVersions.get()) {
+					String jobType = ent.getJobTypeName();
+					long version = ent.getVersion();
 					
 					if (version > 0) {
 						pst.setString(++count, jobType);

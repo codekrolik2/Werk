@@ -7,6 +7,7 @@ import java.util.Map;
 import org.werk.meta.JobInitInfo;
 import org.werk.meta.JobRestartInfo;
 import org.werk.meta.JobType;
+import org.werk.meta.JobTypeSignature;
 import org.werk.meta.VersionJobInitInfo;
 import org.werk.processing.parameters.Parameter;
 import org.werk.processing.readonly.ReadOnlyJob;
@@ -69,7 +70,7 @@ public interface Job<J> extends ReadOnlyJob<J> {
 	ReadOnlyJob<J> loadJob(J jobId) throws Exception;
 	Collection<ReadOnlyJob<J>> loadJobs(Collection<J> jobIds) throws Exception;
 	Collection<ReadOnlyJob<J>> loadAllChildJobs() throws Exception;
-	Collection<ReadOnlyJob<J>> loadChildJobsOfTypes(Map<String, Long> jobTypesAndVersions) throws Exception;
+	Collection<ReadOnlyJob<J>> loadChildJobsOfTypes(List<JobTypeSignature> jobTypesAndVersions) throws Exception;
 	
 	//-------------------------------------------------------------------
 	

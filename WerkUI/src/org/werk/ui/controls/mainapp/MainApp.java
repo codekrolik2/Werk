@@ -135,6 +135,8 @@ public class MainApp extends VBox {
         
 		tabs.getTabs().add(tab);
         tabs.getSelectionModel().select(tab);
+        
+        jobsForm.refreshJobStepTypes();
     }
 	
 	public void quit() {

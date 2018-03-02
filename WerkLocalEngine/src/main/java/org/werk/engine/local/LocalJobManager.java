@@ -23,6 +23,7 @@ import org.werk.engine.processing.WerkStep;
 import org.werk.exceptions.WerkException;
 import org.werk.meta.JobInitInfo;
 import org.werk.meta.JobRestartInfo;
+import org.werk.meta.JobTypeSignature;
 import org.werk.meta.NewStepRestartInfo;
 import org.werk.meta.VersionJobInitInfo;
 import org.werk.processing.jobs.Job;
@@ -180,17 +181,18 @@ public class LocalJobManager<J> {
 		}
 	}
 
-	public List<ReadOnlyJob<J>> getChildJobsOfTypes(Collection<J> jobIds, Map<String, Long> jobTypesAndVersions) {
-		return getAllChildJobs(jobIds).stream()
-				.filter(a -> 
-					jobTypesAndVersions.containsKey(a.getJobTypeName())
-					&& (
-						jobTypesAndVersions.get(a.getJobTypeName()).equals(a.getVersion())
-						||
-						jobTypesAndVersions.get(a.getJobTypeName()).compareTo(0L) <= 0
-					)
-				)
-				.collect(Collectors.toList());
+	public List<ReadOnlyJob<J>> getChildJobsOfTypes(Collection<J> jobIds, List<JobTypeSignature> jobTypesAndVersions) {
+		return getAllChildJobs(jobIds).stream().
+				filter(a -> {
+						for (JobTypeSignature jts : jobTypesAndVersions) {
+							if ((jts.getJobTypeName().equals(a.getJobTypeName())) &&
+								(jts.getVersion() == a.getVersion()))
+								return true;
+						}
+						return false;
+					}
+				).
+				collect(Collectors.toList());
 	}
 	
 	//---------------------------------------------------

@@ -85,6 +85,7 @@ public class TabCreator {
 	
 	public JobsForm getJobsForm() {
 		JobsForm jobsForm = jobsFormProvider.get();
+		jobsForm.initTable();
 		return jobsForm;
 	}
 }

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.cell.PropertyValueFactory?>
+
+<fx:root prefHeight="200.0" prefWidth="200.0" type="TableView"
+	xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1">
+	<columns>
+		<TableColumn editable="false" prefWidth="85.0" text="Job Type">
+			<cellValueFactory>
+				<PropertyValueFactory property="fullName" />
+			</cellValueFactory>
+		</TableColumn>
+		<TableColumn editable="false" prefWidth="75.0" text="Acyclic">
+			<cellValueFactory>
+				<PropertyValueFactory property="forceAcyclic" />
+			</cellValueFactory>
+		</TableColumn>
+		<TableColumn editable="false" prefWidth="95.0" text="First Step">
+			<cellValueFactory>
+				<PropertyValueFactory property="firstStepTypeName" />
+			</cellValueFactory>
+		</TableColumn>
+		<TableColumn editable="false" prefWidth="115.0" text="History Limit">
+			<cellValueFactory>
+				<PropertyValueFactory property="historyLimit" />
+			</cellValueFactory>
+		</TableColumn>
+		<TableColumn editable="false" prefWidth="195.0" text="History Overflow Action">
+			<cellValueFactory>
+				<PropertyValueFactory property="historyOverflowAction" />
+			</cellValueFactory>
+		</TableColumn>
+		<TableColumn fx:id="detailsColumn" editable="false" prefWidth="73.0" text="Details"/>
+		<TableColumn fx:id="createJobColumn" editable="false" prefWidth="95.0" text="Create Job"/>
+		<TableColumn fx:id="showJobsColumn" editable="false" prefWidth="95.0" text="Show Jobs"/>
+	</columns>
+</fx:root>

@@ -1,7 +1,7 @@
 package org.werk.service;
 
 import java.util.Collection;
-import java.util.Map;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -10,6 +10,7 @@ import org.pillar.time.interfaces.Timestamp;
 import org.werk.meta.JobInitInfo;
 import org.werk.meta.JobRestartInfo;
 import org.werk.meta.JobType;
+import org.werk.meta.JobTypeSignature;
 import org.werk.meta.StepType;
 import org.werk.meta.VersionJobInitInfo;
 import org.werk.processing.jobs.JobStatus;
@@ -25,7 +26,7 @@ public interface WerkService<J> {
 	ReadOnlyJob<J> getJobAndHistory(J jobId) throws Exception;
 	JobCollection<J> getJobs(Optional<Timestamp> from, Optional<Timestamp> to,
 			Optional<Timestamp> fromExec, Optional<Timestamp> toExec,
-			Optional<Map<String, Long>> jobTypesAndVersions, Optional<Collection<J>> parentJobIds,
+			Optional<List<JobTypeSignature>> jobTypesAndVersions, Optional<Collection<J>> parentJobIds,
 			Optional<Collection<J>> jobIds, Optional<Set<String>> currentStepTypes, 
 			Optional<Set<JobStatus>> jobStatuses, Optional<PageInfo> pageInfo) throws Exception;
 	

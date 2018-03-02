@@ -2,12 +2,9 @@ package org.werk.rest.serializers;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 
@@ -16,6 +13,7 @@ import org.json.JSONObject;
 import org.pillar.time.interfaces.TimeProvider;
 import org.pillar.time.interfaces.Timestamp;
 import org.werk.engine.JobIdSerializer;
+import org.werk.meta.JobTypeSignature;
 import org.werk.processing.jobs.JobStatus;
 import org.werk.rest.JobFilters;
 import org.werk.service.PageInfo;
@@ -33,7 +31,7 @@ public class JobFiltersSerializer<J> {
 		Optional<Timestamp> to = Optional.empty();
 		Optional<Timestamp> fromExec = Optional.empty();
 		Optional<Timestamp> toExec = Optional.empty();
-		Optional<Map<String, Long>> jobTypes = Optional.empty();
+		Optional<List<JobTypeSignature>> jobTypes = Optional.empty();
 		Optional<Collection<J>> parentJobIds = Optional.empty();
 		Optional<Collection<J>> jobIds = Optional.empty();
 		Optional<Set<String>> currentStepTypes = Optional.empty();
@@ -49,7 +47,7 @@ public class JobFiltersSerializer<J> {
 		if (filtersJSON.has("toExec"))
 			toExec = Optional.of(timeProvider.createTimestamp(filtersJSON.getString("to")));
 		if (filtersJSON.has("jobTypes")) {
-			Map<String, Long> jobTypesMap = new HashMap<>();
+			List<JobTypeSignature> jobTypesList = new ArrayList<>();
 			
 			JSONObject jobTypesJSON = filtersJSON.getJSONObject("jobTypes");
 			
@@ -58,10 +56,13 @@ public class JobFiltersSerializer<J> {
 			    String jobTypeName = (String)keys.next();
 			    Long version  = jobTypesJSON.getLong(jobTypeName);
 			    
-			    jobTypesMap.put(jobTypeName, version);
+			    jobTypesList.add(new JobTypeSignature() {
+					@Override public long getVersion() { return version; }
+					@Override public String getJobTypeName() { return jobTypeName; }
+				});
 			}
 			
-			jobTypes = Optional.of(jobTypesMap);
+			jobTypes = Optional.of(jobTypesList);
 		}
 		if (filtersJSON.has("parentJobIds")) {
 			List<J> parentJobIdList = new ArrayList<>();
@@ -125,11 +126,11 @@ public class JobFiltersSerializer<J> {
 		if (filters.getToExec().isPresent())
 			filtersJSON.put("toExec", filters.getToExec().get().getRawTime());
 		if (filters.getJobTypesAndVersions().isPresent()) {
-			Map<String, Long> jobTypesMap = filters.getJobTypesAndVersions().get();
+			List<JobTypeSignature> jobTypesMap = filters.getJobTypesAndVersions().get();
 			JSONObject jobTypesJSON = new JSONObject();
 			
-			for (Entry<String, Long> ent : jobTypesMap.entrySet())
-				jobTypesJSON.put(ent.getKey(), ent.getValue());
+			for (JobTypeSignature ent : jobTypesMap)
+				jobTypesJSON.put(ent.getJobTypeName(), ent.getVersion());
 			
 			filtersJSON.put("jobTypes", jobTypesJSON);
 		}

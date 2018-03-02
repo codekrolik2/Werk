@@ -23,6 +23,7 @@ import org.werk.engine.sql.DAO.StepDAO;
 import org.werk.meta.JobInitInfo;
 import org.werk.meta.JobRestartInfo;
 import org.werk.meta.JobType;
+import org.werk.meta.JobTypeSignature;
 import org.werk.meta.VersionJobInitInfo;
 import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.jobs.JoinStatusRecord;
@@ -220,12 +221,12 @@ public class SQLWerkJob extends WerkJob<Long> {
 	}
 
 	@Override
-	public List<ReadOnlyJob<Long>> loadChildJobsOfTypes(Map<String, Long> jobTypesAndVersions) throws Exception {
+	public List<ReadOnlyJob<Long>> loadChildJobsOfTypes(List<JobTypeSignature> jobTypesAndVersions) throws Exception {
 		return loadJobs(Optional.empty(), Optional.empty(), Optional.of(jobTypesAndVersions));
 	}
 
 	protected List<ReadOnlyJob<Long>> loadJobs(Optional<Collection<Long>> jobIds, Optional<Collection<Long>> parentJobId, 
-			Optional<Map<String, Long>> jobTypesAndVersions) throws Exception {
+			Optional<List<JobTypeSignature>> jobTypesAndVersions) throws Exception {
 		TransactionContext tc = null;
 		try {
 			tc = getOrCreateTC();

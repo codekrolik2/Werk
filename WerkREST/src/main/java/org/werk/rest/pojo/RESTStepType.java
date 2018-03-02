@@ -52,13 +52,9 @@ public class RESTStepType<J> extends StepTypeImpl<J> {
 		return longName.substring(start < 0 ? 0 : start + 1);
 	}
 	
-	public String jobTypeSignatureToStr(JobTypeSignature a) {
-		return String.format("%s [v%d]", a.getJobTypeName(), a.getVersion());
-	}
-	
 	public String getJobTypesStr() {
 		return String.join(", ", jobTypes.stream().
-				map(a -> jobTypeSignatureToStr(a)).
+				map(a -> RESTJobType.jobTypeSignatureToStr(a)).
 				collect(Collectors.toList()));
 	}
 	

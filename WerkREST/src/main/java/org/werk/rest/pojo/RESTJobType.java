@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.json.JSONObject;
 import org.werk.meta.JobTypeImpl;
+import org.werk.meta.JobTypeSignature;
 import org.werk.meta.OverflowAction;
 import org.werk.meta.inputparameters.JobInputParameter;
 
@@ -24,6 +25,10 @@ public class RESTJobType extends JobTypeImpl {
 	}
 
 	public String getFullName() {
-		return String.format("%s [v%d]", jobTypeName, version);
+		return jobTypeSignatureToStr(this);
+	}
+	
+	public static String jobTypeSignatureToStr(JobTypeSignature a) {
+		return String.format("%s [v%d]", a.getJobTypeName(), a.getVersion());
 	}
 }
