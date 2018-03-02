@@ -18,6 +18,7 @@ import org.werk.meta.JobRestartInfo;
 import org.werk.meta.JobType;
 import org.werk.meta.StepType;
 import org.werk.meta.VersionJobInitInfo;
+import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.readonly.ReadOnlyJob;
 import org.werk.service.JobCollection;
 import org.werk.service.PageInfo;
@@ -55,7 +56,7 @@ public class LocalWerkService implements WerkService<Long> {
 	public JobCollection getJobs(Optional<Timestamp> from, Optional<Timestamp> to, 
 			Optional<Timestamp> fromExec, Optional<Timestamp> toExec, Optional<Map<String, Long>> jobTypesAndVersions,
 			Optional<Collection<Long>> parentJobIds, Optional<Collection<Long>> jobIds, Optional<Set<String>> currentStepTypes, 
-			Optional<PageInfo> pageInfo) throws Exception {
+			Optional<Set<JobStatus>> jobStatuses , Optional<PageInfo> pageInfo) throws Exception {
 		Collection<JobPOJO<Long>> jobs;
 		if (parentJobIds.isPresent()) {
 			jobs = (Collection<JobPOJO<Long>>)(Collection)localJobManager.getAllChildJobs(parentJobIds.get());
@@ -96,6 +97,11 @@ public class LocalWerkService implements WerkService<Long> {
 		if (currentStepTypes.isPresent())
 			jobs = jobs.stream().
 				filter(a -> currentStepTypes.get().contains(((LocalWerkJob)a).getCurrentStep().getStepTypeName())).
+				collect(Collectors.toList());
+		
+		if (jobStatuses.isPresent())
+			jobs = jobs.stream().
+				filter(a -> jobStatuses.get().contains(a.getStatus())).
 				collect(Collectors.toList());
 		
 		int jobCount = jobs.size();

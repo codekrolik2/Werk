@@ -32,13 +32,13 @@
             <AnchorPane prefHeight="30.0" prefWidth="30.0">
                <children>
                   <Label layoutX="14.0" layoutY="6.0" text="Step Type:" AnchorPane.leftAnchor="5.0" />
-                  <TextField layoutX="113.0" layoutY="1.0" prefHeight="26.0" prefWidth="482.0" AnchorPane.bottomAnchor="2.0" AnchorPane.leftAnchor="78.0" AnchorPane.rightAnchor="5.0" AnchorPane.topAnchor="2.0" />
+                  <TextField fx:id="stepTypeFilter" layoutX="113.0" layoutY="1.0" prefHeight="26.0" prefWidth="482.0" AnchorPane.bottomAnchor="2.0" AnchorPane.leftAnchor="78.0" AnchorPane.rightAnchor="5.0" AnchorPane.topAnchor="2.0" />
                </children>
             </AnchorPane>
             <AnchorPane layoutX="10.0" layoutY="10.0" prefHeight="30.0" prefWidth="30.0" GridPane.columnIndex="1">
                <children>
                   <Label layoutX="14.0" layoutY="6.0" text="Job Type:" AnchorPane.leftAnchor="5.0" />
-                  <TextField layoutX="113.0" layoutY="1.0" prefHeight="26.0" prefWidth="482.0" AnchorPane.bottomAnchor="2.0" AnchorPane.leftAnchor="68.0" AnchorPane.rightAnchor="5.0" AnchorPane.topAnchor="2.0" />
+                  <TextField fx:id="jobTypeFilter" layoutX="113.0" layoutY="1.0" prefHeight="26.0" prefWidth="482.0" AnchorPane.bottomAnchor="2.0" AnchorPane.leftAnchor="68.0" AnchorPane.rightAnchor="5.0" AnchorPane.topAnchor="2.0" />
                </children>
             </AnchorPane>
          </children>

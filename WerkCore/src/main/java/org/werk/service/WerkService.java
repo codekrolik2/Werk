@@ -12,6 +12,7 @@ import org.werk.meta.JobRestartInfo;
 import org.werk.meta.JobType;
 import org.werk.meta.StepType;
 import org.werk.meta.VersionJobInitInfo;
+import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.readonly.ReadOnlyJob;
 
 public interface WerkService<J> {
@@ -25,8 +26,8 @@ public interface WerkService<J> {
 	JobCollection<J> getJobs(Optional<Timestamp> from, Optional<Timestamp> to,
 			Optional<Timestamp> fromExec, Optional<Timestamp> toExec,
 			Optional<Map<String, Long>> jobTypesAndVersions, Optional<Collection<J>> parentJobIds,
-			Optional<Collection<J>> jobIds, Optional<Set<String>> currentStepTypes,
-			Optional<PageInfo> pageInfo) throws Exception;
+			Optional<Collection<J>> jobIds, Optional<Set<String>> currentStepTypes, 
+			Optional<Set<JobStatus>> jobStatuses, Optional<PageInfo> pageInfo) throws Exception;
 	
 	//JOB METADATA RETRIEVAL
 	Collection<JobType> getJobTypes();

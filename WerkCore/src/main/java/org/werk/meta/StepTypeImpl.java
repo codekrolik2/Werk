@@ -36,9 +36,8 @@ public class StepTypeImpl<J> implements StepType<J> {
 	@Getter
 	protected boolean shortTransaction;
 	@Override
-	public Set<String> getJobTypes() {
+	public Set<JobTypeSignature> getJobTypes() {
 		return config.getJobTypesForStep(stepTypeName).
-			stream().map(a -> a.getJobTypeName()).
-			collect(Collectors.toSet());
+			stream().collect(Collectors.toSet());
 	}
 }

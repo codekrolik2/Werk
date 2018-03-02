@@ -2,8 +2,11 @@ package org.werk.ui.controls.jobtypesform;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.werk.meta.JobType;
+import org.werk.rest.pojo.RESTJobType;
 import org.werk.restclient.WerkCallback;
 import org.werk.restclient.WerkRESTClient;
 import org.werk.ui.ServerInfoManager;
@@ -18,6 +21,7 @@ import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 
 public class JobTypesForm extends VBox {
@@ -32,6 +36,10 @@ public class JobTypesForm extends VBox {
     Button refreshButton;
 	@FXML
 	JobTypesTable table;
+	@FXML
+	TextField jobTypeFilter;
+	
+	Collection<JobType> jobTypes;
 	
 	public JobTypesForm() {
         FXMLLoader fxmlLoader = LoaderFactory.getInstance().loader(getClass().getResource("JobTypesForm.fxml"));
@@ -47,6 +55,27 @@ public class JobTypesForm extends VBox {
 	
 	public void initTable() {
 		table.setMainApp(mainApp);
+	}
+	
+	public void initialize() {
+		jobTypeFilter.textProperty().addListener((observable, oldValue, newValue) -> {
+			applyFilter();
+		});		
+	}
+	
+	protected boolean jobTypeFilter(JobType jobType) {
+		String filter = jobTypeFilter.getText();
+		if ((filter == null) || (filter.trim().equals("")))
+			return true;
+		return ((RESTJobType)jobType).getFullName().contains(filter);
+	}
+	
+	protected void applyFilter() {
+		List<JobType> filteredJobTypes = jobTypes.stream().
+			filter(a -> jobTypeFilter(a)).
+			collect(Collectors.toList());
+		
+		table.setItems(FXCollections.observableArrayList(filteredJobTypes));
 	}
 	
     public void refresh() {
@@ -73,8 +102,9 @@ public class JobTypesForm extends VBox {
 					@Override
 					public void done(Collection<JobType> result) {
 						Platform.runLater( () -> {
+							jobTypes = result;
 							refreshButton.setDisable(false);
-							table.setItems(FXCollections.observableArrayList(result));
+							applyFilter();
 						});
 					}
 				};
@@ -87,4 +117,3 @@ public class JobTypesForm extends VBox {
 		}
 	}
 }
-

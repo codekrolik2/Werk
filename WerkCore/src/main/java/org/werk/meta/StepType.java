@@ -5,7 +5,7 @@ import java.util.Set;
 public interface StepType<J> {
 	String getStepTypeName();
 	
-	Set<String> getJobTypes();
+	Set<JobTypeSignature> getJobTypes();
 	
 	Set<String> getAllowedTransitions();
 	Set<String> getAllowedRollbackTransitions();

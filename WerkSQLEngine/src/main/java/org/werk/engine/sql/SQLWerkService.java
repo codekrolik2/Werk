@@ -107,12 +107,12 @@ public class SQLWerkService implements WerkService<Long> {
 	public JobCollection<Long> getJobs(Optional<Timestamp> from, Optional<Timestamp> to, 
 			Optional<Timestamp> fromExec, Optional<Timestamp> toExec, Optional<Map<String, Long>> jobTypesAndVersions,
 			Optional<Collection<Long>> parentJobIds, Optional<Collection<Long>> jobIds, Optional<Set<String>> currentStepTypes, 
-			Optional<PageInfo> pageInfo) throws Exception {
+			Optional<Set<JobStatus>> jobStatuses, Optional<PageInfo> pageInfo) throws Exception {
 		TransactionContext tc = null;
 		try {
 			tc = transactionFactory.startTransaction();
 			JobCollection<Long> jobs = jobDAO.loadJobs(tc, from, to, fromExec, toExec, jobIds, parentJobIds, jobTypesAndVersions, 
-					currentStepTypes, pageInfo);
+					currentStepTypes, jobStatuses, pageInfo);
 			return jobs;
 		} finally {
 			tc.close();

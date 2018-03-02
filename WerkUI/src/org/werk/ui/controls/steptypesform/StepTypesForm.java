@@ -2,8 +2,12 @@ package org.werk.ui.controls.steptypesform;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
+import org.werk.meta.JobTypeSignature;
 import org.werk.meta.StepType;
+import org.werk.rest.pojo.RESTStepType;
 import org.werk.restclient.WerkCallback;
 import org.werk.restclient.WerkRESTClient;
 import org.werk.ui.ServerInfoManager;
@@ -18,6 +22,7 @@ import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 
 public class StepTypesForm extends VBox {
@@ -25,6 +30,10 @@ public class StepTypesForm extends VBox {
     Button refreshButton;
 	@FXML
 	StepTypesTable table;
+	@FXML
+    TextField stepTypeFilter;
+	@FXML
+    TextField jobTypeFilter;
 	
 	@Inject
 	MainApp mainApp;
@@ -32,6 +41,8 @@ public class StepTypesForm extends VBox {
 	WerkRESTClient werkClient;
 	@Inject
 	ServerInfoManager serverInfoManager;
+	
+	Collection<StepType<Long>> stepTypes;
 	
 	public StepTypesForm() {
         FXMLLoader fxmlLoader = LoaderFactory.getInstance().loader(getClass().getResource("StepTypesForm.fxml"));
@@ -49,6 +60,44 @@ public class StepTypesForm extends VBox {
 		table.setMainApp(mainApp);
 	}
     
+	public void initialize() {
+		jobTypeFilter.textProperty().addListener((observable, oldValue, newValue) -> {
+			applyFilter();
+		});		
+		stepTypeFilter.textProperty().addListener((observable, oldValue, newValue) -> {
+			applyFilter();
+		});		
+	}
+	
+	protected boolean stepTypeFilter(StepType<Long> stepType) {
+		String stepFilter = stepTypeFilter.getText();
+		if ((stepFilter != null) && (!stepFilter.trim().equals("")))
+			if (!stepType.getStepTypeName().contains(stepFilter))
+				return false;
+		
+		boolean pass = true;
+		String jobFilter = jobTypeFilter.getText();
+		if ((jobFilter != null) && (!jobFilter.trim().equals(""))) {
+			pass = false;
+			for (JobTypeSignature jobType : stepType.getJobTypes()) {
+				if (((RESTStepType<Long>)stepType).jobTypeSignatureToStr(jobType).contains(jobFilter)) {
+					pass = true;
+					break;
+				}
+			}
+		}
+		
+		return pass;
+	}
+	
+	protected void applyFilter() {
+		List<StepType<Long>> filteredStepTypes = stepTypes.stream().
+			filter(a -> stepTypeFilter(a)).
+			collect(Collectors.toList());
+		
+		table.setItems(FXCollections.observableArrayList(filteredStepTypes));
+	}
+	
 	@FXML
     public void refresh() {
 		if (serverInfoManager.getPort() < 0)
@@ -74,8 +123,9 @@ public class StepTypesForm extends VBox {
 					@Override
 					public void done(Collection<StepType<Long>> result) {
 						Platform.runLater( () -> {
+							stepTypes = result;
 							refreshButton.setDisable(false);
-							table.setItems(FXCollections.observableArrayList(result));
+							applyFilter();
 						});
 					}
 				};

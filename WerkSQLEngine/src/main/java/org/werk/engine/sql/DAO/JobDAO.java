@@ -396,7 +396,7 @@ public class JobDAO {
 		jobIds.add(jobId);
 		JobCollection<Long> jobs = loadJobs(tc, Optional.empty(), Optional.empty(), Optional.empty(), 
 				Optional.empty(), Optional.of(jobIds), 
-				Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
+				Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
 		
 		if ((jobs == null) || (jobs.getJobs() == null) || (jobs.getJobs().isEmpty()))
 			return null;
@@ -411,7 +411,7 @@ public class JobDAO {
 			Optional<Timestamp> fromExec, Optional<Timestamp> toExec,
 			Optional<Collection<Long>> jobIds, Optional<Collection<Long>> parentJobIds, 
 			Optional<Map<String, Long>> jobTypesAndVersions, 
-			Optional<Set<String>> currentStepTypes, Optional<PageInfo> pageInfo) throws SQLException {
+			Optional<Set<String>> currentStepTypes, Optional<Set<JobStatus>> jobStatuses, Optional<PageInfo> pageInfo) throws SQLException {
 		Connection connection = ((JDBCTransactionContext)tc).getConnection();
 		PreparedStatement pst = null;
 		
@@ -486,6 +486,18 @@ public class JobDAO {
 				
 				sb.append(")");
 			}
+			if (jobStatuses.isPresent() && !jobStatuses.get().isEmpty()) {
+				sb.append(" AND j.status IN (");
+				
+				int jobStatusCount = 0;
+				for (@SuppressWarnings("unused") JobStatus jobStatus : jobStatuses.get()) {
+					if (jobStatusCount++ > 0) sb.append(", ");
+					sb.append("?");
+				}
+				
+				sb.append(")");
+			}
+			
 			
 			sb.append(" GROUP BY j.id_job, j.job_type, j.version, j.job_name, j.parent_job_id," + 
 			"		j.current_step_id, j.status, j.next_execution_time, j.job_parameter_state, j.job_initial_parameter_state," + 
@@ -527,6 +539,9 @@ public class JobDAO {
 			if (currentStepTypes.isPresent() && !currentStepTypes.get().isEmpty())
 				for (String stepType : currentStepTypes.get())
 					pst.setString(++count, stepType);
+			if (jobStatuses.isPresent() && !jobStatuses.get().isEmpty())
+				for (JobStatus jobStatus : jobStatuses.get())
+					pst.setInt(++count, jobStatus.getCode());
 			if (pageInfo.isPresent()) {
 				pst.setLong(++count, pageInfo.get().getItemsPerPage()*pageInfo.get().getPageNumber());
 				pst.setLong(++count, pageInfo.get().getItemsPerPage());

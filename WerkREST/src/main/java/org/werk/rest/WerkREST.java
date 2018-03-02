@@ -196,7 +196,7 @@ public class WerkREST extends AbstractVerticle {
 				JobCollection<Long> jobs = werkService.getJobs(jobFilters.getFrom(), jobFilters.getTo(), 
 						jobFilters.getFromExec(), jobFilters.getToExec(),
 						jobFilters.getJobTypesAndVersions(), jobFilters.getParentJobIds(), jobFilters.getJobIds(),
-						jobFilters.getCurrentStepTypes(), jobFilters.getPageInfo());
+						jobFilters.getCurrentStepTypes(), jobFilters.getJobStatuses(), jobFilters.getPageInfo());
 				
 				JSONObject jsonObject = jobStepSerializer.serializeJobCollection(jobs);
 				

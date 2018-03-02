@@ -1,6 +1,7 @@
 package org.werk.rest.serializers;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -12,6 +13,7 @@ import java.util.Set;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.werk.meta.JobType;
+import org.werk.meta.JobTypeSignature;
 import org.werk.meta.OverflowAction;
 import org.werk.meta.StepExecFactory;
 import org.werk.meta.StepTransitionerFactory;
@@ -130,9 +132,9 @@ public class JobStepTypeRESTSerializer<J> {
 		boolean shortTransaction = stepType.getBoolean("shortTransaction");
 		
 		JSONArray jobTypesJSON = stepType.getJSONArray("jobTypes");
-		Set<String> jobTypes = new HashSet<>();
+		Set<JobTypeSignature> jobTypes = new HashSet<>();
 		for (int i = 0; i < jobTypesJSON.length(); i++)
-			jobTypes.add(jobTypesJSON.getString(i));
+			jobTypes.add(deserializeJobTypeSignature(jobTypesJSON.getJSONObject(i)));
 		
 		JSONArray allowedTransitionsJSON = stepType.getJSONArray("allowedTransitions");
 		Set<String> allowedTransitions = new HashSet<>();
@@ -165,12 +167,47 @@ public class JobStepTypeRESTSerializer<J> {
 				transitionerConfig, logLimit, logOverflowAction, shortTransaction);
 	}
 	
+	public JobTypeSignature deserializeJobTypeSignature(JSONObject jobTypeSignature) {
+		String jobTypeName = jobTypeSignature.getString("jobTypeName");
+		long version = jobTypeSignature.getLong("version");
+		
+		return new JobTypeSignature() {
+			@Override
+			public long getVersion() {
+				return version;
+			}
+			
+			@Override
+			public String getJobTypeName() {
+				return jobTypeName;
+			}
+		};
+	}
+	
+	public JSONObject serializeJobTypeSignature(JobTypeSignature jobTypeSignature) {
+		JSONObject jobTypeSignatureObject = new JSONObject();
+		
+		jobTypeSignatureObject.put("jobTypeName", jobTypeSignature.getJobTypeName());
+		jobTypeSignatureObject.put("version", jobTypeSignature.getVersion());
+		
+		return jobTypeSignatureObject;
+	}
+	
+	public JSONArray serializeJobTypeSignatures(Collection<JobTypeSignature> jobTypeSignatures) {
+		JSONArray jsonArray = new JSONArray();
+		
+		for (JobTypeSignature jobTypeSignature : jobTypeSignatures)
+			jsonArray.put(serializeJobTypeSignature(jobTypeSignature));
+		
+		return jsonArray;
+	}
+	
 	public JSONObject serializeStepType(StepType<?> stepType) {
 		JSONObject stepTypeJSON = new JSONObject();
 		
 		stepTypeJSON.put("stepTypeName", stepType.getStepTypeName());
 		
-		stepTypeJSON.put("jobTypes", stepType.getJobTypes());
+		stepTypeJSON.put("jobTypes", serializeJobTypeSignatures(stepType.getJobTypes()));
 		stepTypeJSON.put("allowedTransitions", stepType.getAllowedTransitions());
 		stepTypeJSON.put("allowedRollbackTransitions", stepType.getAllowedRollbackTransitions());
 		

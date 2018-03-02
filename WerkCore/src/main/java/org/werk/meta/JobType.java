@@ -6,10 +6,7 @@ import java.util.Set;
 
 import org.werk.meta.inputparameters.JobInputParameter;
 
-public interface JobType {
-	String getJobTypeName();
-	long getVersion();
-	
+public interface JobType extends JobTypeSignature {
 	Map<String, List<JobInputParameter>> getInitParameters();
 	
 	String getFirstStepTypeName();

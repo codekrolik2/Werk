@@ -15,17 +15,17 @@
 			<menus>
 				<Menu mnemonicParsing="false" text="Server"> 
 					<items>
-						<MenuItem mnemonicParsing="false" onAction="#showSetServerDialog" text="Set Server" /> 
+						<MenuItem mnemonicParsing="false" text="Set Server" onAction="#showSetServerDialog" /> 
 						<MenuItem mnemonicParsing="false" text="Server Info" onAction="#createServerInfoTab" /> 
 						<SeparatorMenuItem mnemonicParsing="false" /> 
-						<MenuItem mnemonicParsing="false" onAction="#closeAllTabs" text="Close All Tabs" /> 
+						<MenuItem mnemonicParsing="false" text="Close All Tabs" onAction="#closeAllTabs" /> 
 						<SeparatorMenuItem mnemonicParsing="false" /> 
-						<MenuItem mnemonicParsing="false" onAction="#quit" text="Quit" /> 
+						<MenuItem mnemonicParsing="false" text="Quit" onAction="#quit" /> 
 					</items>
 				</Menu>
 				<Menu mnemonicParsing="false" text="Jobs"> 
 					<items>
-						<MenuItem mnemonicParsing="false" text="Jobs" /> 
+						<MenuItem mnemonicParsing="false" text="Jobs" onAction="#createJobsForm"/> 
 						<SeparatorMenuItem mnemonicParsing="false" /> 
 						<MenuItem mnemonicParsing="false" text="Job Details"/> 
 						<SeparatorMenuItem mnemonicParsing="false" /> 

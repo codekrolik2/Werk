@@ -1,8 +1,10 @@
 package org.werk.rest.pojo;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.json.JSONObject;
+import org.werk.meta.JobTypeSignature;
 import org.werk.meta.OverflowAction;
 import org.werk.meta.StepExecFactory;
 import org.werk.meta.StepTransitionerFactory;
@@ -14,9 +16,9 @@ public class RESTStepType<J> extends StepTypeImpl<J> {
 	@Getter
 	JSONObject jsonObj;
 	@Getter
-	Set<String> jobTypes;
+	Set<JobTypeSignature> jobTypes;
 
-	public RESTStepType(JSONObject jsonObj, String stepTypeName, Set<String> jobTypes, 
+	public RESTStepType(JSONObject jsonObj, String stepTypeName, Set<JobTypeSignature> jobTypes, 
 			Set<String> allowedTransitions, Set<String> allowedRollbackTransitions,
 			StepExecFactory<J> stepExecFactory, StepTransitionerFactory<J> stepTransitionerFactory,
 			String processingDescription, String rollbackDescription, String execConfig, String transitionerConfig,
@@ -50,8 +52,14 @@ public class RESTStepType<J> extends StepTypeImpl<J> {
 		return longName.substring(start < 0 ? 0 : start + 1);
 	}
 	
+	public String jobTypeSignatureToStr(JobTypeSignature a) {
+		return String.format("%s [v%d]", a.getJobTypeName(), a.getVersion());
+	}
+	
 	public String getJobTypesStr() {
-		return String.join(", ", jobTypes);
+		return String.join(", ", jobTypes.stream().
+				map(a -> jobTypeSignatureToStr(a)).
+				collect(Collectors.toList()));
 	}
 	
 	public String getTransitions() {

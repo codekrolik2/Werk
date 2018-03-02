@@ -233,7 +233,7 @@ public class SQLWerkJob extends WerkJob<Long> {
 			List<Long> jobIdList = new ArrayList<>();
 			jobIdList.add(jobId);
 			JobCollection<Long> jobs = jobDAO.loadJobs(tc, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), 
-					jobIds, parentJobId, jobTypesAndVersions, Optional.empty(), Optional.empty());
+					jobIds, parentJobId, jobTypesAndVersions, Optional.empty(), Optional.empty(), Optional.empty());
 			if ((jobs == null) || (jobs.getJobs() == null) || (jobs.getJobs().isEmpty()))
 				return null;
 			

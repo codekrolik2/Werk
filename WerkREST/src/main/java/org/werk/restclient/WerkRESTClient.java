@@ -19,6 +19,7 @@ import org.werk.meta.JobRestartInfo;
 import org.werk.meta.JobType;
 import org.werk.meta.StepType;
 import org.werk.meta.VersionJobInitInfo;
+import org.werk.processing.jobs.JobStatus;
 import org.werk.processing.readonly.ReadOnlyJob;
 import org.werk.rest.JobFilters;
 import org.werk.rest.serializers.JobFiltersSerializer;
@@ -183,6 +184,7 @@ public class WerkRESTClient {
 			Optional<Collection<Long>> parentJobIds, 
 			Optional<Collection<Long>> jobIds,
 			Optional<Set<String>> currentStepTypes, 
+			Optional<Set<JobStatus>> jobStatuses,
 			Optional<PageInfo> pageInfo) throws Exception {
 		// Send a GET request
 		HttpRequest<Buffer> r = client.get(port, host, "/jobs");
@@ -191,7 +193,7 @@ public class WerkRESTClient {
 				jobTypesAndVersions.isPresent() || parentJobIds.isPresent() || jobIds.isPresent() ||
 				currentStepTypes.isPresent() || pageInfo.isPresent()) {
 			JobFilters<Long> jobFilters = new JobFilters<>(from, to, fromExec, toExec, jobTypesAndVersions,
-					parentJobIds, jobIds, currentStepTypes, pageInfo);
+					parentJobIds, jobIds, currentStepTypes, jobStatuses, pageInfo);
 			
 			JSONObject jobFiltersJSON = jobFiltersSerializer.serializeJobFilters(jobFilters);
 			

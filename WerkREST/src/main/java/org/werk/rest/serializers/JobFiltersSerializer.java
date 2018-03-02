@@ -16,6 +16,7 @@ import org.json.JSONObject;
 import org.pillar.time.interfaces.TimeProvider;
 import org.pillar.time.interfaces.Timestamp;
 import org.werk.engine.JobIdSerializer;
+import org.werk.processing.jobs.JobStatus;
 import org.werk.rest.JobFilters;
 import org.werk.service.PageInfo;
 
@@ -36,6 +37,7 @@ public class JobFiltersSerializer<J> {
 		Optional<Collection<J>> parentJobIds = Optional.empty();
 		Optional<Collection<J>> jobIds = Optional.empty();
 		Optional<Set<String>> currentStepTypes = Optional.empty();
+		Optional<Set<JobStatus>> jobStatuses = Optional.empty();
 		Optional<PageInfo> pageInfo = Optional.empty();
 		
 		if (filtersJSON.has("from"))
@@ -88,6 +90,15 @@ public class JobFiltersSerializer<J> {
 			
 			currentStepTypes = Optional.of(stepTypesSet);
 		}
+		if (filtersJSON.has("jobStatuses")) {
+			Set<JobStatus> jobStatusesSet = new HashSet<>();
+			
+			JSONArray arr = filtersJSON.getJSONArray("jobStatuses");
+			for (int i = 0; i < arr.length(); i++)
+				jobStatusesSet.add(JobStatus.valueOf(arr.getString(i)));
+			
+			jobStatuses = Optional.of(jobStatusesSet);
+		}
 		if (filtersJSON.has("pageInfo")) {
 			JSONObject pageInfoJSON = filtersJSON.getJSONObject("pageInfo");
 			
@@ -98,7 +109,8 @@ public class JobFiltersSerializer<J> {
 			pageInfo = Optional.of(pageInfoObj);
 		}
 		
-		return new JobFilters<>(from, to, fromExec, toExec, jobTypes, parentJobIds, jobIds, currentStepTypes, pageInfo);
+		return new JobFilters<>(from, to, fromExec, toExec, jobTypes, parentJobIds, jobIds, 
+				currentStepTypes, jobStatuses, pageInfo);
 	}
 
 	public JSONObject serializeJobFilters(JobFilters<J> filters) {
@@ -144,6 +156,14 @@ public class JobFiltersSerializer<J> {
 				arr.put(s);
 			
 			filtersJSON.put("currentStepTypes", arr);
+		}
+		if (filters.getJobStatuses().isPresent()) {
+			JSONArray arr = new JSONArray();
+			
+			for(JobStatus jobStatus : filters.getJobStatuses().get())
+				arr.put(jobStatus.toString());
+			
+			filtersJSON.put("jobStatuses", arr);
 		}
 		if (filters.getPageInfo().isPresent()) {
 			JSONObject pageInfoJSON = pageInfoSerializer.serializePageInfo(filters.getPageInfo().get());
