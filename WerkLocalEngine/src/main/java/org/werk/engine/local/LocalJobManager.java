@@ -186,7 +186,7 @@ public class LocalJobManager<J> {
 				filter(a -> {
 						for (JobTypeSignature jts : jobTypesAndVersions) {
 							if ((jts.getJobTypeName().equals(a.getJobTypeName())) &&
-								(jts.getVersion() == a.getVersion()))
+								((jts.getVersion() == a.getVersion()) || (jts.getVersion() < 0)))
 								return true;
 						}
 						return false;

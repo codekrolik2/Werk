@@ -86,7 +86,7 @@ public class LocalWerkService implements WerkService<Long> {
 				filter(a -> {
 						for (JobTypeSignature jts : jobTypesAndVersions.get()) {
 							if ((jts.getJobTypeName().equals(a.getJobTypeName())) &&
-								(jts.getVersion() == a.getVersion()))
+								((jts.getVersion() == a.getVersion()) || (jts.getVersion() < 0)))
 								return true;
 						}
 						return false;
