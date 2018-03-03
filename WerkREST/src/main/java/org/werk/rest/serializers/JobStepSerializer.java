@@ -360,7 +360,7 @@ public class JobStepSerializer<J> {
 		Optional<PageInfo> pageInfo = Optional.empty();
 		if (jobCollectionJSON.has("pageInfo"))
 			pageInfo = Optional.of(
-					pageInfoSerializer.deserializePageInfo(new JSONObject(jobCollectionJSON.getString("pageInfo")))
+					pageInfoSerializer.deserializePageInfo(jobCollectionJSON.getJSONObject("pageInfo"))
 				);
 		
 		List<JobPOJO<J>> jobs = new ArrayList<>();

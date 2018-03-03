@@ -4,36 +4,52 @@
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.cell.PropertyValueFactory?>
 
-<fx:root prefHeight="200.0" prefWidth="200.0" type="TableView"
-	xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1">
+<fx:root prefHeight="731.0" prefWidth="1142.0" type="TableView" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1">
 	<columns>
-		<TableColumn editable="false" prefWidth="85.0" text="Job Type">
+	<!--
+		J getJobId();
+		JobStatus getStatus();
+		Optional<String> getJobName();
+		String getJobTypeName();/long getVersion();
+		String getCurrentStepTypeName();/int getStepCount();
+		
+		Optional<J> getParentJobId();
+		Timestamp getCreationTime();
+		Timestamp getNextExecutionTime();
+	-->
+		<TableColumn editable="false" prefWidth="58.000030517578125" text="Job Id">
 			<cellValueFactory>
-				<PropertyValueFactory property="fullName" />
+				<PropertyValueFactory property="jobId" />
 			</cellValueFactory>
 		</TableColumn>
-		<TableColumn editable="false" prefWidth="75.0" text="Acyclic">
+		<TableColumn editable="false" prefWidth="70.0" text="Status">
 			<cellValueFactory>
-				<PropertyValueFactory property="forceAcyclic" />
+				<PropertyValueFactory property="status" />
 			</cellValueFactory>
 		</TableColumn>
-		<TableColumn editable="false" prefWidth="95.0" text="First Step">
+		<TableColumn editable="false" prefWidth="110.0" text="Job Name">
 			<cellValueFactory>
-				<PropertyValueFactory property="firstStepTypeName" />
+				<PropertyValueFactory property="jobName" />
 			</cellValueFactory>
 		</TableColumn>
-		<TableColumn editable="false" prefWidth="115.0" text="History Limit">
+		<TableColumn fx:id="jobTypeColumn" editable="false" prefWidth="105.0" text="Job Type">
+		</TableColumn>
+		<TableColumn fx:id="currentStepColumn" editable="false" prefWidth="105.0" text="Current Step">
+		</TableColumn>
+		<TableColumn fx:id="parentJobIdColumn" editable="false" prefWidth="110.0" text="Parent Job Id">
+		</TableColumn>
+		<TableColumn editable="false" prefWidth="165.0" text="Created">
 			<cellValueFactory>
-				<PropertyValueFactory property="historyLimit" />
+				<PropertyValueFactory property="creationTime" />
 			</cellValueFactory>
 		</TableColumn>
-		<TableColumn editable="false" prefWidth="195.0" text="History Overflow Action">
+		<TableColumn editable="false" prefWidth="165.0" text="Next Execution">
 			<cellValueFactory>
-				<PropertyValueFactory property="historyOverflowAction" />
+				<PropertyValueFactory property="nextExecutionTime" />
 			</cellValueFactory>
 		</TableColumn>
 		<TableColumn fx:id="detailsColumn" editable="false" prefWidth="73.0" text="Details"/>
-		<TableColumn fx:id="createJobColumn" editable="false" prefWidth="95.0" text="Create Job"/>
-		<TableColumn fx:id="showJobsColumn" editable="false" prefWidth="95.0" text="Show Jobs"/>
+		<TableColumn fx:id="restartJobColumn" editable="false" prefWidth="76.0" text="Restart"/>
+		<TableColumn fx:id="childJobsColumn" editable="false" prefWidth="95.0" text="Child Jobs"/>
 	</columns>
 </fx:root>

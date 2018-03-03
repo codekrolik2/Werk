@@ -54,7 +54,7 @@ public class RESTStepType<J> extends StepTypeImpl<J> {
 	
 	public String getJobTypesStr() {
 		return String.join(", ", jobTypes.stream().
-				map(a -> RESTJobType.jobTypeSignatureToStr(a)).
+				map(a -> JobTypeSignature.getJobTypeFullName(a)).
 				collect(Collectors.toList()));
 	}
 	

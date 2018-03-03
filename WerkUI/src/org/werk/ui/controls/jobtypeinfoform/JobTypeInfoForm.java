@@ -72,6 +72,10 @@ public class JobTypeInfoForm extends VBox {
         }
     }
     
+    public void showJobsForm() {
+    	mainApp.createJobsForm(((RESTJobType)jobType).getFullName());
+    }
+    
     public void showCreateJobForm() {
 		mainApp.createCreateJobTab(((RESTJobType)jobType).getFullName());
     }

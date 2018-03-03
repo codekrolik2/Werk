@@ -19,7 +19,6 @@ import org.werk.meta.JobType;
 import org.werk.meta.JobTypeSignature;
 import org.werk.meta.StepType;
 import org.werk.processing.jobs.JobStatus;
-import org.werk.rest.pojo.RESTJobType;
 import org.werk.restclient.WerkCallback;
 import org.werk.restclient.WerkRESTClient;
 import org.werk.service.JobCollection;
@@ -43,9 +42,11 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Pagination;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TitledPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import jfxtras.scene.control.CalendarTextField;
+import lombok.Getter;
 
 public class JobsForm extends VBox {
 	@Inject
@@ -59,6 +60,8 @@ public class JobsForm extends VBox {
 	
 	@FXML
 	GridPane mainGrid;
+	@FXML
+	TitledPane titledPane;
 	
 	//--------------------------------------------------
 	
@@ -82,11 +85,13 @@ public class JobsForm extends VBox {
 	@FXML TextField jobTypesText;
 	@FXML ComboBox<String> jobTypesCombo;
 	@FXML Button jobTypesButton;
-	
+	@FXML Button jobTypesBackButton;
+
 	@FXML CheckBox currentStepTypesCheckBox;
 	@FXML TextField currentStepTypesText;
 	@FXML ComboBox<String> currentStepTypesCombo;
 	@FXML Button currentStepTypesButton;
+	@FXML Button currentStepTypesBackButton;
 	
 	@FXML CheckBox jobIdsCheckBox;
 	@FXML TextField jobIdsText;
@@ -98,11 +103,18 @@ public class JobsForm extends VBox {
 	@FXML TextField jobStatusesText;
 	@FXML ComboBox<JobStatus> jobStatusesCombo;
 	@FXML Button jobStatusesButton;
+	@FXML Button jobStatusesBackButton;
 
 	@FXML Pagination pagination;
 
+	@FXML JobsTable jobsTable;
+	
+	@Getter
 	Map<String, JobType> jobTypes;
+	@Getter
 	Map<String, StepType<Long>> stepTypes;
+	
+	boolean autoLoadJobs = false;
 	
     public JobsForm() {
         FXMLLoader fxmlLoader = LoaderFactory.getInstance().loader(getClass().getResource("JobsForm.fxml"));
@@ -117,16 +129,38 @@ public class JobsForm extends VBox {
     }
     
 	public void initTable() {
-		//TODO: create table
-		//table.setMainApp(mainApp);
+		jobsTable.setMainApp(mainApp);
+		jobsTable.setJobsForm(this);
 	}
 	
 	protected void handleControlDisable(Boolean newValue, Node jobsPerPageText) {
 		jobsPerPageText.setDisable(!newValue);
 	}
 	
+	protected String removeLast(String text) {
+		int index = text.lastIndexOf(",");
+		if (index < 0)
+			return "";
+		else
+			return text.substring(0, index);
+	}
+	
+	public void moveJobStatusBack() {
+		jobStatusesText.setText(removeLast(jobStatusesText.getText()));
+	}
+
+	public void moveJobTypeBack() {
+		jobTypesText.setText(removeLast(jobTypesText.getText()));
+	}
+
+	public void moveCurrentStepTypeBack() {
+		currentStepTypesText.setText(removeLast(currentStepTypesText.getText()));
+	}
+	
 	public void moveJobType() {
 		String newJobType = jobTypesCombo.getSelectionModel().getSelectedItem();
+		if (newJobType == null)
+			return;
 		
 		String jobTypesTxt = jobTypesText.getText();
 		String[] parts = jobTypesText.getText().split(",");
@@ -150,6 +184,8 @@ public class JobsForm extends VBox {
 	
 	public void moveCurrentStepTypes() {
 		String newStepType = currentStepTypesCombo.getSelectionModel().getSelectedItem();
+		if (newStepType == null)
+			return;
 		
 		String currentStepTypesTxt = currentStepTypesText.getText();
 		String[] parts = currentStepTypesText.getText().split(",");
@@ -173,6 +209,8 @@ public class JobsForm extends VBox {
 	
 	public void moveJobStatus() {
 		String newJobStatusStr = jobStatusesCombo.getSelectionModel().getSelectedItem().toString();
+		if (newJobStatusStr == null)
+			return;
 		
 		String jobStatusesTxt = jobStatusesText.getText();
 		String[] parts = jobStatusesText.getText().split(",");
@@ -195,6 +233,13 @@ public class JobsForm extends VBox {
 	}
 	
 	public void initialize() {
+		pagination.currentPageIndexProperty().addListener(new ChangeListener<Number>() {
+			@Override
+			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+				loadJobs();
+			}
+		});
+		
 		Calendar weekAgo = Calendar.getInstance();
 		weekAgo.setTime(new Date());
 		weekAgo.add(Calendar.DATE, -7);
@@ -249,6 +294,7 @@ public class JobsForm extends VBox {
 		    	handleControlDisable(newValue, jobTypesText);
 		    	handleControlDisable(newValue, jobTypesCombo);
 		    	handleControlDisable(newValue, jobTypesButton);
+		    	handleControlDisable(newValue, jobTypesBackButton);
 		    }
 		});
 		
@@ -258,6 +304,7 @@ public class JobsForm extends VBox {
 		    	handleControlDisable(newValue, currentStepTypesText);
 		    	handleControlDisable(newValue, currentStepTypesCombo);
 		    	handleControlDisable(newValue, currentStepTypesButton);
+		    	handleControlDisable(newValue, currentStepTypesBackButton);
 		    }
 		});
 		
@@ -281,6 +328,7 @@ public class JobsForm extends VBox {
 		    	handleControlDisable(newValue, jobStatusesText);
 		    	handleControlDisable(newValue, jobStatusesCombo);
 		    	handleControlDisable(newValue, jobStatusesButton);
+		    	handleControlDisable(newValue, jobStatusesBackButton);
 		    }
 		});
 	}
@@ -396,7 +444,7 @@ public class JobsForm extends VBox {
 					for (String part : parts) {
 						if ((part != null) && (!part.trim().equals(""))) {
 							if (!jobTypes.containsKey(part))
-								throw new WerkException(String.format("StepType not found [%s]", part));
+								throw new WerkException(String.format("JobType not found [%s]", part));
 							jobTypesAndVersionsList.add(jobTypes.get(part));
 						}
 					}
@@ -428,12 +476,14 @@ public class JobsForm extends VBox {
 				int port = serverInfoManager.getPort();
 				
 				loadJobsButton.setDisable(true);
+				pagination.setDisable(true);
 				
 				WerkCallback<JobCollection<Long>> callback = new WerkCallback<JobCollection<Long>>() {
 					@Override
 					public void error(Throwable cause) {
 						Platform.runLater( () -> {
 							loadJobsButton.setDisable(false);
+							pagination.setDisable(false);
 							MessageBox.show(
 								String.format("Error processing request %s:%d [%s]", host, port, cause.toString())
 							);
@@ -444,8 +494,31 @@ public class JobsForm extends VBox {
 					public void done(JobCollection<Long> result) {
 						Platform.runLater( () -> {
 							loadJobsButton.setDisable(false);
-							//TODO: fill table
-							//applyFilter();
+							pagination.setDisable(false);
+							
+							List<TableJobPOJO<Long>> filteredJobTypes = result.getJobs().stream().
+									map(a -> new TableJobPOJO<Long>(a)).
+									collect(Collectors.toList());
+							
+							jobsTable.setItems(FXCollections.observableArrayList(
+								filteredJobTypes
+							));
+							
+							if (result.getPageInfo().isPresent()) {
+								PageInfo pageInfo = result.getPageInfo().get();
+								
+								int pageCount = (int)(result.getJobCount() / pageInfo.getItemsPerPage());
+								if (result.getJobCount() % pageInfo.getItemsPerPage() > 0)
+									pageCount++;
+								if (pageCount == 0)
+									pageCount = 1;
+								
+								pagination.setPageCount(pageCount);
+								pagination.setCurrentPageIndex((int)pageInfo.getPageNumber());
+							} else {
+								pagination.setPageCount(1);
+								pagination.setCurrentPageIndex(0);
+							}
 						});
 					}
 				};
@@ -457,6 +530,7 @@ public class JobsForm extends VBox {
 	    	} catch(Exception e) {
 				MessageBox.show(String.format("Refresh error: [%s]", e));
 				loadJobsButton.setDisable(false);
+				pagination.setDisable(false);
 	    	}
 		}
 	}
@@ -486,7 +560,7 @@ public class JobsForm extends VBox {
 					public void done(Collection<JobType> result) {
 						Platform.runLater( () -> {
 							jobTypes = result.stream().
-								collect(Collectors.toMap(a -> RESTJobType.jobTypeSignatureToStr(a), a -> a));
+								collect(Collectors.toMap(a -> JobTypeSignature.getJobTypeFullName(a), a -> a));
 							refreshJobStepTypes.setDisable(false);
 							jobTypesCombo.setItems(FXCollections.observableArrayList(jobTypes.keySet()));
 						});
@@ -510,6 +584,11 @@ public class JobsForm extends VBox {
 												collect(Collectors.toMap(a -> a.getStepTypeName(), a -> a));
 										refreshJobStepTypes.setDisable(false);
 										currentStepTypesCombo.setItems(FXCollections.observableArrayList(stepTypes.keySet()));
+										
+										if (autoLoadJobs) {
+											autoLoadJobs = false;
+											loadJobs();
+										}
 									});
 								}
 							};
@@ -528,5 +607,19 @@ public class JobsForm extends VBox {
 				refreshJobStepTypes.setDisable(false);
 	    	}
 		}
+	}
+    
+	public void setJobTypes(String jobTypes) {
+		jobTypesCheckBox.setSelected(true);
+		jobTypesText.setText(jobTypes);
+		titledPane.setExpanded(true);
+		autoLoadJobs = true;
+	}
+    
+	public void setParentJobId(Long parentJobId) {
+		jobParentIdsCheckBox.setSelected(true);
+		jobParentIdsText.setText(parentJobId.toString());
+		titledPane.setExpanded(true);
+		autoLoadJobs = true;
 	}
 }

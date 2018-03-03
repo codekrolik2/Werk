@@ -3,34 +3,39 @@ package org.werk.ui.controls.jobsform;
 import java.io.IOException;
 
 import org.werk.meta.JobType;
-import org.werk.rest.pojo.RESTJobType;
+import org.werk.meta.StepType;
+import org.werk.processing.jobs.JobStatus;
 import org.werk.restclient.WerkRESTClient;
 import org.werk.ui.ServerInfoManager;
 import org.werk.ui.controls.mainapp.MainApp;
 import org.werk.ui.controls.table.ButtonCell;
 import org.werk.ui.guice.LoaderFactory;
+import org.werk.ui.util.MessageBox;
 
 import com.google.inject.Inject;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.control.Button;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.util.Callback;
 import lombok.Setter;
 
-public class JobsTable extends TableView<JobType> {
-	@FXML
-	TableColumn<JobType, String> createJobColumn;
-	@FXML
-	TableColumn<JobType, String> showJobsColumn;
-	@FXML
-	TableColumn<JobType, String> detailsColumn;
-
+public class JobsTable extends TableView<TableJobPOJO<Long>> {
+	@FXML TableColumn<TableJobPOJO<Long>, String> jobTypeColumn;
+	@FXML TableColumn<TableJobPOJO<Long>, String> currentStepColumn;
+	@FXML TableColumn<TableJobPOJO<Long>, String> parentJobIdColumn;
+	@FXML TableColumn<TableJobPOJO<Long>, String> detailsColumn;
+	@FXML TableColumn<TableJobPOJO<Long>, String> restartJobColumn;
+	@FXML TableColumn<TableJobPOJO<Long>, String> childJobsColumn;
+	
 	@Setter
 	MainApp mainApp;
+	@Setter
+	JobsForm jobsForm;
 	@Inject
 	WerkRESTClient werkClient;
 	@Inject
@@ -49,52 +54,198 @@ public class JobsTable extends TableView<JobType> {
 	}
 
 	public void initialize() {
-		createJobColumn.setCellFactory(new CreateJobCellFactory());
-		showJobsColumn.setCellFactory(new ShowJobsCellFactory());
-		detailsColumn.setCellFactory(new JobTypeDetailsCellFactory());
+		currentStepColumn.setCellFactory(new StepTypeCellFactory());
+		parentJobIdColumn.setCellFactory(new ParentJobIdCellFactory());
+		jobTypeColumn.setCellFactory(new JobTypeCellFactory());
+		detailsColumn.setCellFactory(new JobDetailsCellFactory());
+		restartJobColumn.setCellFactory(new RestartJobCellFactory());
+		childJobsColumn.setCellFactory(new ChildJobsCellFactory());
 	}
-	
-	public void hideCreateShowJobs() {
-		createJobColumn.setVisible(false);
-		showJobsColumn.setVisible(false);
-	}
-	
-	class CreateJobCellFactory implements Callback<TableColumn<JobType, String>, TableCell<JobType, String>> {
+
+	class RestartJobCellFactory implements Callback<TableColumn<TableJobPOJO<Long>, String>, 
+			TableCell<TableJobPOJO<Long>, String>> {
 		@Override
-		public TableCell<JobType, String> call(final TableColumn<JobType, String> param) {
-			return new ButtonCell<JobType, String>("Create Job") {
+		public TableCell<TableJobPOJO<Long>, String> call(final TableColumn<TableJobPOJO<Long>, String> param) {
+			return new RestartJobCell();
+		}
+	}
+
+	class RestartJobCell extends TableCell<TableJobPOJO<Long>, String> {
+		protected final Button btn;
+		
+		public RestartJobCell() {
+			btn = new Button("Restart");
+		}
+		
+		protected void handle(ActionEvent event) {
+			TableJobPOJO<Long> jobPojo = getTableView().getItems().get(getIndex());
+			System.out.println("Handle JobPOJO " + jobPojo.getJobId());
+		}
+		
+		@Override
+		public void updateItem(String item, boolean empty) {
+			super.updateItem(item, empty);
+			if (empty) {
+				setGraphic(null);
+				setText(null);
+			} else {
+				TableJobPOJO<Long> jobPojo = getTableView().getItems().get(getIndex());
+				if ((jobPojo.getStatus() == JobStatus.FINISHED) || (jobPojo.getStatus() == JobStatus.ROLLED_BACK)
+						|| (jobPojo.getStatus() == JobStatus.FAILED)) {
+					btn.setOnAction(this::handle);
+					setGraphic(btn);
+					setText(null);
+				} else {
+					setGraphic(null);
+					setText(null);
+				}
+			}
+		}
+	}
+	
+	class ChildJobsCellFactory implements Callback<TableColumn<TableJobPOJO<Long>, String>, 
+			TableCell<TableJobPOJO<Long>, String>> {
+		@Override
+		public TableCell<TableJobPOJO<Long>, String> call(final TableColumn<TableJobPOJO<Long>, String> param) {
+			return new ButtonCell<TableJobPOJO<Long>, String>("Child Jobs") {
 				@Override
 				protected void handle(ActionEvent event) {
-					JobType jobType = getTableView().getItems().get(getIndex());
-					mainApp.createCreateJobTab(((RESTJobType)jobType).getFullName());
+					TableJobPOJO<Long> jobPojo = getTableView().getItems().get(getIndex());
+					mainApp.createJobsForm(jobPojo.getJobId());
 				}
 			};
 		}
 	}
 
-	class ShowJobsCellFactory implements Callback<TableColumn<JobType, String>, TableCell<JobType, String>> {
+	class JobDetailsCellFactory
+			implements Callback<TableColumn<TableJobPOJO<Long>, String>, TableCell<TableJobPOJO<Long>, String>> {
 		@Override
-		public TableCell<JobType, String> call(final TableColumn<JobType, String> param) {
-			return new ButtonCell<JobType, String>("Show Jobs") {
+		public TableCell<TableJobPOJO<Long>, String> call(final TableColumn<TableJobPOJO<Long>, String> param) {
+			return new ButtonCell<TableJobPOJO<Long>, String>("Details") {
 				@Override
 				protected void handle(ActionEvent event) {
-					JobType jobType = getTableView().getItems().get(getIndex());
-					System.out.println("Show Jobs " + jobType.getJobTypeName());
+					TableJobPOJO<Long> jobPojo = getTableView().getItems().get(getIndex());
+					System.out.println("Handle JobPOJO " + jobPojo.getJobId());
 				}
 			};
 		}
 	}
 
-	class JobTypeDetailsCellFactory implements Callback<TableColumn<JobType, String>, TableCell<JobType, String>> {
+	class ParentJobIdCellFactory implements Callback<TableColumn<TableJobPOJO<Long>, String>, 
+			TableCell<TableJobPOJO<Long>, String>> {
 		@Override
-		public TableCell<JobType, String> call(final TableColumn<JobType, String> param) {
-			return new ButtonCell<JobType, String>("Details") {
+		public TableCell<TableJobPOJO<Long>, String> call(final TableColumn<TableJobPOJO<Long>, String> param) {
+			return new ParentJobIdCell();
+		}
+	}
+	
+	class ParentJobIdCell extends TableCell<TableJobPOJO<Long>, String> {
+		protected final Button btn;
+		
+		public ParentJobIdCell() {
+			btn = new Button();
+		}
+		
+		protected void handle(ActionEvent event) {
+			TableJobPOJO<Long> jobPojo = getTableView().getItems().get(getIndex());
+			System.out.println("Handle JobPOJO " + jobPojo.getJobId());
+		}
+		
+		@Override
+		public void updateItem(String item, boolean empty) {
+			super.updateItem(item, empty);
+			if (empty) {
+				setGraphic(null);
+				setText(null);
+			} else {
+				TableJobPOJO<Long> jobPojo = getTableView().getItems().get(getIndex());
+				
+				if (jobPojo.getParentJobId().isPresent()) {
+					btn.setOnAction(this::handle);
+					btn.setText(jobPojo.getParentJobId().get().toString());
+					setGraphic(btn);
+					setText(null);
+				} else {
+					setGraphic(null);
+					setText(null);
+				}
+			}
+		}
+	}
+	
+	class StepTypeCellFactory implements Callback<TableColumn<TableJobPOJO<Long>, String>, 
+			TableCell<TableJobPOJO<Long>, String>> {
+		@Override
+		public TableCell<TableJobPOJO<Long>, String> call(final TableColumn<TableJobPOJO<Long>, String> param) {
+			return new TableJobPOJOCell() {
 				@Override
-				protected void handle(ActionEvent event) {
-					JobType jobType = getTableView().getItems().get(getIndex());
-					mainApp.createJobTypeTab(jobType);
+				protected String getBtnText(TableJobPOJO<Long> jobPojo) {
+					return jobPojo.getStepType();
+				}
+
+				@Override
+				protected void handle(TableJobPOJO<Long> jobPojo) {
+					if (jobsForm.getStepTypes() != null) {
+						StepType<Long> stepType = jobsForm.getStepTypes().get(jobPojo.getJobPOJO().getCurrentStepTypeName());
+						if (stepType != null) {
+							mainApp.createStepTypeTab(stepType);
+							return;
+						}
+					}
+					
+					MessageBox.show(String.format("Step type not found: [%s].", jobPojo.getStepType()));
 				}
 			};
 		}
 	}
+
+	class JobTypeCellFactory implements Callback<TableColumn<TableJobPOJO<Long>, String>, 
+			TableCell<TableJobPOJO<Long>, String>> {
+		@Override
+		public TableCell<TableJobPOJO<Long>, String> call(final TableColumn<TableJobPOJO<Long>, String> param) {
+			return new TableJobPOJOCell() {
+				@Override
+				protected String getBtnText(TableJobPOJO<Long> jobPojo) {
+					return jobPojo.getJobType();
+				}
+
+				@Override
+				protected void handle(TableJobPOJO<Long> jobPojo) {
+					if (jobsForm.getJobTypes() != null) {
+						JobType jobType = jobsForm.getJobTypes().get(jobPojo.getJobType());
+						if (jobType != null) {
+							mainApp.createJobTypeTab(jobType);
+							return;
+						}
+					}
+					
+					MessageBox.show(String.format("Job type not found: [%s].", jobPojo.getJobType()));
+				}
+			};
+		}
+	}
+	
+	abstract class TableJobPOJOCell extends ButtonCell<TableJobPOJO<Long>, String> {
+		public TableJobPOJOCell() {
+			super("");
+		}
+
+		protected abstract String getBtnText(TableJobPOJO<Long> jobPojo);
+		protected abstract void handle(TableJobPOJO<Long> jobPojo);
+		
+		@Override
+		public void updateItem(String item, boolean empty) {
+			super.updateItem(item, empty);
+			if (!empty) {
+				TableJobPOJO<Long> jobPojo = getTableView().getItems().get(getIndex());
+				btn.setText(getBtnText(jobPojo));
+			}
+		}
+		
+		@Override
+		protected void handle(ActionEvent event) {
+			TableJobPOJO<Long> jobPojo = getTableView().getItems().get(getIndex());
+			handle(jobPojo);
+		}
+	};
 }

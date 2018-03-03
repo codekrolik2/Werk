@@ -128,6 +128,30 @@ public class MainApp extends VBox {
         createJobForm.refresh();
 	}
 	
+	public void createJobsForm(Long parentJobId) {
+		JobsForm jobsForm = tabCreator.getJobsForm();
+		final Tab tab = new Tab("Jobs", jobsForm);
+		tab.setClosable(true);
+        
+		tabs.getTabs().add(tab);
+        tabs.getSelectionModel().select(tab);
+        
+        jobsForm.refreshJobStepTypes();
+        jobsForm.setParentJobId(parentJobId);
+	}
+	
+	public void createJobsForm(String jobTypes) {
+		JobsForm jobsForm = tabCreator.getJobsForm();
+		final Tab tab = new Tab("Jobs", jobsForm);
+		tab.setClosable(true);
+        
+		tabs.getTabs().add(tab);
+        tabs.getSelectionModel().select(tab);
+        
+        jobsForm.refreshJobStepTypes();
+        jobsForm.setJobTypes(jobTypes);
+	}
+	
 	public void createJobsForm() {
 		JobsForm jobsForm = tabCreator.getJobsForm();
 		final Tab tab = new Tab("Jobs", jobsForm);

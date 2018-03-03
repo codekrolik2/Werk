@@ -25,10 +25,6 @@ public class RESTJobType extends JobTypeImpl {
 	}
 
 	public String getFullName() {
-		return jobTypeSignatureToStr(this);
-	}
-	
-	public static String jobTypeSignatureToStr(JobTypeSignature a) {
-		return String.format("%s [v%d]", a.getJobTypeName(), a.getVersion());
+		return JobTypeSignature.getJobTypeFullName(this);
 	}
 }

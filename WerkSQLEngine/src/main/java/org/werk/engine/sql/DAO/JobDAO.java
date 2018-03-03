@@ -112,7 +112,7 @@ public class JobDAO {
 				(LongTimestamp)init.getNextExecutionTime().get() : ((LongTimestamp)timeProvider.getCurrentTime());
 		
 		return createJob(tc, init.getJobTypeName(), jobType.getVersion(), init.getJobName(), 
-				parentJob, jobStatus, nextExecutionTime.getTimeMs(), 
+				parentJob, jobStatus, nextExecutionTime.getUnixTime(), 
 				init.getInitParameters(), stepCount);
 	}
 	
@@ -150,7 +150,7 @@ public class JobDAO {
 				(LongTimestamp)init.getNextExecutionTime().get() : ((LongTimestamp)timeProvider.getCurrentTime());
 
 		return createJob(tc, init.getJobTypeName(), init.getJobVersion(), init.getJobName(), 
-				parentJob, jobStatus, nextExecutionTime.getTimeMs(), 
+				parentJob, jobStatus, nextExecutionTime.getUnixTime(), 
 				init.getInitParameters(), stepCount);
 	}
 	
@@ -187,7 +187,7 @@ public class JobDAO {
 			pst.setString(7, jobInitialParameterState);
 			pst.setString(8, jobInitialParameterState);
 			pst.setLong(9, stepCount);
-			pst.setLong(10, ((LongTimestamp)(timeProvider.getCurrentTime())).getTimeMs());
+			pst.setLong(10, ((LongTimestamp)(timeProvider.getCurrentTime())).getUnixTime());
 			
 			pst.executeUpdate();
 			
@@ -248,7 +248,7 @@ public class JobDAO {
 			
 			pst.setLong(1, currentStepId);
 			pst.setInt(2, status.getCode());
-			pst.setLong(3, ((LongTimestamp)nextExecutionTime).getTimeMs());
+			pst.setLong(3, ((LongTimestamp)nextExecutionTime).getUnixTime());
 			pst.setString(4, jobParametersStr);
 			pst.setInt(5, stepCount);
 			
@@ -512,13 +512,13 @@ public class JobDAO {
 			
 			int count = 0;
 			if (from.isPresent())
-				pst.setLong(++count, ((LongTimestamp)from.get()).getTimeMs());
+				pst.setLong(++count, ((LongTimestamp)from.get()).getUnixTime());
 			if (to.isPresent())
-				pst.setLong(++count, ((LongTimestamp)to.get()).getTimeMs());
+				pst.setLong(++count, ((LongTimestamp)to.get()).getUnixTime());
 			if (fromExec.isPresent())
-				pst.setLong(++count, ((LongTimestamp)fromExec.get()).getTimeMs());
+				pst.setLong(++count, ((LongTimestamp)fromExec.get()).getUnixTime());
 			if (toExec.isPresent())
-				pst.setLong(++count, ((LongTimestamp)toExec.get()).getTimeMs());
+				pst.setLong(++count, ((LongTimestamp)toExec.get()).getUnixTime());
 			if (jobIds.isPresent() && !jobIds.get().isEmpty())
 				for (long jobId : jobIds.get())
 					pst.setLong(++count, jobId);
