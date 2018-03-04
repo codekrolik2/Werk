@@ -3,6 +3,7 @@ package org.werk.ui;
 import org.werk.meta.JobType;
 import org.werk.meta.StepType;
 import org.werk.ui.controls.createjobform.CreateJobForm;
+import org.werk.ui.controls.jobdetailsform.JobDetailsForm;
 import org.werk.ui.controls.jobsform.JobsForm;
 import org.werk.ui.controls.jobtypeinfoform.JobTypeInfoForm;
 import org.werk.ui.controls.jobtypesform.JobTypesForm;
@@ -23,6 +24,7 @@ public class TabCreator {
 	protected Provider<StepTypeInfoForm> stepTypeInfoFormProvider;
 	protected Provider<CreateJobForm> createJobFormProvider;
 	protected Provider<JobsForm> jobsFormProvider;
+	protected Provider<JobDetailsForm> jobDetailsFormProvider;
 	
 	@Inject
 	public TabCreator(Provider<SetServerForm> setServerFormProvider,
@@ -32,7 +34,8 @@ public class TabCreator {
 			Provider<JobTypeInfoForm> jobTypeInfoFormProvider,
 			Provider<StepTypeInfoForm> stepTypeInfoFormProvider,
 			Provider<CreateJobForm> createJobFormProvider,
-			Provider<JobsForm> jobsFormProvider) {
+			Provider<JobsForm> jobsFormProvider,
+			Provider<JobDetailsForm> jobDetailsFormProvider) {
 		this.setServerFormProvider = setServerFormProvider;
 		this.serverInfoFormProvider = serverInfoFormProvider;
 		this.jobTypesFormProvider = jobTypesFormProvider;
@@ -41,6 +44,7 @@ public class TabCreator {
 		this.stepTypeInfoFormProvider = stepTypeInfoFormProvider;
 		this.createJobFormProvider = createJobFormProvider;
 		this.jobsFormProvider = jobsFormProvider;
+		this.jobDetailsFormProvider = jobDetailsFormProvider;
 	}
 	
 	public SetServerForm getSetServerForm() {
@@ -87,5 +91,16 @@ public class TabCreator {
 		JobsForm jobsForm = jobsFormProvider.get();
 		jobsForm.initTable();
 		return jobsForm;
+	}
+	
+	public JobDetailsForm getJobDetailsForm(Long jobId) {
+		JobDetailsForm jobDetailsForm = jobDetailsFormProvider.get();
+		jobDetailsForm.setJobId(jobId);
+		return jobDetailsForm;
+	}
+	
+	public JobDetailsForm getJobDetailsForm() {
+		JobDetailsForm jobDetailsForm = jobDetailsFormProvider.get();
+		return jobDetailsForm;
 	}
 }

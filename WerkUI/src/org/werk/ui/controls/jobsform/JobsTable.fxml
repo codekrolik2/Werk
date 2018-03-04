@@ -6,17 +6,6 @@
 
 <fx:root prefHeight="731.0" prefWidth="1142.0" type="TableView" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1">
 	<columns>
-	<!--
-		J getJobId();
-		JobStatus getStatus();
-		Optional<String> getJobName();
-		String getJobTypeName();/long getVersion();
-		String getCurrentStepTypeName();/int getStepCount();
-		
-		Optional<J> getParentJobId();
-		Timestamp getCreationTime();
-		Timestamp getNextExecutionTime();
-	-->
 		<TableColumn editable="false" prefWidth="58.000030517578125" text="Job Id">
 			<cellValueFactory>
 				<PropertyValueFactory property="jobId" />

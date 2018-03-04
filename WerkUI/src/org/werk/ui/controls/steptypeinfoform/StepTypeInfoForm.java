@@ -65,7 +65,7 @@ public class StepTypeInfoForm extends VBox {
     }
     
 	public void initTables() {
-		jobTypesTable.hideCreateShowJobs();
+		jobTypesTable.hideCreateJobs();
 		jobTypesTable.setMainApp(mainApp);
 		transitionsTable.setMainApp(mainApp);
 		rollbackTransitionsTable.setMainApp(mainApp);

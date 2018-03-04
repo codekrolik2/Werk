@@ -7,6 +7,7 @@ import org.werk.meta.StepType;
 import org.werk.rest.pojo.RESTJobType;
 import org.werk.ui.TabCreator;
 import org.werk.ui.controls.createjobform.CreateJobForm;
+import org.werk.ui.controls.jobdetailsform.JobDetailsForm;
 import org.werk.ui.controls.jobsform.JobsForm;
 import org.werk.ui.controls.jobtypeinfoform.JobTypeInfoForm;
 import org.werk.ui.controls.jobtypesform.JobTypesForm;
@@ -162,6 +163,24 @@ public class MainApp extends VBox {
         
         jobsForm.refreshJobStepTypes();
     }
+	
+	public void createJobDetailsForm(Long jobId) {
+		JobDetailsForm jobDetailsForm = tabCreator.getJobDetailsForm(jobId);
+		final Tab tab = new Tab("Job #" + jobId, jobDetailsForm);
+		tab.setClosable(true);
+        
+		tabs.getTabs().add(tab);
+        tabs.getSelectionModel().select(tab);
+	}
+	
+	public void createJobDetailsTab() {
+		JobDetailsForm jobDetailsForm = tabCreator.getJobDetailsForm();
+		final Tab tab = new Tab("Job", jobDetailsForm);
+		tab.setClosable(true);
+        
+		tabs.getTabs().add(tab);
+        tabs.getSelectionModel().select(tab);
+	}
 	
 	public void quit() {
 		main.close();

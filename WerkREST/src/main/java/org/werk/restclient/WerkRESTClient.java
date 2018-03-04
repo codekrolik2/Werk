@@ -154,7 +154,7 @@ public class WerkRESTClient {
 
 	public void getJobAndHistory(String host, int port, WerkCallback<ReadOnlyJob<Long>> callback, Long jobId) throws Exception {
 		// Send a GET request
-		client.get(port, host, "/jobs/"+jobId)
+		client.get(port, host, "/jobsAndHistory/"+jobId)
 		.send(ar -> {
 			try {
 				if (ar.succeeded()) {

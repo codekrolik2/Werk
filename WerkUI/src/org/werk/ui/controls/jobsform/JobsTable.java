@@ -125,7 +125,7 @@ public class JobsTable extends TableView<TableJobPOJO<Long>> {
 				@Override
 				protected void handle(ActionEvent event) {
 					TableJobPOJO<Long> jobPojo = getTableView().getItems().get(getIndex());
-					System.out.println("Handle JobPOJO " + jobPojo.getJobId());
+					mainApp.createJobDetailsForm(jobPojo.getJobId());
 				}
 			};
 		}

@@ -20,8 +20,8 @@
    <children>
       <ButtonBar buttonOrder="L_E+U+FBXI_YNOCAH_R" nodeOrientation="RIGHT_TO_LEFT" prefHeight="40.0" prefWidth="200.0">
          <buttons>
-            <Button fx:id="showJobsButton" onAction="#showJobsForm" mnemonicParsing="false" text="Show Jobs" />
-            <Button fx:id="createJobButton" onAction="#showCreateJobForm" mnemonicParsing="false" text="Create Job" />
+            <Button fx:id="showJobsButton" mnemonicParsing="false" onAction="#showJobsForm" text="Show Jobs" />
+            <Button fx:id="createJobButton" mnemonicParsing="false" onAction="#showCreateJobForm" text="Create Job" />
          </buttons>
          <padding>
             <Insets left="5.0" right="5.0" />
@@ -73,7 +73,7 @@
          <VBox.margin>
             <Insets top="5.0" />
          </VBox.margin></Separator>
-      <SplitPane dividerPositions="0.5, 0.5, 0.5, 0.5" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" VBox.vgrow="ALWAYS">
+      <SplitPane dividerPositions="0.2, 0.4, 0.6, 0.8" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" VBox.vgrow="ALWAYS">
         <items>
             <VBox>
                <children>
@@ -86,7 +86,7 @@
                         </Label>
                      </children>
                   </AnchorPane>
-                  <StepTypesTable fx:id="stepsTable" VBox.vgrow="ALWAYS"/>
+                  <StepTypesTable fx:id="stepsTable" VBox.vgrow="ALWAYS" />
                </children>
             </VBox>
             <VBox>

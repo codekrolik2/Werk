@@ -25,8 +25,8 @@ import org.werk.processing.jobs.JoinStatusRecord;
 import org.werk.processing.jobs.MapJoinStatusRecord;
 import org.werk.processing.parameters.Parameter;
 import org.werk.processing.readonly.ReadOnlyJob;
-import org.werk.processing.readonly.ReadOnlyJobImpl;
 import org.werk.processing.steps.StepProcessingLogRecord;
+import org.werk.rest.pojo.RESTJob;
 import org.werk.service.JobCollection;
 import org.werk.service.PageInfo;
 import org.werk.util.JoinResultImpl;
@@ -84,7 +84,7 @@ public class JobStepSerializer<J> {
 		Map<String, Parameter> jobParameters = job.getJobParameters();
 		Optional<JoinStatusRecord<J>> joinStatusRecord = job.getJoinStatusRecord();
 		
-		return new ReadOnlyJobImpl<J>(jobTypeName, version, jobId, jobName, parentJobId, stepCount, currentStepTypeName, jobInitialParameters, status,
+		return new RESTJob<J>(roJobJSON, jobTypeName, version, jobId, jobName, parentJobId, stepCount, currentStepTypeName, jobInitialParameters, status,
 				creationTime, nextExecutionTime, jobParameters, joinStatusRecord, steps);
 	}
 	

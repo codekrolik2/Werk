@@ -54,9 +54,8 @@ public class JobTypesTable extends TableView<JobType> {
 		detailsColumn.setCellFactory(new JobTypeDetailsCellFactory());
 	}
 	
-	public void hideCreateShowJobs() {
+	public void hideCreateJobs() {
 		createJobColumn.setVisible(false);
-		showJobsColumn.setVisible(false);
 	}
 	
 	class CreateJobCellFactory implements Callback<TableColumn<JobType, String>, TableCell<JobType, String>> {

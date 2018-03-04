@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+
+<?import org.werk.ui.controls.parameters.DictionaryParameterInput?>
+<?import org.werk.ui.controls.jobdetailsform.JobStepsForm?>
+<?import org.werk.ui.controls.jobdetailsform.JoinStatusRecordForm?>
+
+<fx:root prefHeight="755.0" prefWidth="591.0" type="VBox" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <AnchorPane VBox.vgrow="NEVER">
+         <children>
+            <Label layoutX="8.0" layoutY="14.0" text="Job Id:" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="5.0" AnchorPane.topAnchor="10.0" />
+            <TextField fx:id="jobIdField" layoutX="55.0" layoutY="9.0" AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="50.0" AnchorPane.topAnchor="5.0" />
+            <Button fx:id="loadJobButton" layoutX="234.0" layoutY="9.0" mnemonicParsing="false" onAction="#loadJob" prefHeight="0.0" text="Load Job" AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="228.0" AnchorPane.topAnchor="5.0" />
+         </children>
+      </AnchorPane>
+            <Label fx:id="jobIdLabel" text="Job Id:">
+			   <padding>
+			      <Insets left="5.0" right="5.0" top="2.0" bottom="2.0"/>
+			   </padding>
+            </Label>
+            <Label fx:id="jobStatusLabel" text="Status:">
+			   <padding>
+			      <Insets left="5.0" right="5.0" top="2.0" bottom="2.0"/>
+			   </padding>
+            </Label>
+            <JoinStatusRecordForm fx:id="joinStatusRecordForm" visible="false">
+			   <padding>
+			      <Insets left="20.0" right="5.0" top="2.0" bottom="2.0"/>
+			   </padding>
+            </JoinStatusRecordForm>
+            <Label fx:id="jobNameLabel" text="Job Name:">
+			   <padding>
+			      <Insets left="5.0" right="5.0" top="2.0" bottom="2.0"/>
+			   </padding>
+            </Label>
+            <Label fx:id="jobTypeLabel" text="JobType/Version:">
+			   <padding>
+			      <Insets left="5.0" right="5.0" top="2.0" bottom="2.0"/>
+			   </padding>
+            </Label>
+            <Label fx:id="currentStepLabel" layoutX="20.0" layoutY="62.0" text="Current Step Type Name:">
+			   <padding>
+			      <Insets left="5.0" right="5.0" top="2.0" bottom="2.0"/>
+			   </padding>
+            </Label>
+            <Label fx:id="stepCountLabel" text="Step Count:">
+			   <padding>
+			      <Insets left="5.0" right="5.0" top="2.0" bottom="2.0"/>
+			   </padding>
+            </Label>
+            <Label fx:id="parentJobIdLabel" text="Parent Job Id:">
+			   <padding>
+			      <Insets left="5.0" right="5.0" top="2.0" bottom="2.0"/>
+			   </padding>
+            </Label>
+            <Label fx:id="creationTimeLabel" text="Creation Time:">
+			   <padding>
+			      <Insets left="5.0" right="5.0" top="2.0" bottom="2.0"/>
+			   </padding>
+            </Label>
+            <Label fx:id="nextExecutionTimeLabel" text="Next Execution Time:">
+			   <padding>
+			      <Insets left="5.0" right="5.0" top="2.0" bottom="2.0"/>
+			   </padding>
+            </Label>
+      <Separator prefWidth="200.0">
+         <VBox.margin>
+            <Insets top="5.0" />
+         </VBox.margin></Separator>
+      <SplitPane dividerPositions="0.2, 0.4, 0.6, 0.8" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" VBox.vgrow="ALWAYS">
+        <items>
+            <TitledPane expanded="false" text="Init Job Parameters:">
+               <content>
+                  <DictionaryParameterInput fx:id="initJobParameters" />
+               </content>
+            </TitledPane>
+            <VBox>
+               <children>
+                  <AnchorPane prefHeight="20.0" prefWidth="200.0">
+                     <children>
+                        <Label layoutX="14.0" layoutY="8.0" text="Job Parameters:" AnchorPane.bottomAnchor="2.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="2.0">
+                           <padding>
+                              <Insets left="10.0" />
+                           </padding>
+                        </Label>
+                     </children>
+                  </AnchorPane>
+                  <DictionaryParameterInput fx:id="jobParameters" VBox.vgrow="ALWAYS" />
+               </children>
+            </VBox>
+            <VBox>
+               <children>
+                  <AnchorPane prefHeight="20.0" prefWidth="200.0">
+                     <children>
+                        <Label layoutX="14.0" layoutY="8.0" text="Processing History:" AnchorPane.bottomAnchor="2.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="2.0">
+                           <padding>
+                              <Insets left="10.0" />
+                           </padding>
+                        </Label>
+                        <Button mnemonicParsing="false" text="Open in new tab" AnchorPane.bottomAnchor="2.0" AnchorPane.leftAnchor="140.0" AnchorPane.topAnchor="2.0" />
+                     </children>
+                  </AnchorPane>
+                  <JobStepsForm fx:id="jobSteps" />
+               </children>
+            </VBox>
+            <TitledPane expanded="false" text="JSON for Job">
+               <content>
+                  <TextArea fx:id="jobJSONTextArea" />
+               </content>
+            </TitledPane>
+        </items>
+      </SplitPane>
+   </children>
+</fx:root>
