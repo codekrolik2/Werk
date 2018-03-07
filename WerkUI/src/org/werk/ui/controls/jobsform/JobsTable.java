@@ -79,7 +79,7 @@ public class JobsTable extends TableView<TableJobPOJO<Long>> {
 		
 		protected void handle(ActionEvent event) {
 			TableJobPOJO<Long> jobPojo = getTableView().getItems().get(getIndex());
-			System.out.println("Handle JobPOJO " + jobPojo.getJobId());
+			mainApp.createRestartJobTab(jobPojo.getJobPOJO().getJobId());
 		}
 		
 		@Override
@@ -111,7 +111,7 @@ public class JobsTable extends TableView<TableJobPOJO<Long>> {
 				@Override
 				protected void handle(ActionEvent event) {
 					TableJobPOJO<Long> jobPojo = getTableView().getItems().get(getIndex());
-					mainApp.createJobsForm(jobPojo.getJobId());
+					mainApp.createJobsTab(jobPojo.getJobId());
 				}
 			};
 		}
@@ -125,7 +125,7 @@ public class JobsTable extends TableView<TableJobPOJO<Long>> {
 				@Override
 				protected void handle(ActionEvent event) {
 					TableJobPOJO<Long> jobPojo = getTableView().getItems().get(getIndex());
-					mainApp.createJobDetailsForm(jobPojo.getJobId());
+					mainApp.createJobDetailsTab(jobPojo.getJobId());
 				}
 			};
 		}
@@ -148,7 +148,7 @@ public class JobsTable extends TableView<TableJobPOJO<Long>> {
 		
 		protected void handle(ActionEvent event) {
 			TableJobPOJO<Long> jobPojo = getTableView().getItems().get(getIndex());
-			System.out.println("Handle JobPOJO " + jobPojo.getJobId());
+			mainApp.createJobsTab(jobPojo.getParentJobId().get());
 		}
 		
 		@Override

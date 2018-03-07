@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.werk.meta.inputparameters.JobInputParameter;
+import org.werk.processing.parameters.DictionaryParameter;
 import org.werk.processing.parameters.Parameter;
 import org.werk.processing.parameters.ParameterType;
 import org.werk.processing.parameters.impl.DictionaryParameterImpl;
@@ -38,7 +39,7 @@ public class DictionaryParameterInit extends ParameterInit {
 		createInput(topLevel);
 	}
 
-	public DictionaryParameterInit(Parameter oldPrm, boolean topLevel) {
+	public DictionaryParameterInit(DictionaryParameter oldPrm, boolean topLevel) {
 		super(oldPrm);
 		inputParameters = Optional.empty();
 		
@@ -68,9 +69,9 @@ public class DictionaryParameterInit extends ParameterInit {
 	}
 	
 	public Parameter getState() throws ParameterStateException {
-		if ((mapParametersState == null) || (mapParametersState.isEmpty()))
+		/*if ((mapParametersState == null) || (mapParametersState.isEmpty()))
 			return new DictionaryParameterImpl(null);
-		
+		*/
 		Map<String, Parameter> values = new HashMap<>();
 		for (DictionaryParameterAndName dpn : mapParametersState) {
 			String key = dpn.getName().trim();

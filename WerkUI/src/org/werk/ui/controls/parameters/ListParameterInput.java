@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.werk.meta.inputparameters.DefaultValueJobInputParameter;
 import org.werk.meta.inputparameters.JobInputParameter;
+import org.werk.processing.parameters.DictionaryParameter;
 import org.werk.processing.parameters.ListParameter;
 import org.werk.processing.parameters.Parameter;
 import org.werk.processing.parameters.ParameterType;
@@ -121,7 +122,7 @@ public class ListParameterInput extends ParameterInput {
 		if (prm.getValue() != null) {
 			for (Parameter param : prm.getValue()) {
 				if (param.getType() == ParameterType.DICTIONARY) {
-					addParam(new DictionaryParameterInit(param, false));				
+					addParam(new DictionaryParameterInit((DictionaryParameter)param, false));				
 				} else if (param.getType() == ParameterType.LIST) {
 					addParam(new ListParameterInit(param));
 				} else
@@ -135,6 +136,8 @@ public class ListParameterInput extends ParameterInput {
 	}
 	
 	protected void addParam(ParameterInit prm) {
+		if (getParameterInit().isImmutable())
+			prm.setImmutable(true);
 		parameterInit.getListParametersState().add(prm);
 		data.add(prm);
 	}

@@ -3,8 +3,8 @@
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.VBox?>
 
-<fx:root fx:id="scrollPane" fitToHeight="true" fitToWidth="true" type="ScrollPane" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1">
+<fx:root fx:id="scrollPane" fitToHeight="true" fitToWidth="true" maxHeight="1.7976931348623157E308" type="ScrollPane" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1">
    <content>
-      <VBox fx:id="internalVbox" />
+      <VBox fx:id="internalVbox" maxHeight="1.7976931348623157E308" />
    </content>
 </fx:root>

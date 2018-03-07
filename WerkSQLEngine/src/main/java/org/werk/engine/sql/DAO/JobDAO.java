@@ -198,6 +198,26 @@ public class JobDAO {
 		}
 	}
 
+	public int updateJobInitialParameters(TransactionContext tc, long jobId,
+			Map<String, Parameter> jobInitParameters) throws Exception {
+		Connection connection = ((JDBCTransactionContext)tc).getConnection();
+		PreparedStatement pst = null;
+		
+		try {
+			String query = "UPDATE jobs SET job_initial_parameter_state = ? WHERE id_job = ?";
+			pst = connection.prepareStatement(query);
+			
+			String jobInitParametersStr = parameterContextSerializer.serializeParameters(jobInitParameters).toString();
+			
+			pst.setString(1, jobInitParametersStr);
+			pst.setLong(2, jobId);
+			
+			return pst.executeUpdate();
+		} finally {
+			if (pst != null) pst.close();
+		}
+	}
+	
 	/*
 	current_step_id
 	status
@@ -300,7 +320,6 @@ public class JobDAO {
 	}
 	
 	public void restartJob(TransactionContext tc, JobRestartInfo<Long> init) throws Exception {
-		//TODO: safe restart - only restart jobs that are not owned by any Werk instance
 		PreparedStatement pst = null;
 		
 		try {
@@ -311,6 +330,13 @@ public class JobDAO {
 			if (job == null)
 				throw new JobRestartException(
 						String.format("Job not found: [%d]", jobId)
+					);
+			
+			//Safe restart - only restart jobs that are not owned by any Werk instance
+			if (job.getIdLocker().isPresent())
+				throw new JobRestartException(
+						String.format("Cannot restart job: owned by serverId [%d]: JobId [%d]", 
+								job.getIdLocker().get(), jobId)
 					);
 			
 			if ((job.getStatus() != JobStatus.FINISHED) && (job.getStatus() != JobStatus.ROLLED_BACK) && 
@@ -373,6 +399,11 @@ public class JobDAO {
 				for (String stepParameterToRemove : init.getStepParametersToRemove())
 					step.getStepParameters().remove(stepParameterToRemove);
 				
+				if (step.isRollback())
+					jobStatus = JobStatus.ROLLING_BACK;
+				else
+					jobStatus = JobStatus.PROCESSING;
+				
 				//Update step
 				stepDAO.updateStep(tc, job.getCurrentStepId(), step.getExecutionCount(), 
 						step.getStepParameters(), step.getProcessingLog());
@@ -385,8 +416,9 @@ public class JobDAO {
 				job.setJoinStatusRecord(jsr);
 			}
 			
-			this.updateJob(tc, jobId, newStepId, jobStatus, job.getNextExecutionTime(), 
+			this.updateJob(tc, jobId, newStepId, jobStatus, job.getNextExecutionTime(),
 					job.getJobParameters(), stepCount, job.getJoinStatusRecord(), false);
+			this.updateJobInitialParameters(tc, jobId, job.getJobInitialParameters());
 		} finally {
 			if (pst != null) pst.close();
 		}

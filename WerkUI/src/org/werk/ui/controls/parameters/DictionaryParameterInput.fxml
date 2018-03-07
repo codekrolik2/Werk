@@ -11,7 +11,7 @@
 
 <fx:root minHeight="0.0" minWidth="0.0" style="-fx-border-color: black;" type="VBox" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1">
    <children>
-      <AnchorPane prefHeight="29.0" prefWidth="600.0">
+      <AnchorPane fx:id="topPane" prefHeight="29.0" prefWidth="600.0">
          <children>
             <Label layoutX="14.0" layoutY="6.0" text="DICTIONARY" AnchorPane.bottomAnchor="6.0" AnchorPane.leftAnchor="6.0" AnchorPane.topAnchor="6.0" />
             <Button fx:id="addButton" layoutX="96.0" layoutY="2.0" mnemonicParsing="false" onAction="#showParameterMenu" text="Add Parameter">

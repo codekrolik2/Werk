@@ -5,12 +5,17 @@ import java.util.Date;
 
 import org.pillar.time.LongTimestamp;
 import org.werk.meta.JobTypeSignature;
+import org.werk.processing.parameters.DictionaryParameter;
+import org.werk.processing.parameters.impl.DictionaryParameterImpl;
 import org.werk.processing.readonly.ReadOnlyJob;
 import org.werk.rest.pojo.RESTJob;
 import org.werk.restclient.WerkCallback;
 import org.werk.restclient.WerkRESTClient;
 import org.werk.ui.ServerInfoManager;
+import org.werk.ui.controls.mainapp.MainApp;
 import org.werk.ui.controls.parameters.DictionaryParameterInput;
+import org.werk.ui.controls.parameters.DictionaryParameterInputType;
+import org.werk.ui.controls.parameters.state.DictionaryParameterInit;
 import org.werk.ui.guice.LoaderFactory;
 import org.werk.ui.util.MessageBox;
 
@@ -29,7 +34,6 @@ public class JobDetailsForm extends VBox {
 	@FXML TextField jobIdField;
 	@FXML Button loadJobButton;
 
-	@FXML Label jobIdLabel;
 	@FXML Label jobStatusLabel;
 	@FXML Label jobNameLabel;
 	@FXML Label jobTypeLabel;
@@ -50,6 +54,10 @@ public class JobDetailsForm extends VBox {
 	WerkRESTClient werkClient;
 	@Inject
 	ServerInfoManager serverInfoManager;
+	@Inject
+	MainApp mainApp;
+	
+	ReadOnlyJob<Long> currentJob = null;
 	
 	public JobDetailsForm() {
         FXMLLoader fxmlLoader = LoaderFactory.getInstance().loader(getClass().getResource("JobDetailsForm.fxml"));
@@ -79,7 +87,9 @@ public class JobDetailsForm extends VBox {
 	}
 	
 	public void setJob(ReadOnlyJob<Long> readOnlyJob) {
-		jobIdLabel.setText("Job Id: " + Long.toString(readOnlyJob.getJobId()));
+		currentJob = readOnlyJob;
+		
+		jobIdField.setText(Long.toString(readOnlyJob.getJobId()));
 		jobStatusLabel.setText("Status: " + readOnlyJob.getStatus().toString());
 		
 		if (readOnlyJob.getJoinStatusRecord().isPresent()) {
@@ -110,14 +120,25 @@ public class JobDetailsForm extends VBox {
 		
 		jobJSONTextArea.setText(((RESTJob<Long>)readOnlyJob).getJson().toString(4));
 		
-		/*jobParameters
-		initJobParameters*/
+		DictionaryParameter dictPrm = new DictionaryParameterImpl(readOnlyJob.getJobParameters());
+		DictionaryParameterInit parameterInit = new DictionaryParameterInit(dictPrm, false);
+		jobParameters.setContext(parameterInit, DictionaryParameterInputType.READ_ONLY);
+		
+		DictionaryParameter dictPrm2 = new DictionaryParameterImpl(readOnlyJob.getJobInitialParameters());
+		DictionaryParameterInit parameterInit2 = new DictionaryParameterInit(dictPrm2, false);
+		initJobParameters.setContext(parameterInit2, DictionaryParameterInputType.READ_ONLY);
+		
 		try {
 			jobSteps.setJob(readOnlyJob);
 		} catch (Exception e) {
 			MessageBox.show(String.format("Job Steps error: [%s]", e));
 			e.printStackTrace();
 		}
+	}
+	
+	public void openHistoryNewTab() throws Exception {
+		if (currentJob != null)
+			mainApp.createJobStepsTab(currentJob);
 	}
 	
     public void setJobId(Long jobId) {
@@ -130,6 +151,7 @@ public class JobDetailsForm extends VBox {
 				int port = serverInfoManager.getPort();
 				
 				loadJobButton.setDisable(true);
+				currentJob = null;
 				
 				WerkCallback<ReadOnlyJob<Long>> callback = new WerkCallback<ReadOnlyJob<Long>>() {
 					@Override

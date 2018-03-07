@@ -244,12 +244,16 @@ public class LocalJobManager<J> {
 		
 		JoinStatusRecord<J> joinStatusRecord = job.getJoinStatusRecord().get();
 		
+		int waitForN = joinStatusRecord.getWaitForNJobs();
+		if ((waitForN < 0) || (waitForN > joinStatusRecord.getJoinedJobIds().size()))
+			waitForN = joinStatusRecord.getJoinedJobIds().size();
+		
 		int finishedJobCount = 0;
 		for (J jobId : joinStatusRecord.getJoinedJobIds())
 			if (!currentJobs.containsKey(jobId))
 				finishedJobCount++;
 		
-		boolean waitDone = joinStatusRecord.getWaitForNJobs() <= finishedJobCount;
+		boolean waitDone = waitForN <= finishedJobCount;
 		
 		if (waitDone) {
 			for (J jobId : joinStatusRecord.getJoinedJobIds()) {

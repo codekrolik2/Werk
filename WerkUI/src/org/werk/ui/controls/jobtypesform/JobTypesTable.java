@@ -78,7 +78,7 @@ public class JobTypesTable extends TableView<JobType> {
 				@Override
 				protected void handle(ActionEvent event) {
 					JobType jobType = getTableView().getItems().get(getIndex());
-					mainApp.createJobsForm(((RESTJobType)jobType).getFullName());
+					mainApp.createJobsTab(((RESTJobType)jobType).getFullName());
 				}
 			};
 		}

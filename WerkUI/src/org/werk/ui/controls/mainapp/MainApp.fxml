@@ -25,7 +25,7 @@
 				</Menu>
 				<Menu mnemonicParsing="false" text="Jobs"> 
 					<items>
-						<MenuItem mnemonicParsing="false" text="Jobs" onAction="#createJobsForm"/> 
+						<MenuItem mnemonicParsing="false" text="Jobs" onAction="#createJobsTab"/> 
 						<SeparatorMenuItem mnemonicParsing="false" /> 
 						<MenuItem mnemonicParsing="false" text="Job Details" onAction="#createJobDetailsTab"/> 
 						<SeparatorMenuItem mnemonicParsing="false" /> 

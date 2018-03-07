@@ -39,6 +39,10 @@ public class StringParameterInput extends ParameterInput {
         }
 	}
 	
+	/*public void updateDisabled() {
+		textField.setEditable(getParameterInit().isImmutable());
+	}*/
+	
 	public void initialize() {
 		textField.textProperty().addListener(new ChangeListener<String>() {
 		    @Override

@@ -130,7 +130,7 @@ public class WerkRESTClient {
 		String str = jobStepSerializer.serializeJobRestartInfo(jobRestartInfo).toString();
 		Buffer buffer = Buffer.buffer(str);
 		
-		client.patch(port, host, "/jobs").sendBuffer(buffer, ar -> {
+		client.patch(port, host, "/jobs/" + jobRestartInfo.getJobId()).sendBuffer(buffer, ar -> {
 			try {
 				if (ar.succeeded()) {
 					// Obtain response

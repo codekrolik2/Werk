@@ -99,7 +99,7 @@ public class JobStepSerializer<J> {
 		step.put("executionCount", stepPOJO.getExecutionCount());
 		
 		step.put("stepParameters", contextSerializer.serializeParameters(stepPOJO.getStepParameters()));
-		step.put("processingLog", stepProcessingHistorySerializer.serializeLog(stepPOJO.getProcessingLog()));
+		step.put("processingLog", stepProcessingHistorySerializer.serializeLogToArray(stepPOJO.getProcessingLog()));
 		
 		return step;
 	}
@@ -118,7 +118,7 @@ public class JobStepSerializer<J> {
 		Map<String, Parameter> stepParameters = 
 				contextSerializer.deserializeParameters(stepJSON.getJSONObject("stepParameters"));
 		List<StepProcessingLogRecord> processingLog = 
-				stepProcessingHistorySerializer.deserializeLog(stepJSON.getJSONObject("processingLog"));
+				stepProcessingHistorySerializer.deserializeLog(stepJSON.getJSONArray("processingLog"));
 		
 		return new StepPOJOImpl(stepTypeName, isRollback, stepNumber, rollbackStepNumbers, 
 				executionCount, stepParameters, processingLog);
@@ -204,10 +204,10 @@ public class JobStepSerializer<J> {
 		resultJSON.put("joinParameterName", rec.getJoinParameterName());
 		return resultJSON;
 	}
-
+	
 	public JoinStatusRecord<J> deserializeMapJoinStatusRecord(JSONObject recJSON) {
 		JoinResultImpl<J> joinResult = joinResultSerializer.deserializeJoinResult(recJSON);
-
+		
 		int waitForNJobs = recJSON.getInt("waitForNJobs");
 		String joinParameterName = recJSON.getString("joinParameterName");
 		
@@ -218,9 +218,17 @@ public class JobStepSerializer<J> {
 		JSONObject jobRestartInfoJSON = new JSONObject();
 		jobRestartInfoJSON.put("jobId", jobIdSerializer.serializeJobId(jobRestartInfo.getJobId()));
 		
+		jobRestartInfoJSON.put("jobInitParametersUpdate", 
+				contextSerializer.serializeParameters(jobRestartInfo.getJobInitParametersUpdate()));
+		
+		JSONArray jobInitParametersToRemoveArr = new JSONArray();
+		for (String prmName : jobRestartInfo.getJobInitParametersToRemove())
+			jobInitParametersToRemoveArr.put(prmName);
+		jobRestartInfoJSON.put("jobInitParametersToRemove", jobInitParametersToRemoveArr);
+		
 		jobRestartInfoJSON.put("jobParametersUpdate", 
 				contextSerializer.serializeParameters(jobRestartInfo.getJobParametersUpdate()));
-
+		
 		JSONArray jobParametersToRemoveArr = new JSONArray();
 		for (String prmName : jobRestartInfo.getJobParametersToRemove())
 			jobParametersToRemoveArr.put(prmName);

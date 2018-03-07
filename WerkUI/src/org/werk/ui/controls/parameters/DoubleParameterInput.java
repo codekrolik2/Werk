@@ -43,6 +43,10 @@ public class DoubleParameterInput extends ParameterInput {
         }
 	}
 	
+	/*public void updateDisabled() {
+		textField.setEditable(getParameterInit().isImmutable());
+	}*/
+	
 	public void initialize() {
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		TextFormatter formatter = new TextFormatter((UnaryOperator<TextFormatter.Change>) change -> {

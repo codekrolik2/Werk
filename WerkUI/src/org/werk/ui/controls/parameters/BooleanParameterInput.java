@@ -44,6 +44,10 @@ public class BooleanParameterInput extends ParameterInput {
         choice.setItems(list);
 	}
 
+	/*public void updateDisabled() {
+		choice.setDisable(getParameterInit().isImmutable());
+	}*/
+	
 	public void initialize() {
 		choice.valueProperty().addListener(new ChangeListener<Boolean>() {
 		    @Override

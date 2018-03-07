@@ -4,14 +4,20 @@ import java.io.IOException;
 import java.util.stream.Collectors;
 
 import org.werk.data.StepPOJO;
+import org.werk.processing.parameters.DictionaryParameter;
+import org.werk.processing.parameters.impl.DictionaryParameterImpl;
 import org.werk.processing.steps.StepProcessingLogRecord;
 import org.werk.restclient.WerkRESTClient;
 import org.werk.ui.ServerInfoManager;
 import org.werk.ui.controls.parameters.DictionaryParameterInput;
+import org.werk.ui.controls.parameters.DictionaryParameterInputType;
+import org.werk.ui.controls.parameters.state.DictionaryParameterInit;
 import org.werk.ui.guice.LoaderFactory;
 
 import com.google.inject.Inject;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Label;
@@ -43,7 +49,7 @@ public class StepDetailsForm extends VBox {
         FXMLLoader fxmlLoader = LoaderFactory.getInstance().loader(getClass().getResource("StepDetailsForm.fxml"));
         fxmlLoader.setRoot(this);
         fxmlLoader.setController(this);
-
+        
         try {
             fxmlLoader.load();
         } catch (IOException exception) {
@@ -61,7 +67,11 @@ public class StepDetailsForm extends VBox {
 				collect(Collectors.toList())));
 		executionCountLabel.setText("Execution Count: " + Integer.toString(step.getExecutionCount()));
 		
-		//step.getStepParameters()
-		//step.getProcessingLog()
+		DictionaryParameter dictPrm = new DictionaryParameterImpl(step.getStepParameters());
+		DictionaryParameterInit parameterInit = new DictionaryParameterInit(dictPrm, false);
+		stepParameters.setContext(parameterInit, DictionaryParameterInputType.READ_ONLY);
+		
+		ObservableList<StepProcessingLogRecord> list = FXCollections.observableArrayList(step.getProcessingLog());   
+		processingHistoryTable.setItems(list);
 	}
 }

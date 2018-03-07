@@ -35,9 +35,9 @@ public class ListParameterInit extends ParameterInit {
 	}
 	
 	public Parameter getState() throws ParameterStateException {
-		if ((listParametersState == null) || (listParametersState.isEmpty()))
+		/*if ((listParametersState == null) || (listParametersState.isEmpty()))
 			new ListParameterImpl(null);
-		
+		*/
 		List<Parameter> listParameters = new ArrayList<>();
 		for (ParameterInit init : listParametersState)
 			listParameters.add(init.getState());

@@ -141,7 +141,7 @@ public class CreateJobForm extends VBox {
 				JobType type = jobTypes.get(jobTypeComboBox.valueProperty().get());
 				
 				List<JobInputParameter> initSignature = type.getInitParameters().get(newValue);
-				DictionaryParameterInit dictInit = new DictionaryParameterInit(Optional.of(initSignature), true);
+				DictionaryParameterInit dictInit = new DictionaryParameterInit(Optional.ofNullable(initSignature), true);
 				parameterInput.setContext(dictInit, DictionaryParameterInputType.JOB_CREATE);
 			}
         });

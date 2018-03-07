@@ -34,10 +34,13 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.layout.AnchorPane;
 import javafx.util.Callback;
 import lombok.Getter;
 
 public class DictionaryParameterInput extends ParameterInput {
+	@FXML
+	AnchorPane topPane;
 	@FXML
     protected Button addButton;
 	@FXML
@@ -80,7 +83,13 @@ public class DictionaryParameterInput extends ParameterInput {
 		setContext(parameterInit, dictType);
 	}
     
-	public void setContext(DictionaryParameterInit parameterInit, DictionaryParameterInputType dictType) {		
+	public void setContext(DictionaryParameterInit parameterInit, DictionaryParameterInputType dictType) {
+		if (dictType == DictionaryParameterInputType.READ_ONLY) {
+			topPane.setVisible(false);
+			topPane.setManaged(false);
+			disableRemoveParameter.setVisible(false);
+		}
+		
 		this.parameterInit = parameterInit;
         parameterInit.setParameterInput(this);
         
@@ -243,7 +252,7 @@ public class DictionaryParameterInput extends ParameterInput {
 		if (prm.getValue() != null) {
 			for (Entry<String, Parameter> param : prm.getValue().entrySet()) {
 				if (param.getValue().getType() == ParameterType.DICTIONARY)
-					addParam(param.getKey(), new DictionaryParameterInit(param.getValue(), false));				
+					addParam(param.getKey(), new DictionaryParameterInit((DictionaryParameter)(param.getValue()), false));				
 				else if (param.getValue().getType() == ParameterType.LIST)
 					addParam(param.getKey(), new ListParameterInit(param.getValue()));
 				else
@@ -257,6 +266,11 @@ public class DictionaryParameterInput extends ParameterInput {
 	}
 	
 	protected void addParam(String name, ParameterInit prm) {
+		if (dictType == DictionaryParameterInputType.READ_ONLY) {
+			prm.setImmutable(true);
+			prm.getParameterInput().updateDisabled();
+		}
+		
 		DictionaryParameterAndName dp = new DictionaryParameterAndName(name, prm);
 		parameterInit.getMapParametersState().add(dp);
 		data.add(dp);

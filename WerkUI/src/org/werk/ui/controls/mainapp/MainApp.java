@@ -4,10 +4,13 @@ import java.io.IOException;
 
 import org.werk.meta.JobType;
 import org.werk.meta.StepType;
+import org.werk.processing.readonly.ReadOnlyJob;
 import org.werk.rest.pojo.RESTJobType;
 import org.werk.ui.TabCreator;
 import org.werk.ui.controls.createjobform.CreateJobForm;
 import org.werk.ui.controls.jobdetailsform.JobDetailsForm;
+import org.werk.ui.controls.jobdetailsform.JobStepsForm;
+import org.werk.ui.controls.jobrestartform.RestartJobForm;
 import org.werk.ui.controls.jobsform.JobsForm;
 import org.werk.ui.controls.jobtypeinfoform.JobTypeInfoForm;
 import org.werk.ui.controls.jobtypesform.JobTypesForm;
@@ -129,7 +132,7 @@ public class MainApp extends VBox {
         createJobForm.refresh();
 	}
 	
-	public void createJobsForm(Long parentJobId) {
+	public void createJobsTab(Long parentJobId) {
 		JobsForm jobsForm = tabCreator.getJobsForm();
 		final Tab tab = new Tab("Jobs", jobsForm);
 		tab.setClosable(true);
@@ -141,7 +144,7 @@ public class MainApp extends VBox {
         jobsForm.setParentJobId(parentJobId);
 	}
 	
-	public void createJobsForm(String jobTypes) {
+	public void createJobsTab(String jobTypes) {
 		JobsForm jobsForm = tabCreator.getJobsForm();
 		final Tab tab = new Tab("Jobs", jobsForm);
 		tab.setClosable(true);
@@ -153,7 +156,7 @@ public class MainApp extends VBox {
         jobsForm.setJobTypes(jobTypes);
 	}
 	
-	public void createJobsForm() {
+	public void createJobsTab() {
 		JobsForm jobsForm = tabCreator.getJobsForm();
 		final Tab tab = new Tab("Jobs", jobsForm);
 		tab.setClosable(true);
@@ -164,7 +167,7 @@ public class MainApp extends VBox {
         jobsForm.refreshJobStepTypes();
     }
 	
-	public void createJobDetailsForm(Long jobId) {
+	public void createJobDetailsTab(Long jobId) {
 		JobDetailsForm jobDetailsForm = tabCreator.getJobDetailsForm(jobId);
 		final Tab tab = new Tab("Job #" + jobId, jobDetailsForm);
 		tab.setClosable(true);
@@ -176,6 +179,25 @@ public class MainApp extends VBox {
 	public void createJobDetailsTab() {
 		JobDetailsForm jobDetailsForm = tabCreator.getJobDetailsForm();
 		final Tab tab = new Tab("Job", jobDetailsForm);
+		tab.setClosable(true);
+        
+		tabs.getTabs().add(tab);
+        tabs.getSelectionModel().select(tab);
+	}
+	
+	public void createJobStepsTab(ReadOnlyJob<Long> roJob) throws Exception {
+		JobStepsForm jobStepsForm = tabCreator.getJobStepsForm();
+		jobStepsForm.setJob(roJob);
+		final Tab tab = new Tab("Job #" + roJob.getJobId() + " Processing History", jobStepsForm);
+		tab.setClosable(true);
+        
+		tabs.getTabs().add(tab);
+        tabs.getSelectionModel().select(tab);
+	}
+
+	public void createRestartJobTab(Long jobId) {
+		RestartJobForm restartJobForm = tabCreator.getRestartJobForm(jobId);
+		final Tab tab = new Tab("Job #" + jobId, restartJobForm);
 		tab.setClosable(true);
         
 		tabs.getTabs().add(tab);
