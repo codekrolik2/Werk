@@ -1,0 +1,3 @@
+src/main/resources Project is missing required source folder: 'src/main/resources'
+fix it with
+Right click -> Maven -> Update project
